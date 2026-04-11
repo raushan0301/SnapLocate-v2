@@ -1,0 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Plus+Jakarta+Sans:ital,opsz,wght@0,6..18,200..800;1,6..18,200..800&display=swap');
+@import "tailwindcss";
+
+/* ── Design Tokens (exact from snaplocate_student_dashboard) ── */
+:root {
+  /* Primary */
+  --primary-bg: #4f46e5;
+  --primary-fg: #ffffff;
+  --primary-light: #e0e7ff;
+  --primary-dark: #3730a3;
+
+  /* Backgrounds */
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-muted: #f1f5f9;
+  --bg-light: #eef2ff;
+  --bg-subtle: #7676801e;
+
+  /* Text */
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #475569;
+  --text-accent: #4f46e5;
+
+  /* Borders */
+  --border-primary: #e2e8f0;
+  --border-light: #f1f5f9;
+  --border-accent: #a5b4fc;
+
+  /* Accent */
+  --accent-orange: #fb923c;
+  --accent-green: #d1fae5;
+  --accent-indigo: #4f46e5;
+
+  /* Sidebar / Header */
+  --sidebar-bg: rgba(255,255,255,0.75);
+  --sidebar-border: rgba(255,255,255,0.5);
+  --header-bg: rgba(255,255,255,0.75);
+  --header-border: rgba(255,255,255,0.5);
+
+  /* Typography */
+  --font-xs:   12px;
+  --font-sm:   14px;
+  --font-base: 16px;
+  --font-lg:   17px;
+  --font-xl:   18px;
+  --font-2xl:  20px;
+  --font-3xl:  24px;
+  --font-4xl:  30px;
+  --font-5xl:  48px;
+
+  --lh-xs:  15px;
+  --lh-sm:  16px;
+  --lh-md:  17px;
+  --lh-lg:  18px;
+  --lh-xl:  20px;
+  --lh-2xl: 21px;
+  --lh-3xl: 23px;
+  --lh-4xl: 26px;
+  --lh-5xl: 31px;
+  --lh-6xl: 38px;
+  --lh-7xl: 61px;
+
+  /* Spacing */
+  --sp-xs:    4px;
+  --sp-sm:    6px;
+  --sp-md:    8px;
+  --sp-lg:   10px;
+  --sp-xl:   12px;
+  --sp-2xl:  14px;
+  --sp-3xl:  16px;
+  --sp-4xl:  18px;
+  --sp-5xl:  20px;
+  --sp-6xl:  22px;
+  --sp-7xl:  24px;
+  --sp-8xl:  26px;
+  --sp-9xl:  28px;
+  --sp-10xl: 32px;
+  --sp-13xl: 64px;
+
+  /* Radius */
+  --r-xs:  3px;
+  --r-sm:  4px;
+  --r-md:  6px;
+  --r-lg:  8px;
+  --r-xl:  12px;
+  --r-2xl: 16px;
+  --r-3xl: 18px;
+  --r-4xl: 20px;
+  --r-5xl: 24px;
+
+  /* Layout */
+  --sidebar-w: 22%;
+  --content-w: 78%;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  background: var(--bg-main);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden; /* prevent double scrollbars; main area scrolls internally */
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 99px; }
