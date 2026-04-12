@@ -235,3 +235,276 @@ CREATE INDEX IF NOT EXISTS idx_marketplace_status     ON marketplace(status);
 CREATE INDEX IF NOT EXISTS idx_lost_found_status      ON lost_found(status);
 CREATE INDEX IF NOT EXISTS idx_classrooms_name        ON classrooms(name);
 CREATE INDEX IF NOT EXISTS idx_classroom_timetable_cid ON classroom_timetable(classroom_id);
+
+-- ─── ANNOUNCEMENTS ───────────────────────────────────────────
+-- Run this in your Supabase SQL editor to enable the Broadcast feature
+CREATE TABLE IF NOT EXISTS announcements (
+  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title       TEXT NOT NULL,
+  message     TEXT NOT NULL,
+  type        TEXT DEFAULT 'info' CHECK (type IN ('info', 'warning', 'urgent')),
+  created_by  UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_announcements_created_at ON announcements(created_at DESC);
+
+-- ─── AUDIT LOG ───────────────────────────────────────────────
+-- Run this in your Supabase SQL editor to enable the Audit Log feature
+CREATE TABLE IF NOT EXISTS audit_log (
+  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  actor_id    UUID REFERENCES users(id) ON DELETE SET NULL,
+  actor_name  TEXT NOT NULL DEFAULT 'System',
+  action      TEXT NOT NULL,   -- e.g. 'CREATE_USER', 'DELETE_USER', 'REMOVE_LISTING'
+  target_type TEXT,            -- 'user', 'listing', 'post', 'resource', 'announcement'
+  target_id   UUID,
+  target_name TEXT,            -- human-readable label of what was acted on
+  meta        JSONB DEFAULT '{}',
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_log_created    ON audit_log(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_log_actor      ON audit_log(actor_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_action     ON audit_log(action);
+
+-- ── Notifications ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS notifications (
+  id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title      TEXT NOT NULL,
+  message    TEXT NOT NULL,
+  link       TEXT,                        -- optional frontend route to navigate to
+  is_read    BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user    ON notifications(user_id, is_read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(created_at DESC);
+
+-- ── Student Faculty Advisors ──────────────────────────────────────────────────
+-- Admin assigns one faculty advisor per student (one-to-one per student)
+CREATE TABLE IF NOT EXISTS student_advisors (
+  student_id         UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  faculty_profile_id UUID NOT NULL REFERENCES faculty_profiles(id) ON DELETE CASCADE,
+  subject            TEXT,            -- optional: e.g. "Class Advisor - CSE-4A"
+  assigned_at        TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_student_advisors_faculty ON student_advisors(faculty_profile_id);
+
+-- ============================================================
+-- SnapLocate v2 — LMS + WebKiosk Extension Tables
+-- Run this block after the base schema above
+-- ============================================================
+
+-- ─── ORG_ID MIGRATION FOR EXISTING TABLES ───────────────────
+-- courses table is missing org_id — add it before LMS tables reference it
+ALTER TABLE courses ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES organizations(id);
+CREATE INDEX IF NOT EXISTS idx_courses_org ON courses(org_id);
+
+-- ─── STUDENT PROFILES ───────────────────────────────────────
+-- Extends users table with academic registration info (WebKiosk replacement)
+CREATE TABLE IF NOT EXISTS student_profiles (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id         UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  org_id          UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  enrollment_no   TEXT,
+  roll_no         TEXT,
+  branch          TEXT,
+  dept            TEXT,
+  semester        INTEGER,
+  section         TEXT,
+  batch_year      INTEGER,
+  current_cgpa    NUMERIC(4,2),
+  synced_from     TEXT DEFAULT 'manual',
+  last_synced_at  TIMESTAMPTZ,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_student_profiles_user   ON student_profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_student_profiles_org    ON student_profiles(org_id);
+CREATE INDEX IF NOT EXISTS idx_student_profiles_enroll ON student_profiles(enrollment_no);
+
+-- ─── COURSE ENROLLMENTS ─────────────────────────────────────
+CREATE TABLE IF NOT EXISTS course_enrollments (
+  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  org_id      UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  course_id   UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  student_id  UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  enrolled_at TIMESTAMPTZ DEFAULT NOW(),
+  status      TEXT DEFAULT 'active' CHECK (status IN ('active', 'dropped', 'completed')),
+  UNIQUE (course_id, student_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_enrollments_org     ON course_enrollments(org_id);
+CREATE INDEX IF NOT EXISTS idx_enrollments_course  ON course_enrollments(course_id);
+CREATE INDEX IF NOT EXISTS idx_enrollments_student ON course_enrollments(student_id);
+
+-- ─── ASSIGNMENTS ────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS assignments (
+  id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  org_id           UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  course_id        UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  faculty_id       UUID NOT NULL REFERENCES faculty_profiles(id) ON DELETE CASCADE,
+  title            TEXT NOT NULL,
+  description      TEXT,
+  due_date         TIMESTAMPTZ NOT NULL,
+  max_marks        NUMERIC(6,2) DEFAULT 100,
+  file_url         TEXT,
+  attachment_type  TEXT DEFAULT 'none' CHECK (attachment_type IN ('pdf', 'image', 'doc', 'link', 'none')),
+  is_published     BOOLEAN DEFAULT TRUE,
+  created_at       TIMESTAMPTZ DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_assignments_org    ON assignments(org_id);
+CREATE INDEX IF NOT EXISTS idx_assignments_course ON assignments(course_id);
+CREATE INDEX IF NOT EXISTS idx_assignments_due    ON assignments(due_date);
+
+-- ─── ASSIGNMENT SUBMISSIONS ─────────────────────────────────
+CREATE TABLE IF NOT EXISTS assignment_submissions (
+  id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  org_id        UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  assignment_id UUID NOT NULL REFERENCES assignments(id) ON DELETE CASCADE,
+  student_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  file_url      TEXT,
+  text_content  TEXT,
+  submitted_at  TIMESTAMPTZ DEFAULT NOW(),
+  marks         NUMERIC(6,2),
+  feedback      TEXT,
+  status        TEXT DEFAULT 'submitted' CHECK (status IN ('submitted', 'late', 'graded', 'returned')),
+  graded_by     UUID REFERENCES users(id),
+  graded_at     TIMESTAMPTZ,
+  UNIQUE (assignment_id, student_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_submissions_org        ON assignment_submissions(org_id);
+CREATE INDEX IF NOT EXISTS idx_submissions_assignment ON assignment_submissions(assignment_id);
+CREATE INDEX IF NOT EXISTS idx_submissions_student    ON assignment_submissions(student_id);
+CREATE INDEX IF NOT EXISTS idx_submissions_status     ON assignment_submissions(status);
+
+-- ─── GRADES (EXAM MARKS) ────────────────────────────────────
+CREATE TABLE IF NOT EXISTS grades (
+  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  org_id      UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  student_id  UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  course_id   UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  exam_type   TEXT NOT NULL CHECK (exam_type IN ('mid', 'end', 'internal', 'quiz', 'practical')),
+  marks       NUMERIC(6,2) NOT NULL,
+  max_marks   NUMERIC(6,2) NOT NULL DEFAULT 100,
+  remarks     TEXT,
+  entered_by  UUID REFERENCES users(id),
+  synced_from TEXT DEFAULT 'manual',
+  last_synced_at TIMESTAMPTZ,
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (student_id, course_id, exam_type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_grades_org     ON grades(org_id);
+CREATE INDEX IF NOT EXISTS idx_grades_student ON grades(student_id);
+CREATE INDEX IF NOT EXISTS idx_grades_course  ON grades(course_id);
+
+-- ─── COURSE ANNOUNCEMENTS ───────────────────────────────────
+CREATE TABLE IF NOT EXISTS course_announcements (
+  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  org_id      UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  course_id   UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  faculty_id  UUID NOT NULL REFERENCES faculty_profiles(id) ON DELETE CASCADE,
+  title       TEXT NOT NULL,
+  message     TEXT NOT NULL,
+  is_pinned   BOOLEAN DEFAULT FALSE,
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_course_ann_org    ON course_announcements(org_id);
+CREATE INDEX IF NOT EXISTS idx_course_ann_course ON course_announcements(course_id);
+
+-- ─── ATTENDANCE ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS attendance (
+  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  org_id      UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  course_id   UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  student_id  UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  date        DATE NOT NULL,
+  status      TEXT NOT NULL CHECK (status IN ('present', 'absent', 'late', 'excused')),
+  marked_by   UUID REFERENCES users(id),
+  synced_from TEXT DEFAULT 'manual',
+  last_synced_at TIMESTAMPTZ,
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (course_id, student_id, date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_attendance_org     ON attendance(org_id);
+CREATE INDEX IF NOT EXISTS idx_attendance_course  ON attendance(course_id);
+CREATE INDEX IF NOT EXISTS idx_attendance_student ON attendance(student_id);
+CREATE INDEX IF NOT EXISTS idx_attendance_date    ON attendance(date);
+
+-- ─── EXAM SCHEDULE ──────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS exam_schedule (
+  id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  org_id           UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  course_id        UUID REFERENCES courses(id) ON DELETE SET NULL,
+  course_code      TEXT,
+  course_name      TEXT,
+  exam_type        TEXT NOT NULL CHECK (exam_type IN ('mid', 'end', 'internal', 'quiz', 'practical', 'supplementary')),
+  exam_date        DATE NOT NULL,
+  start_time       TIME NOT NULL,
+  end_time         TIME,
+  venue            TEXT,
+  duration_mins    INTEGER,
+  seating_plan_url TEXT,
+  synced_from      TEXT DEFAULT 'manual',
+  created_at       TIMESTAMPTZ DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_exam_schedule_org    ON exam_schedule(org_id);
+CREATE INDEX IF NOT EXISTS idx_exam_schedule_date   ON exam_schedule(exam_date);
+CREATE INDEX IF NOT EXISTS idx_exam_schedule_course ON exam_schedule(course_id);
+
+-- ─── FEE RECORDS ────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS fee_records (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  org_id          UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  student_id      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  semester        INTEGER NOT NULL,
+  fee_type        TEXT DEFAULT 'tuition' CHECK (fee_type IN ('tuition', 'hostel', 'transport', 'misc', 'total')),
+  amount_due      NUMERIC(12,2) NOT NULL,
+  amount_paid     NUMERIC(12,2) DEFAULT 0,
+  due_date        DATE,
+  paid_at         TIMESTAMPTZ,
+  status          TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'partial', 'paid', 'overdue', 'waived')),
+  receipt_url     TEXT,
+  transaction_ref TEXT,
+  synced_from     TEXT DEFAULT 'manual',
+  last_synced_at  TIMESTAMPTZ,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_fee_records_org     ON fee_records(org_id);
+CREATE INDEX IF NOT EXISTS idx_fee_records_student ON fee_records(student_id);
+CREATE INDEX IF NOT EXISTS idx_fee_records_status  ON fee_records(status);
+
+-- ─── EXTERNAL SYNC CONFIG ───────────────────────────────────
+CREATE TABLE IF NOT EXISTS external_sync_config (
+  id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  org_id           UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  provider         TEXT NOT NULL CHECK (provider IN ('webkiosk', 'moodle', 'oracle_erp')),
+  base_url         TEXT NOT NULL,
+  credentials_json JSONB NOT NULL DEFAULT '{}',
+  sync_modules     JSONB DEFAULT '{"attendance": true, "grades": true, "fees": true, "exam_schedule": true}',
+  is_active        BOOLEAN DEFAULT TRUE,
+  last_synced_at   TIMESTAMPTZ,
+  last_sync_status TEXT DEFAULT 'never',
+  last_sync_log    TEXT,
+  created_at       TIMESTAMPTZ DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (org_id, provider)
+);
+
+CREATE INDEX IF NOT EXISTS idx_sync_config_org ON external_sync_config(org_id);

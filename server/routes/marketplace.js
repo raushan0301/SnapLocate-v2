@@ -35,12 +35,12 @@ router.get('/:id', async (req, res) => {
 
 // ─── POST /api/marketplace ───────────────────────────────────
 router.post('/', authenticate, async (req, res) => {
-  const { title, price, description, image_url } = req.body
+  const { title, price, description, image_url, category } = req.body
   if (!title || !price) return res.status(400).json({ success: false, message: 'title and price are required' })
 
   const { data, error } = await supabaseAdmin
     .from('marketplace')
-    .insert({ title, price, description, image_url, seller_id: req.user.id, status: 'active' })
+    .insert({ title, price, description, image_url, category: category || 'Other', seller_id: req.user.id, status: 'active' })
     .select().single()
 
   if (error) throw error

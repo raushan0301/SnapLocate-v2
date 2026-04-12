@@ -25,9 +25,12 @@ import LostFoundPage     from './pages/student/LostFound'
 import StudentRequests   from './pages/student/Requests'
 
 // Faculty Pages
-import FacultyDashboard from './pages/faculty/Dashboard'
-import FacultyProfile   from './pages/faculty/Profile'
-import FacultyRequests  from './pages/faculty/Requests'
+import FacultyDashboard  from './pages/faculty/Dashboard'
+import FacultyProfile    from './pages/faculty/Profile'
+import FacultyRequests   from './pages/faculty/Requests'
+import FacultySettings   from './pages/faculty/Settings'
+import FacultyOfficeHours from './pages/faculty/OfficeHours'
+import FacultyStudents   from './pages/faculty/Students'
 
 // Admin Pages
 import AdminDashboard   from './pages/admin/Dashboard'
@@ -39,6 +42,40 @@ import AdminSupport     from './pages/admin/SupportContacts'
 import ManageCalendar   from './pages/admin/ManageCalendar'
 import AdminWiFi       from './pages/admin/WiFi'
 import SupportTicketsHub from './pages/admin/SupportTicketsHub'
+import ManageStudents    from './pages/admin/ManageStudents'
+import ManageMarketplace from './pages/admin/ManageMarketplace'
+import ManageLostFound   from './pages/admin/ManageLostFound'
+import ManageRequests    from './pages/admin/ManageRequests'
+import ManageResources   from './pages/admin/ManageResources'
+import Broadcast         from './pages/admin/Broadcast'
+import AdminSettings     from './pages/admin/AdminSettings'
+import AuditLog         from './pages/admin/AuditLog'
+
+// LMS Student Pages
+import LMSDashboard         from './pages/student/LMSDashboard'
+import LMSCourse            from './pages/student/LMSCourse'
+import LMSAssignments       from './pages/student/LMSAssignments'
+import LMSAssignmentDetail  from './pages/student/LMSAssignmentDetail'
+import LMSGrades            from './pages/student/LMSGrades'
+
+// WebKiosk Student Pages
+import WebKioskDashboard    from './pages/student/WebKioskDashboard'
+import AttendanceView       from './pages/student/AttendanceView'
+import ExamScheduleView     from './pages/student/ExamScheduleView'
+import FeesView             from './pages/student/FeesView'
+import StudentProfileView   from './pages/student/StudentProfileView'
+
+// Faculty LMS + Attendance Pages
+import LMSCourseManagement     from './pages/faculty/LMSCourseManagement'
+import LMSCourseDetail         from './pages/faculty/LMSCourseDetail'
+import LMSAssignmentGrading    from './pages/faculty/LMSAssignmentGrading'
+import AttendanceMarking        from './pages/faculty/AttendanceMarking'
+
+// Admin LMS + WebKiosk Pages
+import ManageCourses        from './pages/admin/ManageCourses'
+import ManageExamSchedule   from './pages/admin/ManageExamSchedule'
+import ManageFees           from './pages/admin/ManageFees'
+import SyncConfig           from './pages/admin/SyncConfig'
 
 // Shared Pages
 import ProfessorProfile from './pages/shared/ProfessorProfile'
@@ -76,11 +113,32 @@ export default function AppRoutes() {
         <Route path="/lost-found"     element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><LostFoundPage /></ProtectedRoute>} />
 
         {/* Faculty Routes */}
-        <Route path="/faculty/dashboard" element={<ProtectedRoute allowedRole="faculty"><FacultyDashboard /></ProtectedRoute>} />
-        <Route path="/faculty/profile"   element={<ProtectedRoute allowedRole="faculty"><FacultyProfile /></ProtectedRoute>} />
-        <Route path="/faculty/workspace" element={<ProtectedRoute allowedRole="faculty"><Workspace role="faculty" /></ProtectedRoute>} />
-        <Route path="/faculty/requests"  element={<ProtectedRoute allowedRole="faculty"><FacultyRequests /></ProtectedRoute>} />
-        <Route path="/faculty/calendar"  element={<ProtectedRoute allowedRole="faculty"><CalendarPage /></ProtectedRoute>} />
+        <Route path="/faculty/dashboard"    element={<ProtectedRoute allowedRole="faculty"><FacultyDashboard /></ProtectedRoute>} />
+        <Route path="/faculty/profile"      element={<ProtectedRoute allowedRole="faculty"><FacultyProfile /></ProtectedRoute>} />
+        <Route path="/faculty/workspace"    element={<ProtectedRoute allowedRole="faculty"><Workspace role="faculty" /></ProtectedRoute>} />
+        <Route path="/faculty/requests"     element={<ProtectedRoute allowedRole="faculty"><FacultyRequests /></ProtectedRoute>} />
+        <Route path="/faculty/calendar"     element={<ProtectedRoute allowedRole="faculty"><CalendarPage /></ProtectedRoute>} />
+        <Route path="/faculty/settings"     element={<ProtectedRoute allowedRole="faculty"><FacultySettings /></ProtectedRoute>} />
+        <Route path="/faculty/office-hours" element={<ProtectedRoute allowedRole="faculty"><FacultyOfficeHours /></ProtectedRoute>} />
+        <Route path="/faculty/students"     element={<ProtectedRoute allowedRole="faculty"><FacultyStudents /></ProtectedRoute>} />
+        <Route path="/faculty/lms"                          element={<ProtectedRoute allowedRole="faculty"><LMSCourseManagement /></ProtectedRoute>} />
+        <Route path="/faculty/lms/courses/:id"              element={<ProtectedRoute allowedRole="faculty"><LMSCourseDetail /></ProtectedRoute>} />
+        <Route path="/faculty/lms/assignments/:id/grade"    element={<ProtectedRoute allowedRole="faculty"><LMSAssignmentGrading /></ProtectedRoute>} />
+        <Route path="/faculty/attendance"                   element={<ProtectedRoute allowedRole="faculty"><AttendanceMarking /></ProtectedRoute>} />
+
+        {/* Student LMS Routes */}
+        <Route path="/lms"                  element={<ProtectedRoute allowedRole="student"><LMSDashboard /></ProtectedRoute>} />
+        <Route path="/lms/courses/:id"      element={<ProtectedRoute allowedRole="student"><LMSCourse /></ProtectedRoute>} />
+        <Route path="/lms/assignments"      element={<ProtectedRoute allowedRole="student"><LMSAssignments /></ProtectedRoute>} />
+        <Route path="/lms/assignments/:id"  element={<ProtectedRoute allowedRole="student"><LMSAssignmentDetail /></ProtectedRoute>} />
+        <Route path="/lms/grades"           element={<ProtectedRoute allowedRole="student"><LMSGrades /></ProtectedRoute>} />
+
+        {/* Student WebKiosk Routes */}
+        <Route path="/webkiosk"             element={<ProtectedRoute allowedRole="student"><WebKioskDashboard /></ProtectedRoute>} />
+        <Route path="/webkiosk/attendance"  element={<ProtectedRoute allowedRole="student"><AttendanceView /></ProtectedRoute>} />
+        <Route path="/webkiosk/exams"       element={<ProtectedRoute allowedRole="student"><ExamScheduleView /></ProtectedRoute>} />
+        <Route path="/webkiosk/fees"        element={<ProtectedRoute allowedRole="student"><FeesView /></ProtectedRoute>} />
+        <Route path="/webkiosk/profile"     element={<ProtectedRoute allowedRole="student"><StudentProfileView /></ProtectedRoute>} />
 
         {/* Admin Routes */}
         <Route path="/admin/dashboard"   element={<ProtectedRoute allowedRole="admin"><AdminDashboard /></ProtectedRoute>} />
@@ -92,6 +150,18 @@ export default function AppRoutes() {
         <Route path="/admin/support-contacts" element={<ProtectedRoute allowedRole="admin"><AdminSupport /></ProtectedRoute>} />
         <Route path="/admin/calendar"    element={<ProtectedRoute allowedRole="admin"><ManageCalendar /></ProtectedRoute>} />
         <Route path="/admin/wifi"        element={<ProtectedRoute allowedRole="admin"><AdminWiFi /></ProtectedRoute>} />
+        <Route path="/admin/students"    element={<ProtectedRoute allowedRole="admin"><ManageStudents /></ProtectedRoute>} />
+        <Route path="/admin/marketplace" element={<ProtectedRoute allowedRole="admin"><ManageMarketplace /></ProtectedRoute>} />
+        <Route path="/admin/lost-found"  element={<ProtectedRoute allowedRole="admin"><ManageLostFound /></ProtectedRoute>} />
+        <Route path="/admin/requests"    element={<ProtectedRoute allowedRole="admin"><ManageRequests /></ProtectedRoute>} />
+        <Route path="/admin/resources"   element={<ProtectedRoute allowedRole="admin"><ManageResources /></ProtectedRoute>} />
+        <Route path="/admin/broadcast"   element={<ProtectedRoute allowedRole="admin"><Broadcast /></ProtectedRoute>} />
+        <Route path="/admin/settings"    element={<ProtectedRoute allowedRole="admin"><AdminSettings /></ProtectedRoute>} />
+        <Route path="/admin/audit-log"      element={<ProtectedRoute allowedRole="admin"><AuditLog /></ProtectedRoute>} />
+        <Route path="/admin/lms/courses"     element={<ProtectedRoute allowedRole="admin"><ManageCourses /></ProtectedRoute>} />
+        <Route path="/admin/exam-schedule"  element={<ProtectedRoute allowedRole="admin"><ManageExamSchedule /></ProtectedRoute>} />
+        <Route path="/admin/fees"           element={<ProtectedRoute allowedRole="admin"><ManageFees /></ProtectedRoute>} />
+        <Route path="/admin/sync"           element={<ProtectedRoute allowedRole="admin"><SyncConfig /></ProtectedRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { supabaseAdmin } from '../lib/supabase.js'
-import { authenticate } from '../middleware/auth.js'
+import { authenticate, requireAdmin } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -31,8 +31,7 @@ router.get('/', async (req, res) => {
   }
 })
 
-router.get('/raw', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Admin only' })
+router.get('/raw', authenticate, requireAdmin, async (req, res) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('campus_support').select('*').order('created_at', { ascending: false })
@@ -43,8 +42,7 @@ router.get('/raw', authenticate, async (req, res) => {
   }
 })
 
-router.post('/', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Admin only' })
+router.post('/', authenticate, requireAdmin, async (req, res) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('campus_support').insert(req.body).select().single()
@@ -55,8 +53,7 @@ router.post('/', authenticate, async (req, res) => {
   }
 })
 
-router.put('/:id', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Admin only' })
+router.put('/:id', authenticate, requireAdmin, async (req, res) => {
   try {
     const payload = { ...req.body }
     delete payload.id
@@ -69,8 +66,7 @@ router.put('/:id', authenticate, async (req, res) => {
   }
 })
 
-router.delete('/:id', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Admin only' })
+router.delete('/:id', authenticate, requireAdmin, async (req, res) => {
   try {
     const { error } = await supabaseAdmin
       .from('campus_support').delete().eq('id', req.params.id)
@@ -139,8 +135,7 @@ router.post('/tickets', authenticate, async (req, res) => {
 })
 
 // PATCH /api/support/tickets/:id — Admin can update status/reply
-router.patch('/tickets/:id', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Admin only' })
+router.patch('/tickets/:id', authenticate, requireAdmin, async (req, res) => {
   try {
     const payload = { ...req.body, updated_at: new Date().toISOString() }
     const { data, error } = await supabaseAdmin
@@ -157,8 +152,7 @@ router.patch('/tickets/:id', authenticate, async (req, res) => {
 })
 
 // DELETE /api/support/tickets/:id — Admin only
-router.delete('/tickets/:id', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Admin only' })
+router.delete('/tickets/:id', authenticate, requireAdmin, async (req, res) => {
   try {
     const { error } = await supabaseAdmin
       .from('support_tickets').delete().eq('id', req.params.id)
@@ -174,6 +168,18 @@ router.delete('/tickets/:id', authenticate, async (req, res) => {
 // GET /api/support/tickets/:id/messages
 router.get('/tickets/:id/messages', authenticate, async (req, res) => {
   try {
+    // Verify caller owns the ticket or is an admin
+    if (req.user.role !== 'admin') {
+      const { data: ticket } = await supabaseAdmin
+        .from('support_tickets')
+        .select('user_id')
+        .eq('id', req.params.id)
+        .single()
+      if (!ticket || ticket.user_id !== req.user.id) {
+        return res.status(403).json({ success: false, message: 'Access denied' })
+      }
+    }
+
     const { data, error } = await supabaseAdmin
       .from('support_messages')
       .select('*')
@@ -189,6 +195,18 @@ router.get('/tickets/:id/messages', authenticate, async (req, res) => {
 // POST /api/support/tickets/:id/messages
 router.post('/tickets/:id/messages', authenticate, async (req, res) => {
   try {
+    // Verify caller owns the ticket or is an admin
+    if (req.user.role !== 'admin') {
+      const { data: ticket } = await supabaseAdmin
+        .from('support_tickets')
+        .select('user_id')
+        .eq('id', req.params.id)
+        .single()
+      if (!ticket || ticket.user_id !== req.user.id) {
+        return res.status(403).json({ success: false, message: 'Access denied' })
+      }
+    }
+
     const { data: userData } = await supabaseAdmin
       .from('users')
       .select('full_name, role')
@@ -209,11 +227,28 @@ router.post('/tickets/:id/messages', authenticate, async (req, res) => {
 
     if (error) throw error
 
-    // Update ticket updated_at
-    await supabaseAdmin
-      .from('support_tickets')
-      .update({ updated_at: new Date().toISOString(), status: 'In Progress' })
-      .eq('id', req.params.id)
+    // Only auto-advance to 'In Progress' when admin first replies on an Open ticket.
+    // Student/faculty messages just update the timestamp so admin sees activity.
+    const ticketUpdate = { updated_at: new Date().toISOString() }
+    if (userData?.role === 'admin') {
+      ticketUpdate.status = 'In Progress'
+      // Use a conditional update so Resolved/Closed tickets aren't re-opened by admin notes
+      await supabaseAdmin
+        .from('support_tickets')
+        .update(ticketUpdate)
+        .eq('id', req.params.id)
+        .eq('status', 'Open')
+      // Still bump updated_at even if status didn't change
+      await supabaseAdmin
+        .from('support_tickets')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', req.params.id)
+    } else {
+      await supabaseAdmin
+        .from('support_tickets')
+        .update(ticketUpdate)
+        .eq('id', req.params.id)
+    }
 
     res.status(201).json({ success: true, data })
   } catch (error) {
@@ -238,8 +273,7 @@ router.get('/faqs', async (req, res) => {
 })
 
 // POST /api/support/faqs — Admin only
-router.post('/faqs', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Admin only' })
+router.post('/faqs', authenticate, requireAdmin, async (req, res) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('support_faqs').insert(req.body).select().single()
@@ -251,8 +285,7 @@ router.post('/faqs', authenticate, async (req, res) => {
 })
 
 // PUT /api/support/faqs/:id — Admin only
-router.put('/faqs/:id', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Admin only' })
+router.put('/faqs/:id', authenticate, requireAdmin, async (req, res) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('support_faqs').update(req.body).eq('id', req.params.id).select().single()
@@ -264,8 +297,7 @@ router.put('/faqs/:id', authenticate, async (req, res) => {
 })
 
 // DELETE /api/support/faqs/:id — Admin only
-router.delete('/faqs/:id', authenticate, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Admin only' })
+router.delete('/faqs/:id', authenticate, requireAdmin, async (req, res) => {
   try {
     const { error } = await supabaseAdmin
       .from('support_faqs').delete().eq('id', req.params.id)

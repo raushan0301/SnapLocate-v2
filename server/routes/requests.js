@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { supabaseAdmin } from '../lib/supabase.js'
 import { authenticate, requireFaculty } from '../middleware/auth.js'
 import { sendRequestStatusEmail } from '../lib/ses.js'
+import { createNotification } from '../lib/notifications.js'
 
 const router = Router()
 
@@ -107,7 +108,7 @@ router.patch('/:id', authenticate, requireFaculty, async (req, res) => {
 
   if (error) throw error
 
-  // Email the student
+  // Email + in-app notification to student
   sendRequestStatusEmail(request.student.email, {
     studentName: request.student.full_name,
     facultyName: req.user.full_name,
@@ -115,6 +116,13 @@ router.patch('/:id', authenticate, requireFaculty, async (req, res) => {
     status,
     notes,
   }).catch(console.error)
+
+  createNotification(
+    request.student_id,
+    status === 'accepted' ? 'Request Accepted ✓' : 'Request Update',
+    `Your ${request.type} request to ${req.user.full_name} was ${status}.${notes ? ` Note: ${notes}` : ''}`,
+    '/requests'
+  )
 
   res.json({ success: true, message: `Request ${status}`, data })
 })
@@ -143,6 +151,13 @@ router.patch('/:id/accept', authenticate, requireFaculty, async (req, res) => {
     status: 'accepted',
   }).catch(console.error)
 
+  createNotification(
+    request.student_id,
+    'Request Accepted ✓',
+    `Your ${request.type} request to ${req.user.full_name} was accepted.`,
+    '/requests'
+  )
+
   res.json({ success: true, message: 'Request accepted', data })
 })
 
@@ -167,6 +182,13 @@ router.patch('/:id/reject', authenticate, requireFaculty, async (req, res) => {
     requestType: request.type,
     status: 'rejected',
   }).catch(console.error)
+
+  createNotification(
+    request.student_id,
+    'Request Update',
+    `Your ${request.type} request to ${req.user.full_name} was rejected.`,
+    '/requests'
+  )
 
   res.json({ success: true, message: 'Request rejected', data })
 })

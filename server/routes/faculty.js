@@ -24,7 +24,6 @@ router.get('/', async (req, res) => {
   const { data, error } = await query
   if (error) throw error
 
-  // Flatten users data into each faculty object for easier frontend use
   const flat = (data || []).map(f => ({
     ...f,
     user_id:     f.users?.id,
@@ -38,31 +37,7 @@ router.get('/', async (req, res) => {
   res.json({ success: true, data: flat })
 })
 
-// GET /api/faculty/:id
-router.get('/:id', async (req, res) => {
-  const { id } = req.params
-
-  const { data: profile, error } = await supabaseAdmin
-    .from('faculty_profiles')
-    .select(`
-      *,
-      users!inner(id, full_name, email, avatar_url, is_verified),
-      qualifications(*),
-      publications(*),
-      awards(*),
-      timetable(*),
-      office_hours(*),
-      courses(*)
-    `)
-    .eq('id', id)
-    .single()
-
-  if (error || !profile) {
-    return res.status(404).json({ success: false, message: 'Faculty not found' })
-  }
-
-  res.json({ success: true, data: profile })
-})
+// ─── Named routes MUST come before /:id ──────────────────────
 
 // GET /api/faculty/me/profile
 router.get('/me/profile', authenticate, requireFaculty, async (req, res) => {
@@ -82,19 +57,16 @@ router.get('/me/profile', authenticate, requireFaculty, async (req, res) => {
     .single()
 
   if (error) {
-    // Profile doesn't exist yet — return empty shell
     return res.json({ success: true, data: null })
   }
 
-  // Flatten user data for consistency
   const flat = {
     ...data,
     full_name:   data.users?.full_name,
     email:       data.users?.email,
     avatar_url:  data.users?.avatar_url,
     is_verified: data.users?.is_verified,
-    // Keep users object if frontend needs it, or remove it
-    users:       undefined 
+    users:       undefined
   }
 
   res.json({ success: true, data: flat })
@@ -132,7 +104,6 @@ router.put('/me/qualifications', authenticate, requireFaculty, async (req, res) 
   const { data: profile } = await supabaseAdmin.from('faculty_profiles').select('id').eq('user_id', req.user.id).single()
   if (!profile) return res.status(404).json({ success: false, message: 'Create profile first' })
 
-  // Bulk replace
   await supabaseAdmin.from('qualifications').delete().eq('faculty_id', profile.id)
   const items = req.body.items || []
   if (items.length > 0) {
@@ -182,7 +153,6 @@ router.put('/me/timetable', authenticate, requireFaculty, async (req, res) => {
     .from('faculty_profiles').select('id').eq('user_id', req.user.id).single()
   if (!profile) return res.status(404).json({ success: false, message: 'Create your profile first' })
 
-  // Delete existing and re-insert
   await supabaseAdmin.from('timetable').delete().eq('faculty_id', profile.id)
 
   const slots = req.body.slots || []
@@ -229,54 +199,120 @@ router.put('/me/office-hours', authenticate, requireFaculty, async (req, res) =>
   res.json({ success: true, message: 'Office hours updated' })
 })
 
+// GET /api/faculty/my-students
+// Returns students allocated to this faculty by admin (via student_advisors table)
+// Falls back to request-based history if no allocations exist
+router.get('/my-students', authenticate, requireFaculty, async (req, res) => {
+  const { data: profile } = await supabaseAdmin
+    .from('faculty_profiles').select('id').eq('user_id', req.user.id).single()
+
+  if (!profile) return res.json({ success: true, data: [], source: 'none' })
+
+  // Primary: admin-allocated students
+  const { data: allocated } = await supabaseAdmin
+    .from('student_advisors')
+    .select(`subject, assigned_at, student:student_id(id, full_name, email, avatar_url, created_at)`)
+    .eq('faculty_profile_id', profile.id)
+    .order('assigned_at', { ascending: false })
+
+  if (allocated && allocated.length > 0) {
+    const students = allocated.map(a => ({
+      ...a.student,
+      subject:     a.subject || null,
+      assigned_at: a.assigned_at,
+      source:      'allocated',
+    }))
+    return res.json({ success: true, data: students, source: 'allocated' })
+  }
+
+  // Fallback: students who've sent requests
+  const { data: requests, error } = await supabaseAdmin
+    .from('requests')
+    .select(`id, type, status, created_at, updated_at, student:student_id(id, full_name, email, avatar_url)`)
+    .eq('faculty_id', profile.id)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+
+  const map = new Map()
+  for (const r of (requests || [])) {
+    const sid = r.student?.id
+    if (!sid) continue
+    if (!map.has(sid)) {
+      map.set(sid, {
+        ...r.student,
+        last_request_type:   r.type,
+        last_request_status: r.status,
+        last_interaction:    r.updated_at || r.created_at,
+        total_requests:      1,
+        source:              'requests',
+      })
+    } else {
+      map.get(sid).total_requests++
+    }
+  }
+
+  res.json({ success: true, data: Array.from(map.values()), source: 'requests' })
+})
+
 // GET /api/faculty/dashboard/stats
 router.get('/dashboard/stats', authenticate, requireFaculty, async (req, res) => {
   try {
     const { data: profile, error: pErr } = await supabaseAdmin
-      .from('faculty_profiles').select('id, dept').eq('user_id', req.user.id).single()
-    
+      .from('faculty_profiles').select('id, dept, citations').eq('user_id', req.user.id).single()
+
     if (pErr || !profile) {
       return res.json({ success: true, stats: { scheduleToday: [], pendingRequests: 0, totalCitations: 0, pendingGrades: 0 } })
     }
 
-    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }) // e.g. "Monday"
-    
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
+
     const [scheduleRes, requestsRes, gradesRes] = await Promise.all([
-      // 1. Today's schedule
-      supabaseAdmin
-        .from('timetable')
-        .select('*')
-        .eq('faculty_id', profile.id)
-        .ilike('day', `${today}`),
-      
-      // 2. Pending student requests
-      supabaseAdmin
-        .from('requests')
-        .select('id', { count: 'exact' })
-        .eq('faculty_id', profile.id)
-        .eq('status', 'pending'),
-      
-      // 3. (Mock) Pending grades count or filter by active courses if available
-      supabaseAdmin
-        .from('courses')
-        .select('id', { count: 'exact' })
-        .eq('faculty_id', profile.id)
+      supabaseAdmin.from('timetable').select('*').eq('faculty_id', profile.id).ilike('day', today),
+      supabaseAdmin.from('requests').select('id', { count: 'exact' }).eq('faculty_id', profile.id).eq('status', 'pending'),
+      supabaseAdmin.from('courses').select('id', { count: 'exact' }).eq('faculty_id', profile.id)
     ])
 
     res.json({
       success: true,
       stats: {
-        scheduleToday: scheduleRes.data || [],
+        scheduleToday:   scheduleRes.data || [],
         pendingRequests: requestsRes.count || 0,
-        pendingGrades: (gradesRes.count || 0) * 4, // Mock: 4 pending papers per course
-        totalCitations: profile.citations || 0,
-        dept: profile.dept
+        pendingGrades:   (gradesRes.count || 0) * 4,
+        totalCitations:  profile.citations || 0,
+        dept:            profile.dept
       }
     })
   } catch (err) {
     console.error('Faculty stats error:', err)
     res.status(500).json({ success: false, message: 'Server error' })
   }
+})
+
+// ─── GET /api/faculty/:id — must be LAST to avoid swallowing named routes ────
+router.get('/:id', async (req, res) => {
+  const { id } = req.params
+
+  const { data: profile, error } = await supabaseAdmin
+    .from('faculty_profiles')
+    .select(`
+      *,
+      users!inner(id, full_name, email, avatar_url, is_verified),
+      qualifications(*),
+      publications(*),
+      awards(*),
+      timetable(*),
+      office_hours(*),
+      courses(*)
+    `)
+    .eq('id', id)
+    .single()
+
+  if (error || !profile) {
+    return res.status(404).json({ success: false, message: 'Faculty not found' })
+  }
+
+  res.json({ success: true, data: profile })
 })
 
 export default router

@@ -44,6 +44,9 @@ export default function AdminSupportHub() {
   const [faqModalOpen, setFaqModalOpen] = useState(false)
   const [faqForm, setFaqForm] = useState({ id: null, question: '', answer: '', category: 'General', sort_order: 0 })
   const [faqSubmitting, setFaqSubmitting] = useState(false)
+  const [msgError, setMsgError] = useState(null)
+  const [sendError, setSendError] = useState(null)
+  const [statusError, setStatusError] = useState(null)
 
   const handleAddFaq = () => {
     setFaqForm({ id: null, question: '', answer: '', category: 'General', sort_order: 0 })
@@ -102,40 +105,53 @@ export default function AdminSupportHub() {
     }
   }
 
-  // Poll messages if a ticket is open
+  // Poll messages while a ticket drawer is open (15s to avoid hammering the server)
   useEffect(() => {
     if (!selectedTicket) return
+    setMsgError(null)
     const fetchMsgs = async () => {
       try {
         const res = await api.get(`/api/support/tickets/${selectedTicket.id}/messages`)
         if (res.success) setMessages(res.data)
-      } catch (e) {}
+        else setMsgError('Failed to load messages.')
+      } catch (e) {
+        setMsgError('Could not reach server.')
+      }
     }
     fetchMsgs()
-    const int = setInterval(fetchMsgs, 3000)
+    const int = setInterval(fetchMsgs, 15000)
     return () => clearInterval(int)
   }, [selectedTicket])
 
   const handleUpdateStatus = async (ticketId, newStatus) => {
+    setStatusError(null)
     try {
       const res = await api.patch(`/api/support/tickets/${ticketId}`, { status: newStatus })
       if (res.success) {
         setTickets(tickets.map(t => t.id === ticketId ? { ...t, status: newStatus } : t))
         if (selectedTicket?.id === ticketId) setSelectedTicket({ ...selectedTicket, status: newStatus })
+      } else {
+        setStatusError('Failed to update status.')
       }
-    } catch (err) {}
+    } catch (err) {
+      setStatusError('Could not reach server.')
+    }
   }
 
   const handleSendAdminReply = async () => {
     if (!chatInput.trim() || !selectedTicket) return
+    setSendError(null)
     try {
-      await api.post(`/api/support/tickets/${selectedTicket.id}/messages`, { message: chatInput })
-      await api.patch(`/api/support/tickets/${selectedTicket.id}`, { admin_reply: chatInput })
+      const [msgRes] = await Promise.all([
+        api.post(`/api/support/tickets/${selectedTicket.id}/messages`, { message: chatInput }),
+        api.patch(`/api/support/tickets/${selectedTicket.id}`, { admin_reply: chatInput }),
+      ])
+      if (!msgRes.success) { setSendError('Failed to send reply.'); return }
       setChatInput('')
-      
-      // Update local state to reflect admin reply snippet
       setTickets(tickets.map(t => t.id === selectedTicket.id ? { ...t, admin_reply: chatInput } : t))
-    } catch (err) {}
+    } catch (err) {
+      setSendError('Could not send reply. Please try again.')
+    }
   }
 
   const filteredTickets = tickets.filter(t => 
@@ -220,6 +236,11 @@ export default function AdminSupportHub() {
           )}
         </div>
 
+        {statusError && (
+          <div style={{ marginBottom: 12, background: '#fff1f2', border: '1px solid #fda4af', borderRadius: 10, padding: '10px 16px', ...inter(13, 500, '18px', '#e11d48') }}>
+            {statusError}
+          </div>
+        )}
         {activeTab === 'tickets' && (
           <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, border: '1px solid #f1f5f9', boxShadow: '0 4px 24px rgba(0,0,0,0.03)' }}>
             <div style={{ overflowX: 'auto' }}>
@@ -324,7 +345,12 @@ export default function AdminSupportHub() {
 
           {/* Chat Messages */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: 16, background: '#f8fafc' }}>
-             {messages.length === 0 && (
+             {msgError && (
+               <div style={{ background: '#fff1f2', border: '1px solid #fda4af', borderRadius: 8, padding: '10px 14px', ...inter(13, 500, '18px', '#e11d48') }}>
+                 {msgError}
+               </div>
+             )}
+             {messages.length === 0 && !msgError && (
                 <div style={{ textAlign: 'center', ...inter(13, 400, '18px', '#94a3b8'), marginTop: 40 }}>
                   No messages yet. Send a reply to start the conversation.
                 </div>
@@ -370,11 +396,16 @@ export default function AdminSupportHub() {
               onFocus={e => e.target.style.borderColor = '#4f46e5'}
               onBlur={e => e.target.style.borderColor = '#e2e8f0'}
             />
+            {sendError && (
+              <div style={{ marginBottom: 8, background: '#fff1f2', border: '1px solid #fda4af', borderRadius: 8, padding: '8px 12px', ...inter(12, 500, '16px', '#e11d48') }}>
+                {sendError}
+              </div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ ...inter(12, 500, '16px', '#64748b') }}>
                 Pressing send will notify the user.
               </div>
-              <button 
+              <button
                 onClick={handleSendAdminReply}
                 disabled={!chatInput.trim()}
                 style={{

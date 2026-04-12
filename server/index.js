@@ -25,6 +25,21 @@ import workspaceRoutes from './routes/workspace.js'
 import workspaceFacultyRoutes from './routes/workspace_faculty.js'
 import settingsRoutes from './routes/settings.js'
 import wifiRoutes from './routes/wifi.js'
+import announcementsRoutes from './routes/announcements.js'
+import notificationsRoutes from './routes/notifications.js'
+
+// LMS + WebKiosk routes
+import lmsCoursesRoutes       from './routes/lms/courses.js'
+import lmsAssignmentsRoutes   from './routes/lms/assignments.js'
+import lmsSubmissionsRoutes   from './routes/lms/submissions.js'
+import lmsGradesRoutes        from './routes/lms/grades.js'
+import lmsAnnouncementsRoutes from './routes/lms/announcements.js'
+import attendanceRoutes       from './routes/attendance.js'
+import examScheduleRoutes     from './routes/examSchedule.js'
+import feesRoutes             from './routes/fees.js'
+import studentProfilesRoutes  from './routes/studentProfiles.js'
+import syncWebkioskRoutes     from './routes/sync/webkiosk.js'
+import syncMoodleRoutes       from './routes/sync/moodle.js'
 
 // Middleware
 import { errorHandler } from './middleware/errorHandler.js'
@@ -75,7 +90,24 @@ app.use('/api/support',     supportRoutes)
 app.use('/api/workspace',   workspaceRoutes)
 app.use('/api/faculty-workspace', workspaceFacultyRoutes)
 app.use('/api/settings',    settingsRoutes)
-app.use('/api/wifi',        wifiRoutes)
+app.use('/api/wifi',          wifiRoutes)
+app.use('/api/announcements',   announcementsRoutes)
+app.use('/api/notifications',   notificationsRoutes)
+
+// LMS routes
+app.use('/api/lms/courses',       lmsCoursesRoutes)
+app.use('/api/lms/assignments',   lmsAssignmentsRoutes)
+app.use('/api/lms/submissions',   lmsSubmissionsRoutes)
+app.use('/api/lms/grades',        lmsGradesRoutes)
+app.use('/api/lms/announcements', lmsAnnouncementsRoutes)
+// WebKiosk routes
+app.use('/api/attendance',        attendanceRoutes)
+app.use('/api/exam-schedule',     examScheduleRoutes)
+app.use('/api/fees',              feesRoutes)
+app.use('/api/student-profiles',  studentProfilesRoutes)
+// External sync routes
+app.use('/api/sync/webkiosk',     syncWebkioskRoutes)
+app.use('/api/sync/moodle',       syncMoodleRoutes)
 
 // Error Handlers
 app.use((req, res) => {
