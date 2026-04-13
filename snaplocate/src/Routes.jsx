@@ -31,6 +31,7 @@ import FacultyRequests   from './pages/faculty/Requests'
 import FacultySettings   from './pages/faculty/Settings'
 import FacultyOfficeHours from './pages/faculty/OfficeHours'
 import FacultyStudents   from './pages/faculty/Students'
+import FacultyResources  from './pages/faculty/Resources'
 
 // Admin Pages
 import AdminDashboard   from './pages/admin/Dashboard'
@@ -125,6 +126,7 @@ export default function AppRoutes() {
         <Route path="/faculty/lms/courses/:id"              element={<ProtectedRoute allowedRole="faculty"><LMSCourseDetail /></ProtectedRoute>} />
         <Route path="/faculty/lms/assignments/:id/grade"    element={<ProtectedRoute allowedRole="faculty"><LMSAssignmentGrading /></ProtectedRoute>} />
         <Route path="/faculty/attendance"                   element={<ProtectedRoute allowedRole="faculty"><AttendanceMarking /></ProtectedRoute>} />
+        <Route path="/faculty/resources"                   element={<ProtectedRoute allowedRole="faculty"><FacultyResources /></ProtectedRoute>} />
 
         {/* Student LMS Routes */}
         <Route path="/lms"                  element={<ProtectedRoute allowedRole="student"><LMSDashboard /></ProtectedRoute>} />

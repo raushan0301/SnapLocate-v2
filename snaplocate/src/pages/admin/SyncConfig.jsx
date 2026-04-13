@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
 import { RefreshCw, CheckCircle, AlertCircle, Settings } from 'lucide-react'
@@ -14,17 +14,26 @@ function ProviderCard({ provider, displayName, color, bg }) {
   const [syncing, setSyncing]   = useState(false)
   const [saving, setSaving]     = useState(false)
   const [toast, setToast]       = useState('')
+  const [syncElapsed, setSyncElapsed] = useState(0)
+  const pollRef = useRef(null)
+  const timerRef = useRef(null)
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3500) }
 
   const load = useCallback(async () => {
     try {
       const res = await api.get(`/api/sync/${provider}/status`)
-      if (res.success && res.data) setConfig(res.data)
+      if (res.success && res.data) {
+        setConfig(res.data)
+        return res.data
+      }
     } catch {}
+    return null
   }, [provider])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); if (timerRef.current) clearInterval(timerRef.current) }, [])
 
   const handleSave = async () => {
     setSaving(true)
@@ -39,13 +48,32 @@ function ProviderCard({ provider, displayName, color, bg }) {
 
   const handleSync = async () => {
     setSyncing(true)
+    setSyncElapsed(0)
+    const prevSyncedAt = config?.last_synced_at || null
+
     try {
-      const res = await api.post(`/api/sync/${provider}/trigger`, {})
-      showToast(res.message || 'Sync started')
-      setTimeout(() => load(), 3000)
+      await api.post(`/api/sync/${provider}/trigger`, {})
     } catch (err) {
-      showToast(err?.message || 'Sync failed')
-    } finally { setSyncing(false) }
+      showToast(err?.message || 'Sync failed to start')
+      setSyncing(false)
+      return
+    }
+
+    timerRef.current = setInterval(() => setSyncElapsed(p => p + 1), 1000)
+
+    let attempts = 0
+    pollRef.current = setInterval(async () => {
+      attempts++
+      const latest = await load()
+      const done = latest && latest.last_synced_at && latest.last_synced_at !== prevSyncedAt
+      if (done || attempts >= 100) {
+        clearInterval(pollRef.current); pollRef.current = null
+        clearInterval(timerRef.current); timerRef.current = null
+        setSyncing(false); setSyncElapsed(0)
+        if (done) showToast(`Sync complete — ${latest.last_sync_status}`)
+        else showToast('Sync timed out. Check status later.')
+      }
+    }, 3000)
   }
 
   const statusBg = { success: '#f0fdf4', failed: '#fee2e2', partial: '#fef3c7', never: '#f8fafc' }
@@ -92,8 +120,52 @@ function ProviderCard({ provider, displayName, color, bg }) {
           </div>
         )}
 
+        {/* Sync progress */}
+        {syncing && (
+          <div style={{ marginBottom: 16, padding: '16px 20px', background: 'linear-gradient(135deg, #eef2ff, #e0e7ff)', border: '1px solid #c7d2fe', borderRadius: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <RefreshCw size={16} color="#fff" style={{ animation: 'spin 1s linear infinite' }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={pjs(14, 700, '20px', '#1e1b4b')}>Syncing {displayName}</div>
+                <div style={pjs(12, 500, '16px', '#6366f1')}>
+                  {syncElapsed < 5 ? 'Authenticating...' :
+                   syncElapsed < 12 ? 'Fetching courses from server...' :
+                   syncElapsed < 25 ? 'Loading assignments, announcements & materials in parallel...' :
+                   syncElapsed < 45 ? 'Saving data to SnapLocate...' :
+                   'Wrapping up, almost done...'}
+                </div>
+              </div>
+              <div style={{ ...pjs(20, 800, '24px', '#4f46e5'), fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+                {Math.floor(syncElapsed / 60)}:{String(syncElapsed % 60).padStart(2, '0')}
+              </div>
+            </div>
+            <div style={{ height: 6, borderRadius: 6, background: '#c7d2fe', overflow: 'hidden' }}>
+              <div style={{
+                height: '100%', borderRadius: 6, transition: 'width 1s ease-out',
+                background: `linear-gradient(90deg, ${color}, ${color}cc, ${color}99)`,
+                width: `${Math.min(95, syncElapsed < 5 ? syncElapsed * 4 : syncElapsed < 12 ? 20 + (syncElapsed - 5) * 4 : syncElapsed < 25 ? 48 + (syncElapsed - 12) * 2 : syncElapsed < 45 ? 74 + (syncElapsed - 25) * 0.8 : Math.min(95, 90 + (syncElapsed - 45) * 0.1))}%`
+              }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+              {[
+                { label: 'Connect', done: syncElapsed >= 5 },
+                { label: 'Courses', done: syncElapsed >= 12 },
+                { label: 'Content', done: syncElapsed >= 25 },
+                { label: 'Save', done: syncElapsed >= 45 },
+              ].map((step, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: 3, background: step.done ? color : '#c7d2fe', transition: 'background 0.3s' }} />
+                  <span style={pjs(10, step.done ? 700 : 500, '14px', step.done ? color : '#94a3b8')}>{step.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Sync log */}
-        {config?.last_sync_log && (
+        {!syncing && config?.last_sync_log && (
           <div style={{ marginBottom: 16, padding: '12px 14px', background: '#f8fafc', borderRadius: 10, ...pjs(11, 400, '18px', '#64748b'), fontFamily: 'monospace', whiteSpace: 'pre-wrap', maxHeight: 100, overflowY: 'auto' }}>
             {config.last_sync_log}
           </div>
@@ -105,9 +177,15 @@ function ProviderCard({ provider, displayName, color, bg }) {
             <Settings size={13} /> Configure
           </button>
           <button onClick={handleSync} disabled={syncing || !config?.credentials_json?.configured}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 10, border: 'none', background: syncing || !config?.credentials_json?.configured ? '#e2e8f0' : color, color: '#fff', cursor: syncing || !config?.credentials_json?.configured ? 'not-allowed' : 'pointer', ...pjs(13, 700, '18px', '#fff') }}>
-            <RefreshCw size={13} style={{ animation: syncing ? 'spin 1s linear infinite' : 'none' }} />
-            {syncing ? 'Syncing...' : 'Sync Now'}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 10, border: 'none',
+              background: syncing || !config?.credentials_json?.configured ? '#e2e8f0' : color,
+              color: syncing || !config?.credentials_json?.configured ? '#94a3b8' : '#fff',
+              cursor: syncing || !config?.credentials_json?.configured ? 'not-allowed' : 'pointer',
+              opacity: syncing ? 0.7 : 1,
+              transition: 'all 0.2s',
+              ...pjs(13, 700, '18px', syncing ? '#94a3b8' : '#fff') }}>
+            <RefreshCw size={13} style={{ animation: syncing ? 'spin 1s linear infinite' : 'none', color: 'inherit' }} />
+            {syncing ? `Syncing... ${Math.floor(syncElapsed / 60)}:${String(syncElapsed % 60).padStart(2, '0')}` : 'Sync Now'}
           </button>
         </div>
 

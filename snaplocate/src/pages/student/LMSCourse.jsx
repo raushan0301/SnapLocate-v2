@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   BookOpen, Megaphone, ClipboardList, BarChart2, CalendarCheck,
-  ChevronLeft, FileText, CheckCircle, Clock, AlertCircle,
+  ChevronLeft, ChevronDown, FileText, CheckCircle, AlertCircle,
+  FolderOpen, ExternalLink, File, Link2, Image,
 } from 'lucide-react'
 import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
@@ -16,50 +17,75 @@ function DueChip({ dueDate }) {
   const diff = new Date(dueDate).getTime() - Date.now()
   const days = Math.ceil(diff / 86400000)
   const overdue = days < 0
-  const today   = days === 0
-  const bg    = overdue ? '#fee2e2' : today ? '#fef3c7' : '#f0fdf4'
+  const today = days === 0
+  const bg = overdue ? '#fee2e2' : today ? '#fef3c7' : '#f0fdf4'
   const color = overdue ? '#dc2626' : today ? '#d97706' : '#16a34a'
   const label = overdue ? 'Overdue' : today ? 'Due today' : days === 1 ? 'Due tomorrow' : `Due in ${days}d`
-  return (
-    <span style={{ background: bg, color, borderRadius: 6, padding: '2px 8px', ...pjs(11, 700, '16px', color) }}>
-      {label}
-    </span>
-  )
+  return <span style={{ background: bg, color, borderRadius: 6, padding: '2px 8px', ...pjs(11, 700, '16px', color) }}>{label}</span>
 }
 
 function AttBadge({ status }) {
   const map = {
-    present:  { bg: '#f0fdf4', color: '#16a34a', label: 'Present' },
-    absent:   { bg: '#fee2e2', color: '#dc2626', label: 'Absent'  },
-    late:     { bg: '#fef3c7', color: '#d97706', label: 'Late'    },
-    excused:  { bg: '#eff6ff', color: '#3b82f6', label: 'Excused' },
+    present: { bg: '#f0fdf4', color: '#16a34a', label: 'Present' },
+    absent: { bg: '#fee2e2', color: '#dc2626', label: 'Absent' },
+    late: { bg: '#fef3c7', color: '#d97706', label: 'Late' },
+    excused: { bg: '#eff6ff', color: '#3b82f6', label: 'Excused' },
   }
   const s = map[status?.toLowerCase()] ?? map.absent
+  return <span style={{ ...pjs(11, 700, '16px', s.color), background: s.bg, padding: '2px 10px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{s.label}</span>
+}
+
+function EmptyState({ Icon, text }) {
   return (
-    <span style={{ ...pjs(11, 700, '16px', s.color), background: s.bg, padding: '2px 10px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-      {s.label}
-    </span>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px', gap: 10 }}>
+      <Icon size={32} color="#e2e8f0" />
+      <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, color: '#94a3b8', margin: 0 }}>{text}</p>
+    </div>
   )
 }
 
+const moduleIcon = (type) => {
+  switch (type) {
+    case 'url': return { Icon: Link2, bg: '#f0fdf4', color: '#16a34a' }
+    case 'resource': return { Icon: FileText, bg: '#fef3c7', color: '#d97706' }
+    case 'page': return { Icon: File, bg: '#eef2ff', color: '#4f46e5' }
+    case 'folder': return { Icon: FolderOpen, bg: '#fdf4ff', color: '#a855f7' }
+    case 'label': return { Icon: FileText, bg: '#f8fafc', color: '#94a3b8' }
+    default: return { Icon: File, bg: '#f8fafc', color: '#64748b' }
+  }
+}
+
+const sectionColors = [
+  { bg: '#eef2ff', border: '#c7d2fe', accent: '#4f46e5' },
+  { bg: '#f0fdf4', border: '#bbf7d0', accent: '#16a34a' },
+  { bg: '#fff7ed', border: '#fed7aa', accent: '#ea580c' },
+  { bg: '#fdf4ff', border: '#f0abfc', accent: '#a855f7' },
+  { bg: '#ecfeff', border: '#a5f3fc', accent: '#0891b2' },
+  { bg: '#fef2f2', border: '#fecaca', accent: '#dc2626' },
+  { bg: '#fffbeb', border: '#fde68a', accent: '#d97706' },
+]
+
 const TABS = [
+  { key: 'content', label: 'Course Content', Icon: FolderOpen },
   { key: 'announcements', label: 'Announcements', Icon: Megaphone },
-  { key: 'assignments',   label: 'Assignments',   Icon: ClipboardList },
-  { key: 'grades',        label: 'Grades',        Icon: BarChart2 },
-  { key: 'attendance',    label: 'Attendance',    Icon: CalendarCheck },
+  { key: 'assignments', label: 'Assignments', Icon: ClipboardList },
+  { key: 'grades', label: 'Grades', Icon: BarChart2 },
+  { key: 'attendance', label: 'Attendance', Icon: CalendarCheck },
 ]
 
 export default function LMSCourse() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [activeTab,     setActiveTab]     = useState('announcements')
-  const [course,        setCourse]        = useState(null)
+  const [activeTab, setActiveTab] = useState('content')
+  const [course, setCourse] = useState(null)
   const [announcements, setAnnouncements] = useState([])
-  const [assignments,   setAssignments]   = useState([])
-  const [grades,        setGrades]        = useState([])
-  const [attendance,    setAttendance]    = useState([])
+  const [assignments, setAssignments] = useState([])
+  const [materials, setMaterials] = useState([])
+  const [grades, setGrades] = useState([])
+  const [attendance, setAttendance] = useState([])
   const [loadingCourse, setLoadingCourse] = useState(true)
-  const [loadingTab,    setLoadingTab]    = useState(false)
+  const [loadingTab, setLoadingTab] = useState(false)
+  const [collapsedSections, setCollapsedSections] = useState({})
 
   useEffect(() => {
     if (!id) return
@@ -72,6 +98,9 @@ export default function LMSCourse() {
   useEffect(() => {
     if (!id) return
     const fetchers = {
+      content: () => api.get(`/api/lms/materials?course_id=${id}`).then(res => {
+        if (res.success) setMaterials(res.data ?? [])
+      }),
       announcements: () => api.get(`/api/lms/announcements?course_id=${id}`).then(res => {
         if (res.success) {
           const sorted = [...(res.data ?? [])].sort((a, b) => {
@@ -99,13 +128,27 @@ export default function LMSCourse() {
     fetchers[activeTab]().catch(() => {}).finally(() => setLoadingTab(false))
   }, [id, activeTab])
 
+  // Group materials by section
+  const sections = (() => {
+    const map = {}
+    for (const mat of materials) {
+      const key = mat.section_name || 'General'
+      const num = mat.section_num ?? 999
+      if (!map[key]) map[key] = { name: key, num, items: [] }
+      map[key].items.push(mat)
+    }
+    return Object.values(map).sort((a, b) => a.num - b.num)
+  })()
+
+  const toggleSection = (name) => setCollapsedSections(p => ({ ...p, [name]: !p[name] }))
+
   const attSummary = (() => {
     if (!attendance.length) return null
-    const total   = attendance.length
+    const total = attendance.length
     const present = attendance.filter(a => a.status === 'present').length
-    const late    = attendance.filter(a => a.status === 'late').length
-    const absent  = attendance.filter(a => a.status === 'absent').length
-    const pct     = Math.round(((present + late * 0.5) / total) * 100)
+    const late = attendance.filter(a => a.status === 'late').length
+    const absent = attendance.filter(a => a.status === 'absent').length
+    const pct = Math.round(((present + late * 0.5) / total) * 100)
     return { total, present, late, absent, pct }
   })()
 
@@ -133,19 +176,16 @@ export default function LMSCourse() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
                   <span style={{ ...pjs(12, 700, '16px', '#4f46e5'), background: '#eef2ff', padding: '2px 10px', borderRadius: 20 }}>{course.code}</span>
                   {course.dept && <span style={pjs(13, 400, '18px', '#64748b')}>{course.dept}</span>}
-                  {course.semester && <span style={pjs(13, 400, '18px', '#64748b')}>Sem {course.semester}</span>}
+                  {course.semester && <span style={pjs(13, 400, '18px', '#64748b')}>{course.semester}</span>}
                 </div>
                 <h1 style={{ ...pjs(22, 700, '30px', '#0f172a'), margin: '0 0 6px' }}>{course.name}</h1>
                 {facultyName && <div style={pjs(13, 400, '18px', '#64748b')}>Faculty: {facultyName}</div>}
-                {course.enrolled_count != null && (
-                  <div style={{ ...pjs(12, 400, '16px', '#94a3b8'), marginTop: 2 }}>{course.enrolled_count} enrolled</div>
-                )}
               </div>
             </div>
           </div>
 
           {/* Tabs */}
-          <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #f1f5f9', marginBottom: 24 }}>
+          <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #f1f5f9', marginBottom: 24, overflowX: 'auto' }}>
             {TABS.map(({ key, label, Icon }) => {
               const active = activeTab === key
               return (
@@ -164,6 +204,56 @@ export default function LMSCourse() {
             <div style={{ ...pjs(14, 400, '20px', '#94a3b8'), textAlign: 'center', padding: 40 }}>Loading...</div>
           ) : (
             <>
+              {/* COURSE CONTENT — Moodle-like sections */}
+              {activeTab === 'content' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {sections.length === 0 && <EmptyState Icon={FolderOpen} text="No course materials uploaded yet." />}
+                  {sections.map((sec, si) => {
+                    const sc = sectionColors[si % sectionColors.length]
+                    const isCollapsed = collapsedSections[sec.name]
+                    return (
+                      <div key={sec.name} style={{ background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+                        <button onClick={() => toggleSection(sec.name)}
+                          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', background: sc.bg, border: 'none', borderBottom: `1px solid ${sc.border}`, cursor: 'pointer' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <FolderOpen size={16} color={sc.accent} />
+                            <span style={pjs(14, 700, '20px', sc.accent)}>{sec.name}</span>
+                            <span style={{ ...pjs(11, 600, '14px', '#64748b'), background: '#fff', padding: '2px 8px', borderRadius: 20 }}>{sec.items.length}</span>
+                          </div>
+                          <ChevronDown size={16} color={sc.accent} style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'none', transition: 'transform 0.2s' }} />
+                        </button>
+                        {!isCollapsed && (
+                          <div>
+                            {sec.items.map((mat, i) => {
+                              const mi = moduleIcon(mat.module_type)
+                              const link = mat.file_url || mat.external_url
+                              return (
+                                <div key={mat.id} style={{ padding: '12px 20px', borderBottom: i < sec.items.length - 1 ? '1px solid #f8fafc' : 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
+                                  <div style={{ width: 34, height: 34, borderRadius: 8, background: mi.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                    <mi.Icon size={15} color={mi.color} />
+                                  </div>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ ...pjs(13, 600, '18px', '#0f172a'), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mat.title}</div>
+                                    {mat.description && <div style={{ ...pjs(11, 400, '16px', '#94a3b8'), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 400 }}>{mat.description}</div>}
+                                  </div>
+                                  <span style={{ ...pjs(10, 600, '14px', '#94a3b8'), textTransform: 'uppercase', flexShrink: 0 }}>{mat.module_type}</span>
+                                  {link && (
+                                    <a href={link} target="_blank" rel="noopener noreferrer"
+                                      style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 12px', borderRadius: 8, background: '#eef2ff', color: '#4f46e5', fontWeight: 700, fontSize: 12, textDecoration: 'none', flexShrink: 0 }}>
+                                      <ExternalLink size={12} /> Open
+                                    </a>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
               {/* ANNOUNCEMENTS */}
               {activeTab === 'announcements' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -209,6 +299,7 @@ export default function LMSCourse() {
                                 </span>
                               )}
                             </div>
+                            {asgn.description && <p style={{ ...pjs(12, 400, '18px', '#64748b'), margin: '0 0 4px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{asgn.description}</p>}
                             {asgn.max_marks != null && <span style={pjs(12, 400, '16px', '#94a3b8')}>Max marks: {asgn.max_marks}</span>}
                           </div>
                         </div>
@@ -304,14 +395,5 @@ export default function LMSCourse() {
         </>
       )}
     </PageLayout>
-  )
-}
-
-function EmptyState({ Icon, text }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px', gap: 10 }}>
-      <Icon size={32} color="#e2e8f0" />
-      <p style={{ ...{ fontFamily: "'Plus Jakarta Sans', sans-serif" }, fontSize: 14, color: '#94a3b8', margin: 0 }}>{text}</p>
-    </div>
   )
 }

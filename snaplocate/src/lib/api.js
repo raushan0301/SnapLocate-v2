@@ -36,8 +36,12 @@ export const api = {
     const token = getToken()
     const headers = { ...(token ? { Authorization: `Bearer ${token}` } : {}) }
     const res = await fetch(`${API_URL}${path}`, { method: 'POST', headers, body: formData })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.message || 'Upload failed')
+    const text = await res.text()
+    let data
+    try { data = JSON.parse(text) } catch {
+      throw new Error(`Upload failed (${res.status}): unexpected server response`)
+    }
+    if (!res.ok || !data.success) throw new Error(data.error || data.message || `Upload failed (${res.status})`)
     return data
   }
 }
