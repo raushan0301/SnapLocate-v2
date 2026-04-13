@@ -19,23 +19,35 @@ const CLOUDINARY_FOLDERS = {
 
 // ─── POST /api/upload/image ──────────────────────────────────
 // Uploads image to Cloudinary, returns URL
-router.post('/image', authenticate, uploadImage.single('file'), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ success: false, message: 'No file uploaded' })
-  }
+router.post('/image', authenticate, (req, res) => {
+  // Run multer manually so we can return JSON on multer errors (file type, size, etc.)
+  uploadImage.single('file')(req, res, async (multerErr) => {
+    try {
+      if (multerErr) {
+        const msg = multerErr.code === 'LIMIT_FILE_SIZE'
+          ? 'File too large — maximum size is 5 MB'
+          : multerErr.message || 'File upload error'
+        return res.status(400).json({ success: false, error: msg })
+      }
 
-  const folder_key = req.body.type || 'avatar'
-  const folder = CLOUDINARY_FOLDERS[folder_key] || 'snaplocate/misc'
+      if (!req.file) {
+        return res.status(400).json({ success: false, error: 'No file uploaded' })
+      }
 
-  const result = await uploadToCloudinary(req.file.buffer, {
-    folder,
-    transformation: [{ width: 1200, crop: 'limit', quality: 'auto' }],
-  })
+      // Accept folder_key from query param OR body
+      const folder_key = req.query.folder_key || req.body.folder_key || req.body.type || 'avatar'
+      const folder = CLOUDINARY_FOLDERS[folder_key] || 'snaplocate/misc'
 
-  res.json({
-    success: true,
-    url: result.url,
-    public_id: result.public_id,
+      const result = await uploadToCloudinary(req.file.buffer, {
+        folder,
+        transformation: [{ width: 1200, crop: 'limit', quality: 'auto' }],
+      })
+
+      return res.json({ success: true, url: result.url, public_id: result.public_id })
+    } catch (err) {
+      console.error('[upload/image]', err.message)
+      return res.status(500).json({ success: false, error: err.message || 'Upload failed' })
+    }
   })
 })
 

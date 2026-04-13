@@ -15,7 +15,8 @@ import requestsRoutes from './routes/requests.js'
 import resourcesRoutes from './routes/resources.js'
 import societiesRoutes from './routes/societies.js'
 import marketplaceRoutes from './routes/marketplace.js'
-import lostFoundRoutes from './routes/lostFound.js'
+import lostFoundRoutes     from './routes/lostFound.js'
+import lostFoundChatRoutes from './routes/lostFoundChat.js'
 import shopsRoutes from './routes/shops.js'
 import notifyRoutes from './routes/notify.js'
 import adminRoutes from './routes/admin.js'
@@ -34,12 +35,14 @@ import lmsAssignmentsRoutes   from './routes/lms/assignments.js'
 import lmsSubmissionsRoutes   from './routes/lms/submissions.js'
 import lmsGradesRoutes        from './routes/lms/grades.js'
 import lmsAnnouncementsRoutes from './routes/lms/announcements.js'
+import lmsMaterialsRoutes    from './routes/lms/materials.js'
 import attendanceRoutes       from './routes/attendance.js'
 import examScheduleRoutes     from './routes/examSchedule.js'
 import feesRoutes             from './routes/fees.js'
 import studentProfilesRoutes  from './routes/studentProfiles.js'
 import syncWebkioskRoutes     from './routes/sync/webkiosk.js'
 import syncMoodleRoutes       from './routes/sync/moodle.js'
+import studentSyncRoutes      from './routes/studentSync.js'
 
 // Middleware
 import { errorHandler } from './middleware/errorHandler.js'
@@ -82,6 +85,7 @@ app.use('/api/resources',   resourcesRoutes)
 app.use('/api/societies',   societiesRoutes)
 app.use('/api/marketplace', marketplaceRoutes)
 app.use('/api/lost-found',  lostFoundRoutes)
+app.use('/api/lf-chat',    lostFoundChatRoutes)
 app.use('/api/shops',       shopsRoutes)
 app.use('/api/notify',      notifyRoutes)
 app.use('/api/admin',       adminRoutes)
@@ -100,6 +104,7 @@ app.use('/api/lms/assignments',   lmsAssignmentsRoutes)
 app.use('/api/lms/submissions',   lmsSubmissionsRoutes)
 app.use('/api/lms/grades',        lmsGradesRoutes)
 app.use('/api/lms/announcements', lmsAnnouncementsRoutes)
+app.use('/api/lms/materials',    lmsMaterialsRoutes)
 // WebKiosk routes
 app.use('/api/attendance',        attendanceRoutes)
 app.use('/api/exam-schedule',     examScheduleRoutes)
@@ -108,6 +113,7 @@ app.use('/api/student-profiles',  studentProfilesRoutes)
 // External sync routes
 app.use('/api/sync/webkiosk',     syncWebkioskRoutes)
 app.use('/api/sync/moodle',       syncMoodleRoutes)
+app.use('/api/student-sync',      studentSyncRoutes)
 
 // Error Handlers
 app.use((req, res) => {

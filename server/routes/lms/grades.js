@@ -22,7 +22,7 @@ router.get('/', authenticate, async (req, res) => {
   try {
     let query = supabaseAdmin
       .from('grades')
-      .select('*, courses(code, name), users(full_name)')
+      .select('*, courses(code, name), users!student_id(full_name)')
       .order('created_at', { ascending: false })
 
     if (role === 'student') {

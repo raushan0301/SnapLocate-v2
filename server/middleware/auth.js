@@ -17,7 +17,7 @@ export async function authenticate(req, res, next) {
     // Fetch fresh user from Supabase to ensure they still exist and get role
     const { data: user, error } = await supabaseAdmin
       .from('users')
-      .select('id, email, role, full_name, avatar_url')
+      .select('id, email, role, full_name, avatar_url, org_id')
       .eq('id', decoded.userId)
       .single()
 

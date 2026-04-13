@@ -25,7 +25,10 @@ export async function uploadToCloudinary(file, options = {}) {
         ...options,
       },
       (error, result) => {
-        if (error) return reject(error)
+        if (error) {
+          const msg = error.message || error.error?.message || JSON.stringify(error)
+          return reject(new Error(`Cloudinary: ${msg}`))
+        }
         resolve({
           url: result.secure_url,
           public_id: result.public_id,

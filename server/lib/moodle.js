@@ -1,11 +1,9 @@
 import axios from 'axios'
 import { supabaseAdmin } from './supabase.js'
 
-// Strip any path suffixes the user may have pasted (e.g. /login/index.php)
 function normalizeBaseUrl(url) {
   try {
     const u = new URL(url)
-    // Remove known Moodle login/page paths, keep only the Moodle root
     u.pathname = u.pathname
       .replace(/\/login\/index\.php$/i, '')
       .replace(/\/login\/?$/i, '')
@@ -26,9 +24,7 @@ export class MoodleClient {
     this.client  = axios.create({ baseURL: this.baseUrl, timeout: 30000 })
   }
 
-  // Authenticate with username/password → get a token
   async login(username, password) {
-    // Try both the mobile app service and the default service
     const services = ['moodle_mobile_app', 'moodle_mobile_app_lms', 'moodle_mobile_app_os']
     let lastErr = null
     for (const service of services) {
@@ -55,25 +51,38 @@ export class MoodleClient {
     return res.data
   }
 
-  // Get current user info (returns userid, sitename, etc.)
-  async getSiteInfo() {
-    return this.call('core_webservice_get_site_info')
+  async getSiteInfo() { return this.call('core_webservice_get_site_info') }
+  async getMyCourses(userId) { return this.call('core_enrol_get_users_courses', { userid: userId }) }
+  async getAllCourses() { return this.call('core_course_get_courses') }
+  async getCourseContents(courseId) { return this.call('core_course_get_contents', { courseid: courseId }) }
+
+  async getForumsByCourses(courseIds = []) {
+    return this.call('mod_forum_get_forums_by_courses',
+      Object.fromEntries(courseIds.map((id, i) => [`courseids[${i}]`, id]))
+    )
   }
 
-  // Get courses the authenticated user is enrolled in (works for non-admin users)
-  async getMyCourses(userId) {
-    return this.call('core_enrol_get_users_courses', { userid: userId })
+  async getForumDiscussions(forumId, page = 0, perpage = 50) {
+    return this.call('mod_forum_get_forum_discussions', { forumid: forumId, page, perpage })
   }
 
-  // Fallback: try to get all courses (requires manager/admin capability)
-  async getAllCourses() {
-    return this.call('core_course_get_courses')
+  async getCategories(categoryIds = []) {
+    if (categoryIds.length === 0) return []
+    const params = {}
+    categoryIds.forEach((id, i) => {
+      params[`criteria[${i}][key]`]   = 'id'
+      params[`criteria[${i}][value]`] = id
+    })
+    try {
+      const res = await this.call('core_course_get_categories', params)
+      return Array.isArray(res) ? res : []
+    } catch { return [] }
   }
 
   async getAssignments(courseIds = []) {
-    return this.call('mod_assign_get_assignments', Object.fromEntries(
-      courseIds.map((id, i) => [`courseids[${i}]`, id])
-    ))
+    return this.call('mod_assign_get_assignments',
+      Object.fromEntries(courseIds.map((id, i) => [`courseids[${i}]`, id]))
+    )
   }
 
   async getGradesTable(courseId, userId) {
@@ -81,7 +90,81 @@ export class MoodleClient {
   }
 }
 
-// ─── Main sync runner ──────────────────────────────────────────────────────────
+// ─── Parse department/branch from Moodle course fullname ─────────────────────
+function parseDept(fullname = '') {
+  const match = fullname.match(/\b(CSE|ECE|ENC|MEE|CHE|ELE|CIV|BIO|PHY|MAT|MCA|MBA|BCA|CSAI|CSBS|AIDS|IT)\b/i)
+  if (match) return match[1].toUpperCase()
+  const parts = fullname.split('-')
+  if (parts.length >= 2) {
+    const candidate = parts[parts.length - 2].trim()
+    if (candidate.length <= 6 && /^[A-Z]+$/i.test(candidate)) return candidate.toUpperCase()
+  }
+  return null
+}
+
+// ─── Run promises in batches of N ────────────────────────────────────────────
+async function batch(items, concurrency, fn) {
+  const results = []
+  for (let i = 0; i < items.length; i += concurrency) {
+    const chunk = items.slice(i, i + concurrency)
+    const res = await Promise.allSettled(chunk.map(fn))
+    results.push(...res)
+  }
+  return results
+}
+
+// ─── Build local course cache (bulk fetch once) ──────────────────────────────
+async function buildCourseCache(codes) {
+  if (codes.length === 0) return {}
+  const { data } = await supabaseAdmin
+    .from('courses')
+    .select('id, code, faculty_id')
+    .in('code', codes)
+  const map = {}
+  for (const c of data || []) map[c.code] = { id: c.id, faculty_id: c.faculty_id }
+  return map
+}
+
+// ─── DB upsert helper: check existing by moodle_id, then bulk insert/update ─
+async function upsertByMoodleId(table, rows, log) {
+  if (rows.length === 0) return 0
+  const moodleIds = rows.map(r => r.moodle_id).filter(Boolean)
+  const { data: existing } = await supabaseAdmin
+    .from(table).select('id, moodle_id').in('moodle_id', moodleIds)
+  const existMap = {}
+  for (const e of existing || []) existMap[e.moodle_id] = e.id
+
+  const toInsert = []
+  const toUpdate = []
+  for (const row of rows) {
+    if (existMap[row.moodle_id]) {
+      toUpdate.push({ ...row, id: existMap[row.moodle_id], updated_at: new Date().toISOString() })
+    } else {
+      toInsert.push(row)
+    }
+  }
+
+  let count = 0
+  if (toInsert.length > 0) {
+    const { error } = await supabaseAdmin.from(table).insert(toInsert)
+    if (error) log.push(`  ✗ ${table} insert: ${error.message}`)
+    else count += toInsert.length
+  }
+  // Batch updates in chunks of 20
+  for (let i = 0; i < toUpdate.length; i += 20) {
+    const chunk = toUpdate.slice(i, i + 20)
+    const results = await Promise.allSettled(
+      chunk.map(row => {
+        const { id, ...rest } = row
+        return supabaseAdmin.from(table).update(rest).eq('id', id)
+      })
+    )
+    count += results.filter(r => r.status === 'fulfilled' && !r.value.error).length
+  }
+  return count
+}
+
+// ─── Main admin sync runner (parallelized) ───────────────────────────────────
 export async function runMoodleSync() {
   const { data: configs } = await supabaseAdmin
     .from('external_sync_config')
@@ -104,43 +187,58 @@ export async function runMoodleSync() {
       await client.login(creds.username, creds.password)
       log.push('Authenticated with Moodle')
 
-      // Get logged-in user's ID so we can fetch their enrolled courses
       const siteInfo = await client.getSiteInfo()
-      const userId = siteInfo.userid
+      const userId   = siteInfo.userid
       log.push(`Logged in as: ${siteInfo.fullname} (id: ${userId})`)
 
-      const modules = config.sync_modules || {}
-
-      // ── 1. Always sync courses ──────────────────────────────────────────────
+      // ── 1. Sync courses ───────────────────────────────────────────────────
       let moodleCourses = []
       try {
-        // Use enrolled courses API first (works for any user role)
         let raw = []
-        try {
-          raw = await client.getMyCourses(userId)
-        } catch {
-          // Fallback to admin-level get all courses
-          raw = await client.getAllCourses()
-        }
-        // Filter out the "site" course (id=1) which is always present
+        try { raw = await client.getMyCourses(userId) }
+        catch { raw = await client.getAllCourses() }
+
         moodleCourses = (raw || []).filter(c => c.id !== 1 && c.id !== 0)
         log.push(`Found ${moodleCourses.length} courses in Moodle`)
 
-        let coursesSynced = 0
-        for (const mc of moodleCourses) {
-          // Map Moodle fields → SnapLocate courses table
-          const row = {
-            code:           mc.shortname  || `MOODLE-${mc.id}`,
-            name:           mc.fullname   || mc.shortname,
-            dept:           mc.categoryname || null,
-            synced_from:    'moodle',
-          }
+        const categoryIds = [...new Set(moodleCourses.map(c => c.category).filter(Boolean))]
+        const categories  = await client.getCategories(categoryIds)
+        const catMap = {}
+        for (const cat of categories) catMap[cat.id] = cat.name
+        log.push(`Fetched ${categories.length} semester categories`)
 
-          // Upsert by course code (shortname is unique per Moodle course)
-          const { error } = await supabaseAdmin
-            .from('courses')
-            .upsert(row, { onConflict: 'code', ignoreDuplicates: false })
-          if (!error) coursesSynced++
+        // Bulk fetch existing courses
+        const codes = moodleCourses.map(mc => mc.shortname || `MOODLE-${mc.id}`)
+        const { data: existingCourses } = await supabaseAdmin
+          .from('courses').select('id, code').in('code', codes)
+        const existMap = {}
+        for (const c of existingCourses || []) existMap[c.code] = c.id
+
+        const toInsert = []
+        const toUpdate = []
+        for (const mc of moodleCourses) {
+          const code = mc.shortname || `MOODLE-${mc.id}`
+          const name = mc.fullname  || mc.shortname
+          const semester = catMap[mc.category] || mc.categoryname || null
+          const dept = parseDept(name)
+          if (existMap[code]) {
+            toUpdate.push({ id: existMap[code], name, semester, dept, synced_from: 'moodle' })
+          } else {
+            toInsert.push({ code, name, semester, dept, synced_from: 'moodle' })
+          }
+        }
+
+        let coursesSynced = 0
+        if (toInsert.length > 0) {
+          const { error } = await supabaseAdmin.from('courses').insert(toInsert)
+          if (error) log.push(`  ✗ course insert: ${error.message}`)
+          else coursesSynced += toInsert.length
+        }
+        if (toUpdate.length > 0) {
+          const results = await Promise.allSettled(
+            toUpdate.map(({ id, ...rest }) => supabaseAdmin.from('courses').update(rest).eq('id', id))
+          )
+          coursesSynced += results.filter(r => r.status === 'fulfilled' && !r.value.error).length
         }
         log.push(`Synced ${coursesSynced} courses into SnapLocate`)
       } catch (e) {
@@ -148,38 +246,120 @@ export async function runMoodleSync() {
         status = 'partial'
       }
 
-      // ── 2. Sync assignments (if enabled) ───────────────────────────────────
-      if (modules.assignments && moodleCourses.length > 0) {
+      if (moodleCourses.length === 0) {
+        log.push('No courses to sync content for.')
+        status = status === 'success' ? 'partial' : status
+      } else {
+        const moodleCourseIds = moodleCourses.map(c => c.id)
+        const courseCodeMap = {}
+        for (const mc of moodleCourses) courseCodeMap[mc.id] = mc.shortname || `MOODLE-${mc.id}`
+
+        // Build local course cache once
+        const allCodes = Object.values(courseCodeMap)
+        const localCache = await buildCourseCache(allCodes)
+
+        // ── Fire assignments + announcements + materials fetch in PARALLEL ───
+        const [assignResult, forumResult, contentsResult] = await Promise.allSettled([
+          client.getAssignments(moodleCourseIds),
+          client.getForumsByCourses(moodleCourseIds),
+          batch(moodleCourses, 5, async (mc) => {
+            const sections = await client.getCourseContents(mc.id)
+            return { moodleId: mc.id, shortname: mc.shortname || `MOODLE-${mc.id}`, sections }
+          }),
+        ])
+
+        // ── 2. Process assignments ──────────────────────────────────────────
         try {
-          const moodleCourseIds = moodleCourses.map(c => c.id)
-          const { courses: assignCourses } = await client.getAssignments(moodleCourseIds)
-          let assignSynced = 0
-
+          if (assignResult.status !== 'fulfilled') throw new Error(assignResult.reason?.message || 'fetch failed')
+          const { courses: assignCourses } = assignResult.value
+          const rows = []
           for (const ac of assignCourses || []) {
-            // Find the local course by shortname/code
-            const { data: localCourse } = await supabaseAdmin
-              .from('courses')
-              .select('id, faculty_id')
-              .eq('code', ac.shortname)
-              .single()
-            if (!localCourse) continue
-
+            const local = localCache[ac.shortname]
+            if (!local) continue
             for (const asgn of ac.assignments || []) {
-              await supabaseAdmin.from('assignments').upsert({
-                course_id:   localCourse.id,
-                faculty_id:  localCourse.faculty_id,
-                title:       asgn.name,
-                description: asgn.intro || null,
-                due_date:    asgn.duedate ? new Date(asgn.duedate * 1000).toISOString() : null,
-                max_marks:   asgn.grade || 100,
-                synced_from: 'moodle',
-              }, { onConflict: 'course_id,title' })
-              assignSynced++
+              rows.push({
+                course_id: local.id, faculty_id: local.faculty_id || null,
+                title: asgn.name,
+                description: asgn.intro ? asgn.intro.replace(/<[^>]+>/g, '').trim() : null,
+                due_date: asgn.duedate ? new Date(asgn.duedate * 1000).toISOString() : new Date(Date.now() + 30 * 86400000).toISOString(),
+                max_marks: asgn.grade > 0 ? asgn.grade : 100,
+                synced_from: 'moodle', moodle_id: asgn.id,
+              })
             }
           }
-          log.push(`Synced ${assignSynced} assignments from Moodle`)
+          const count = await upsertByMoodleId('assignments', rows, log)
+          log.push(`Synced ${count} assignments from Moodle`)
         } catch (e) {
           log.push(`Assignment sync failed: ${e.message}`)
+          status = 'partial'
+        }
+
+        // ── 3. Process announcements ────────────────────────────────────────
+        try {
+          if (forumResult.status !== 'fulfilled') throw new Error(forumResult.reason?.message || 'fetch failed')
+          const forums = forumResult.value
+          const newsForums = (forums || []).filter(f => f.type === 'news')
+
+          // Fetch all forum discussions in parallel (batches of 5)
+          const discResults = await batch(newsForums, 5, async (forum) => {
+            const shortname = courseCodeMap[forum.course] || ''
+            const local = localCache[shortname]
+            if (!local) return { rows: [] }
+            const result = await client.getForumDiscussions(forum.id)
+            const discussions = result?.discussions || result || []
+            return {
+              rows: discussions.map(disc => ({
+                course_id: local.id, faculty_id: null,
+                title: disc.name || disc.subject || 'Announcement',
+                message: disc.message ? disc.message.replace(/<[^>]+>/g, '').trim().slice(0, 2000) : '',
+                is_pinned: disc.pinned || false,
+                synced_from: 'moodle', moodle_id: disc.discussion || disc.id,
+              }))
+            }
+          })
+          const annRows = discResults.flatMap(r => r.status === 'fulfilled' ? r.value.rows : [])
+          const count = await upsertByMoodleId('course_announcements', annRows, log)
+          log.push(`Synced ${count} announcements from Moodle`)
+        } catch (e) {
+          log.push(`Announcement sync failed: ${e.message}`)
+          status = 'partial'
+        }
+
+        // ── 4. Process course materials ─────────────────────────────────────
+        try {
+          if (contentsResult.status !== 'fulfilled') throw new Error('contents fetch failed')
+          const matRows = []
+          for (const r of contentsResult.value) {
+            if (r.status !== 'fulfilled') continue
+            const { shortname, sections } = r.value
+            const local = localCache[shortname]
+            if (!local) continue
+            for (const section of sections || []) {
+              for (const mod of section.modules || []) {
+                if (['assign', 'forum', 'quiz', 'choice', 'feedback', 'chat'].includes(mod.modname)) continue
+                let fileUrl = null, externalUrl = null
+                if (mod.modname === 'url') {
+                  externalUrl = mod.contents?.[0]?.fileurl || null
+                } else if (mod.contents?.length > 0) {
+                  const f = mod.contents.find(c => c.type === 'file') || mod.contents[0]
+                  if (f?.fileurl) fileUrl = `${f.fileurl}${f.fileurl.includes('?') ? '&' : '?'}token=${client.token}`
+                }
+                if (!fileUrl && !externalUrl && mod.modname !== 'label') continue
+                matRows.push({
+                  course_id: local.id, title: mod.name,
+                  description: mod.description ? mod.description.replace(/<[^>]+>/g, '').trim().slice(0, 500) : null,
+                  module_type: mod.modname, file_url: fileUrl, external_url: externalUrl,
+                  section_name: section.name || `Section ${section.section}`,
+                  section_num: section.section ?? 0,
+                  synced_from: 'moodle', moodle_id: mod.id,
+                })
+              }
+            }
+          }
+          const count = await upsertByMoodleId('course_materials', matRows, log)
+          log.push(`Synced ${count} course materials from Moodle`)
+        } catch (e) {
+          log.push(`Materials sync failed: ${e.message}`)
           status = 'partial'
         }
       }
@@ -193,10 +373,219 @@ export async function runMoodleSync() {
     await supabaseAdmin
       .from('external_sync_config')
       .update({
-        last_synced_at:    new Date().toISOString(),
-        last_sync_status:  status,
-        last_sync_log:     log.join('\n'),
+        last_synced_at:   new Date().toISOString(),
+        last_sync_status: status,
+        last_sync_log:    log.join('\n'),
       })
       .eq('id', config.id)
   }
+}
+
+// ─── Student-level personal sync (parallelized) ─────────────────────────────
+export async function runStudentSync(userId) {
+  const { data: config } = await supabaseAdmin
+    .from('student_sync_config')
+    .select('*')
+    .eq('user_id', userId)
+    .single()
+
+  if (!config) throw new Error('No sync config found')
+
+  const log    = []
+  let   status = 'success'
+
+  try {
+    const creds = config.credentials_json || {}
+    if (!creds.username || !creds.password) throw new Error('Missing credentials')
+
+    const client = new MoodleClient(config.base_url)
+    log.push(`Connecting to ${client.baseUrl}...`)
+    await client.login(creds.username, creds.password)
+    log.push('Authenticated')
+
+    const siteInfo = await client.getSiteInfo()
+    const moodleUserId = siteInfo.userid
+    log.push(`Logged in as: ${siteInfo.fullname}`)
+
+    // 1. Fetch enrolled courses + categories in parallel
+    let moodleCourses = []
+    try {
+      moodleCourses = ((await client.getMyCourses(moodleUserId)) || []).filter(c => c.id !== 1 && c.id !== 0)
+    } catch {
+      moodleCourses = ((await client.getAllCourses()) || []).filter(c => c.id !== 1 && c.id !== 0)
+    }
+    log.push(`Found ${moodleCourses.length} courses`)
+
+    const categoryIds = [...new Set(moodleCourses.map(c => c.category).filter(Boolean))]
+    const categories  = await client.getCategories(categoryIds)
+    const catMap = {}
+    for (const cat of categories) catMap[cat.id] = cat.name
+
+    // 2. Bulk upsert courses
+    const codes = moodleCourses.map(mc => mc.shortname || `MOODLE-${mc.id}`)
+    const { data: existingCourses } = await supabaseAdmin
+      .from('courses').select('id, code').in('code', codes)
+    const existMap = {}
+    for (const c of existingCourses || []) existMap[c.code] = c.id
+
+    const toInsert = []
+    const toUpdate = []
+    for (const mc of moodleCourses) {
+      const code = mc.shortname || `MOODLE-${mc.id}`
+      const name = mc.fullname  || mc.shortname
+      const semester = catMap[mc.category] || null
+      const dept = parseDept(name)
+      if (existMap[code]) {
+        toUpdate.push({ id: existMap[code], name, semester, dept, synced_from: 'moodle' })
+      } else {
+        toInsert.push({ code, name, semester, dept, synced_from: 'moodle' })
+      }
+    }
+
+    let coursesSynced = 0
+    if (toInsert.length > 0) {
+      const { data: inserted, error } = await supabaseAdmin.from('courses').insert(toInsert).select('id, code')
+      if (error) log.push(`  ✗ course insert: ${error.message}`)
+      else {
+        coursesSynced += toInsert.length
+        for (const c of inserted || []) existMap[c.code] = c.id
+      }
+    }
+    if (toUpdate.length > 0) {
+      const results = await Promise.allSettled(
+        toUpdate.map(({ id, ...rest }) => supabaseAdmin.from('courses').update(rest).eq('id', id))
+      )
+      coursesSynced += results.filter(r => r.status === 'fulfilled' && !r.value.error).length
+    }
+    log.push(`Synced ${coursesSynced} courses`)
+
+    // Auto-enroll student in all courses (bulk)
+    const enrollRows = Object.values(existMap)
+      .filter(Boolean)
+      .map(courseId => ({ student_id: userId, course_id: courseId, status: 'active' }))
+    if (enrollRows.length > 0) {
+      await supabaseAdmin.from('course_enrollments')
+        .upsert(enrollRows, { onConflict: 'student_id,course_id', ignoreDuplicates: true })
+    }
+
+    if (moodleCourses.length === 0) {
+      log.push('No courses found'); status = 'partial'
+    } else {
+      const moodleCourseIds = moodleCourses.map(c => c.id)
+      const courseCodeMap = {}
+      for (const mc of moodleCourses) courseCodeMap[mc.id] = mc.shortname || `MOODLE-${mc.id}`
+
+      // Build local cache from existMap
+      const localCache = await buildCourseCache(Object.values(courseCodeMap))
+
+      // ── Fire ALL Moodle fetches in parallel ─────────────────────────────
+      const [assignResult, forumResult, contentsResult] = await Promise.allSettled([
+        client.getAssignments(moodleCourseIds),
+        client.getForumsByCourses(moodleCourseIds),
+        batch(moodleCourses, 5, async (mc) => {
+          const sections = await client.getCourseContents(mc.id)
+          return { shortname: mc.shortname || `MOODLE-${mc.id}`, sections }
+        }),
+      ])
+
+      // 3. Process assignments
+      try {
+        if (assignResult.status !== 'fulfilled') throw new Error(assignResult.reason?.message || 'fetch failed')
+        const { courses: assignCourses } = assignResult.value
+        const rows = []
+        for (const ac of assignCourses || []) {
+          const local = localCache[ac.shortname]
+          if (!local) continue
+          for (const asgn of ac.assignments || []) {
+            rows.push({
+              course_id: local.id, faculty_id: local.faculty_id || null,
+              title: asgn.name,
+              description: asgn.intro ? asgn.intro.replace(/<[^>]+>/g, '').trim() : null,
+              due_date: asgn.duedate ? new Date(asgn.duedate * 1000).toISOString() : new Date(Date.now() + 30*86400000).toISOString(),
+              max_marks: asgn.grade > 0 ? asgn.grade : 100,
+              synced_from: 'moodle', moodle_id: asgn.id,
+            })
+          }
+        }
+        const count = await upsertByMoodleId('assignments', rows, log)
+        log.push(`Synced ${count} assignments`)
+      } catch (e) { log.push(`Assignment sync failed: ${e.message}`); status = 'partial' }
+
+      // 4. Process announcements
+      try {
+        if (forumResult.status !== 'fulfilled') throw new Error(forumResult.reason?.message || 'fetch failed')
+        const forums = forumResult.value
+        const newsForums = (forums || []).filter(f => f.type === 'news')
+
+        const discResults = await batch(newsForums, 5, async (forum) => {
+          const shortname = courseCodeMap[forum.course] || ''
+          const local = localCache[shortname]
+          if (!local) return { rows: [] }
+          const result = await client.getForumDiscussions(forum.id)
+          const discussions = result?.discussions || result || []
+          return {
+            rows: discussions.map(disc => ({
+              course_id: local.id, faculty_id: null,
+              title: disc.name || disc.subject || 'Announcement',
+              message: disc.message ? disc.message.replace(/<[^>]+>/g, '').trim().slice(0, 2000) : '',
+              is_pinned: disc.pinned || false,
+              synced_from: 'moodle', moodle_id: disc.discussion || disc.id,
+            }))
+          }
+        })
+        const annRows = discResults.flatMap(r => r.status === 'fulfilled' ? r.value.rows : [])
+        const count = await upsertByMoodleId('course_announcements', annRows, log)
+        log.push(`Synced ${count} announcements`)
+      } catch (e) { log.push(`Announcement sync failed: ${e.message}`); status = 'partial' }
+
+      // 5. Process course materials
+      try {
+        if (contentsResult.status !== 'fulfilled') throw new Error('contents fetch failed')
+        const matRows = []
+        for (const r of contentsResult.value) {
+          if (r.status !== 'fulfilled') continue
+          const { shortname, sections } = r.value
+          const local = localCache[shortname]
+          if (!local) continue
+          for (const section of sections || []) {
+            for (const mod of section.modules || []) {
+              if (['assign', 'forum', 'quiz', 'choice', 'feedback', 'chat'].includes(mod.modname)) continue
+              let fileUrl = null, externalUrl = null
+              if (mod.modname === 'url') {
+                externalUrl = mod.contents?.[0]?.fileurl || null
+              } else if (mod.contents?.length > 0) {
+                const f = mod.contents.find(c => c.type === 'file') || mod.contents[0]
+                if (f?.fileurl) fileUrl = `${f.fileurl}${f.fileurl.includes('?') ? '&' : '?'}token=${client.token}`
+              }
+              if (!fileUrl && !externalUrl && mod.modname !== 'label') continue
+              matRows.push({
+                course_id: local.id, title: mod.name,
+                description: mod.description ? mod.description.replace(/<[^>]+>/g, '').trim().slice(0, 500) : null,
+                module_type: mod.modname, file_url: fileUrl, external_url: externalUrl,
+                section_name: section.name || `Section ${section.section}`,
+                section_num: section.section ?? 0,
+                synced_from: 'moodle', moodle_id: mod.id,
+              })
+            }
+          }
+        }
+        const count = await upsertByMoodleId('course_materials', matRows, log)
+        log.push(`Synced ${count} materials`)
+      } catch (e) { log.push(`Materials sync failed: ${e.message}`); status = 'partial' }
+    }
+
+    log.push('Sync complete')
+  } catch (err) {
+    status = 'failed'
+    log.push(`Sync failed: ${err.message}`)
+  }
+
+  await supabaseAdmin
+    .from('student_sync_config')
+    .update({
+      last_synced_at: new Date().toISOString(),
+      last_sync_status: status,
+      last_sync_log: log.join('\n'),
+    })
+    .eq('user_id', userId)
 }

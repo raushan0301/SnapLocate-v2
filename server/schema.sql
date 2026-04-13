@@ -134,13 +134,19 @@ CREATE TABLE IF NOT EXISTS requests (
 -- ─── RESOURCES ──────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS resources (
   id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  org_id      UUID REFERENCES organizations(id) ON DELETE CASCADE,
   course_id   UUID REFERENCES courses(id) ON DELETE SET NULL,
   title       TEXT NOT NULL,
   type        TEXT NOT NULL CHECK (type IN ('note', 'lab', 'paper', 'doc', 'syllabus', 'pyq')),
+  description TEXT,
   file_url    TEXT NOT NULL,
   uploaded_by UUID REFERENCES users(id) ON DELETE SET NULL,
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Migration for existing rows (run once if upgrading from v1):
+-- ALTER TABLE resources ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES organizations(id);
+-- ALTER TABLE resources ADD COLUMN IF NOT EXISTS description TEXT;
 
 -- ─── SOCIETIES ──────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS societies (
@@ -168,16 +174,71 @@ CREATE TABLE IF NOT EXISTS marketplace (
 
 -- ─── LOST & FOUND ───────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS lost_found (
-  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  reporter_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  title       TEXT NOT NULL,
-  description TEXT,
-  image_url   TEXT,
-  status      TEXT DEFAULT 'lost' CHECK (status IN ('lost', 'found', 'resolved')),
-  location    TEXT,
-  date        DATE,
-  created_at  TIMESTAMPTZ DEFAULT NOW()
+  id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  org_id       UUID,
+  reporter_id  UUID REFERENCES users(id) ON DELETE CASCADE,
+  title        TEXT NOT NULL,
+  description  TEXT,
+  image_url    TEXT,
+  status       TEXT DEFAULT 'lost' CHECK (status IN ('lost', 'found', 'resolved')),
+  category     TEXT DEFAULT 'other'
+    CHECK (category IN ('electronics','keys','id_card','clothing','books','bag','wallet','jewellery','sports','other')),
+  location     TEXT,
+  contact_info TEXT,
+  date         DATE,
+  resolved_at  TIMESTAMPTZ,
+  resolved_by  UUID REFERENCES users(id),
+  expires_at   TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '60 days'),
+  created_at   TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Migration for existing rows (run once if upgrading from v1):
+-- Note: org_id is a plain UUID (no FK) since organizations table is not yet created
+-- ALTER TABLE lost_found ADD COLUMN IF NOT EXISTS org_id UUID;
+-- ALTER TABLE lost_found ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'other';
+-- ALTER TABLE lost_found ADD COLUMN IF NOT EXISTS contact_info TEXT;
+-- ALTER TABLE lost_found ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMPTZ;
+-- ALTER TABLE lost_found ADD COLUMN IF NOT EXISTS resolved_by UUID REFERENCES users(id);
+-- ALTER TABLE lost_found ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '60 days');
+
+-- ─── LOST & FOUND CLAIMS ────────────────────────────────────
+CREATE TABLE IF NOT EXISTS lost_found_claims (
+  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  item_id     UUID NOT NULL REFERENCES lost_found(id) ON DELETE CASCADE,
+  claimer_id  UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  message     TEXT NOT NULL,
+  proof_url   TEXT,
+  status      TEXT DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected')),
+  admin_note  TEXT,
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(item_id, claimer_id)
+);
+
+-- ─── LOST & FOUND CHAT ──────────────────────────────────────
+CREATE TABLE IF NOT EXISTS lf_conversations (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  item_id         UUID NOT NULL REFERENCES lost_found(id) ON DELETE CASCADE,
+  participant_a   UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,  -- reporter
+  participant_b   UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,  -- other party
+  last_message_at TIMESTAMPTZ DEFAULT NOW(),
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(item_id, participant_a, participant_b)
+);
+
+CREATE TABLE IF NOT EXISTS lf_messages (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  conversation_id UUID NOT NULL REFERENCES lf_conversations(id) ON DELETE CASCADE,
+  sender_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  content         TEXT NOT NULL CHECK (char_length(content) <= 1000),
+  is_read         BOOLEAN DEFAULT FALSE,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_lf_conv_item  ON lf_conversations(item_id);
+CREATE INDEX IF NOT EXISTS idx_lf_conv_pa    ON lf_conversations(participant_a);
+CREATE INDEX IF NOT EXISTS idx_lf_conv_pb    ON lf_conversations(participant_b);
+CREATE INDEX IF NOT EXISTS idx_lf_msg_conv   ON lf_messages(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_lf_msg_sender ON lf_messages(sender_id);
 
 -- ─── SHOPS ──────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS shops (

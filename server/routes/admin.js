@@ -278,26 +278,158 @@ router.delete('/marketplace/:id', authenticate, requireAdmin, async (req, res) =
   res.json({ success: true, message: 'Listing removed' })
 })
 
+// GET /api/admin/lost-found/stats
+router.get('/lost-found/stats', authenticate, requireAdmin, async (req, res) => {
+  // Get all items for this org (fallback: all items if org_id not set)
+  let itemsQuery = supabaseAdmin.from('lost_found').select('id, status, category')
+  if (req.user.org_id) itemsQuery = itemsQuery.eq('org_id', req.user.org_id)
+  const { data: items, error: itemsErr } = await itemsQuery
+  if (itemsErr) throw itemsErr
+
+  const ids = (items || []).map(i => i.id)
+  let pendingClaims = 0
+  if (ids.length > 0) {
+    const { data: claims } = await supabaseAdmin
+      .from('lost_found_claims').select('status').in('item_id', ids).eq('status', 'pending')
+    pendingClaims = (claims || []).length
+  }
+
+  const byCategory = (items || []).reduce((acc, i) => {
+    acc[i.category || 'other'] = (acc[i.category || 'other'] || 0) + 1
+    return acc
+  }, {})
+
+  res.json({
+    success: true,
+    data: {
+      total:          (items || []).length,
+      lost:           (items || []).filter(i => i.status === 'lost').length,
+      found:          (items || []).filter(i => i.status === 'found').length,
+      resolved:       (items || []).filter(i => i.status === 'resolved').length,
+      pending_claims: pendingClaims,
+      by_category:    byCategory,
+    },
+  })
+})
+
+// GET /api/admin/lost-found/claims — all claims across org
+router.get('/lost-found/claims', authenticate, requireAdmin, async (req, res) => {
+  // First get all item IDs for this org (fallback: all items if org_id not set)
+  let orgItemsQuery = supabaseAdmin.from('lost_found').select('id')
+  if (req.user.org_id) orgItemsQuery = orgItemsQuery.eq('org_id', req.user.org_id)
+  const { data: orgItems } = await orgItemsQuery
+  const orgItemIds = (orgItems || []).map(i => i.id)
+
+  if (orgItemIds.length === 0) return res.json({ success: true, data: [] })
+
+  const { status } = req.query
+  let query = supabaseAdmin
+    .from('lost_found_claims')
+    .select(`*, claimer:claimer_id(id, full_name, avatar_url, role), item:item_id(id, title, status, category)`)
+    .in('item_id', orgItemIds)
+    .order('created_at', { ascending: false })
+
+  if (status && status !== 'all') query = query.eq('status', status)
+
+  const { data, error } = await query
+  if (error) throw error
+  res.json({ success: true, data: data || [] })
+})
+
 // GET /api/admin/lost-found — All posts for moderation
 router.get('/lost-found', authenticate, requireAdmin, async (req, res) => {
-  const { data, error } = await supabaseAdmin
+  const { status, category, search } = req.query
+  let query = supabaseAdmin
     .from('lost_found')
     .select('*, reporter:reporter_id(full_name, avatar_url)')
     .order('created_at', { ascending: false })
+  // Only filter by org_id if it exists (graceful fallback for single-tenant setups)
+  if (req.user.org_id) query = query.eq('org_id', req.user.org_id)
+  if (status && status !== 'all')     query = query.eq('status', status)
+  if (category && category !== 'all') query = query.eq('category', category)
+  if (search) query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%,location.ilike.%${search}%`)
+  const { data, error } = await query
   if (error) throw error
+
+  // Attach claim counts
+  const ids = (data || []).map(i => i.id)
+  let claimCounts = {}
+  if (ids.length > 0) {
+    const { data: cc } = await supabaseAdmin
+      .from('lost_found_claims').select('item_id, status').in('item_id', ids)
+    ;(cc || []).forEach(c => {
+      if (!claimCounts[c.item_id]) claimCounts[c.item_id] = { total: 0, pending: 0 }
+      claimCounts[c.item_id].total++
+      if (c.status === 'pending') claimCounts[c.item_id].pending++
+    })
+  }
+
+  const enriched = (data || []).map(i => ({ ...i, claim_counts: claimCounts[i.id] || { total: 0, pending: 0 } }))
+  res.json({ success: true, data: enriched })
+})
+
+// PATCH /api/admin/lost-found/:id/status — force-set status
+router.patch('/lost-found/:id/status', authenticate, requireAdmin, async (req, res) => {
+  const { status } = req.body
+  if (!['lost','found','resolved'].includes(status)) {
+    return res.status(400).json({ success: false, error: 'Invalid status' })
+  }
+
+  const updates = { status }
+  if (status === 'resolved') {
+    updates.resolved_at = new Date().toISOString()
+    updates.resolved_by = req.user.id
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('lost_found').update(updates).eq('id', req.params.id).eq('org_id', req.user.org_id).select().single()
+  if (error) throw error
+
+  logAudit(req.user, 'FORCE_RESOLVE_POST', 'post', req.params.id, data?.title)
+  res.json({ success: true, data })
+})
+
+// PATCH /api/admin/lost-found/claims/:claimId — admin approve/reject any claim
+router.patch('/lost-found/claims/:claimId', authenticate, requireAdmin, async (req, res) => {
+  const { action, admin_note } = req.body
+  if (!['approve','reject'].includes(action)) {
+    return res.status(400).json({ success: false, error: 'action must be approve or reject' })
+  }
+
+  const { data: claim } = await supabaseAdmin
+    .from('lost_found_claims').select('item_id').eq('id', req.params.claimId).single()
+  if (!claim) return res.status(404).json({ success: false, error: 'Claim not found' })
+
+  const newStatus = action === 'approve' ? 'approved' : 'rejected'
+  const { data, error } = await supabaseAdmin
+    .from('lost_found_claims')
+    .update({ status: newStatus, admin_note: admin_note || null })
+    .eq('id', req.params.claimId).select().single()
+  if (error) throw error
+
+  if (action === 'approve') {
+    await supabaseAdmin
+      .from('lost_found')
+      .update({ status: 'resolved', resolved_at: new Date().toISOString(), resolved_by: req.user.id })
+      .eq('id', claim.item_id)
+    await supabaseAdmin
+      .from('lost_found_claims')
+      .update({ status: 'rejected', admin_note: 'Another claim was approved.' })
+      .eq('item_id', claim.item_id).eq('status', 'pending').neq('id', req.params.claimId)
+  }
+
   res.json({ success: true, data })
 })
 
 // DELETE /api/admin/lost-found/:id
 router.delete('/lost-found/:id', authenticate, requireAdmin, async (req, res) => {
   const { data: target } = await supabaseAdmin
-    .from('lost_found').select('title').eq('id', req.params.id).single()
+    .from('lost_found').select('title').eq('id', req.params.id).eq('org_id', req.user.org_id).single()
 
   const { error } = await supabaseAdmin.from('lost_found').delete().eq('id', req.params.id)
   if (error) throw error
 
   logAudit(req.user, 'REMOVE_POST', 'post', req.params.id, target?.title)
-
   res.json({ success: true, message: 'Post removed' })
 })
 
@@ -315,12 +447,17 @@ router.get('/requests', authenticate, requireAdmin, async (req, res) => {
   res.json({ success: true, data })
 })
 
-// GET /api/admin/resources — All resources for moderation
+// GET /api/admin/resources — All resources for moderation (scoped to org)
 router.get('/resources', authenticate, requireAdmin, async (req, res) => {
-  const { data, error } = await supabaseAdmin
+  const { type, search } = req.query
+  let query = supabaseAdmin
     .from('resources')
     .select('*, course:course_id(code, name, dept), uploader:uploaded_by(full_name)')
+    .eq('org_id', req.user.org_id)
     .order('created_at', { ascending: false })
+  if (type && type !== 'all') query = query.eq('type', type)
+  if (search) query = query.ilike('title', `%${search}%`)
+  const { data, error } = await query
   if (error) throw error
   res.json({ success: true, data })
 })
@@ -328,7 +465,7 @@ router.get('/resources', authenticate, requireAdmin, async (req, res) => {
 // DELETE /api/admin/resources/:id
 router.delete('/resources/:id', authenticate, requireAdmin, async (req, res) => {
   const { data: target } = await supabaseAdmin
-    .from('resources').select('title').eq('id', req.params.id).single()
+    .from('resources').select('title').eq('id', req.params.id).eq('org_id', req.user.org_id).single()
 
   const { error } = await supabaseAdmin.from('resources').delete().eq('id', req.params.id)
   if (error) throw error

@@ -25,7 +25,7 @@ router.get('/', authenticate, async (req, res) => {
 
     const { data, error } = await supabaseAdmin
       .from('assignment_submissions')
-      .select('*, users(id, full_name, email, avatar_url)')
+      .select('*, users!student_id(id, full_name, email, avatar_url)')
       .eq('assignment_id', assignment_id)
       .order('submitted_at', { ascending: false })
     if (error) throw error
@@ -41,7 +41,7 @@ router.get('/:id', authenticate, async (req, res) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('assignment_submissions')
-      .select('*, users(full_name, email, avatar_url)')
+      .select('*, users!student_id(full_name, email, avatar_url)')
       .eq('id', req.params.id)
       .single()
     if (error || !data) return res.status(404).json({ success: false, error: 'Submission not found' })
