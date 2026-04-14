@@ -23,6 +23,7 @@ router.get('/', authenticate, async (req, res) => {
       .select('*, users!faculty_id(full_name, avatar_url)')
       .eq('course_id', course_id)
       .order('is_pinned', { ascending: false })
+      .order('posted_at',   { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })
     if (error) throw error
     res.json({ success: true, data })
