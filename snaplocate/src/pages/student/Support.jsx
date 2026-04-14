@@ -260,18 +260,18 @@ export default function SupportPage() {
         <p style={{ ...pjs(14, 400, '20px', '#94a3b8'), marginTop: 6, marginBottom: 22 }}>
           Search FAQs, submit a ticket, or open a live chat with our support team
         </p>
-        <div style={{ position: 'relative', maxWidth: 640, margin: '0 auto' }}>
-          <svg style={{ position: 'absolute', left: 18, top: '50%', transform: 'translateY(-50%)' }} width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <circle cx="7" cy="7" r="6" stroke="#94a3b8" strokeWidth="1.3" />
-            <path d="M12 12l3 3" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round" />
+        <div style={{ position: 'relative', maxWidth: 400, margin: '0 auto' }}>
+          <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <circle cx="6.5" cy="6.5" r="5.5" stroke="#94a3b8" strokeWidth="1.3"/>
+            <path d="M11 11l3 3" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round"/>
           </svg>
           <input
             value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search FAQs or describe your issue..."
             style={{
-              width: '100%', padding: '16px 18px 16px 48px',
-              background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 16,
-              ...pjs(14, 400, '22px', '#0f172a'), outline: 'none', boxSizing: 'border-box',
+              width: '100%', padding: '12px 16px 12px 42px',
+              background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14,
+              ...pjs(14, 400, '20px', '#0f172a'), outline: 'none', boxSizing: 'border-box',
               boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
             }}
           />

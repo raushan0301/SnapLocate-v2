@@ -466,15 +466,21 @@ export default function Resources() {
           <p style={{ ...pjs(14, 400, '21px', '#64748b'), marginTop: 4, marginBottom: 0 }}>Notes, PYQs, lab files, and syllabi uploaded by your faculty.</p>
         </div>
         {/* Search */}
-        <div style={{ position: 'relative', minWidth: 240 }}>
-          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
-            <circle cx="6.5" cy="6.5" r="5" stroke="#94a3b8" strokeWidth="1.3" />
-            <path d="M10.5 10.5l3 3" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round" />
+        <div style={{ position: 'relative', flex: '1 1 300px', maxWidth: 400 }}>
+          <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <circle cx="6.5" cy="6.5" r="5.5" stroke="#94a3b8" strokeWidth="1.3" />
+            <path d="M11 11l3 3" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round" />
           </svg>
           <input
             type="text" placeholder="Search resources..." value={search}
             onChange={e => setSearch(e.target.value)}
-            style={{ width: '100%', padding: '10px 14px 10px 36px', borderRadius: 12, border: '1.5px solid #e2e8f0', fontSize: 13, outline: 'none', boxSizing: 'border-box', background: '#fff' }}
+            style={{ 
+              width: '100%', padding: '12px 16px 12px 42px', 
+              borderRadius: 14, border: '1px solid #e2e8f0', 
+              fontSize: 14, outline: 'none', boxSizing: 'border-box', background: '#fff',
+              ...pjs(14, 400, '20px', '#0f172a'),
+              boxShadow: '0 1px 4px rgba(0,0,0,0.04)' 
+            }}
             onFocus={e => e.target.style.borderColor = '#4f46e5'}
             onBlur={e => e.target.style.borderColor = '#e2e8f0'}
           />

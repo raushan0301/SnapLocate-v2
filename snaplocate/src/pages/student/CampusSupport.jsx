@@ -107,16 +107,19 @@ export default function CampusSupportPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
           <h1 style={pjs(24, 700, '32px', '#0f172a')}>Campus Support Hub</h1>
           <div style={{ position: 'relative', flex: '1 1 300px', maxWidth: 400 }}>
-            <svg style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)' }} width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="5" stroke="#94a3b8" strokeWidth="1.2"/><path d="M10 10l3 3" stroke="#94a3b8" strokeWidth="1.2" strokeLinecap="round"/></svg>
+            <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="15" height="15" viewBox="0 0 15 15" fill="none">
+              <circle cx="6.5" cy="6.5" r="5.5" stroke="#94a3b8" strokeWidth="1.3"/>
+              <path d="M11 11l3 3" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round"/>
+            </svg>
             <input
               placeholder="Search departments, roles, or issues..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               style={{
-                width: '100%', padding: '11px 14px 11px 38px',
-                background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 12,
-                ...pjs(13, 400, '18px', '#0f172a'), outline: 'none',
-                boxSizing: 'border-box', boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                width: '100%', padding: '12px 16px 12px 42px',
+                background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14,
+                ...pjs(14, 400, '20px', '#0f172a'), outline: 'none',
+                boxSizing: 'border-box', boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
               }}
             />
           </div>

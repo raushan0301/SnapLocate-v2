@@ -6,27 +6,38 @@ import LFChatModal from '../../components/LFChatModal'
 import {
   Plus, Search, X, ChevronDown, ChevronUp,
   MapPin, Calendar, User, AlertCircle, CheckCircle2,
-  Package, Trash2, Edit2, Camera, Clock, MessageCircle
+  Package, Trash2, Edit2, Camera, Clock, MessageCircle, PlusSquare,
+  MonitorSmartphone, Key, Book, Shirt, Backpack, Wallet, Activity, Box, LayoutGrid, Contact, RotateCcw
 } from 'lucide-react'
 
+const pjs = (size, weight, lh, color) => ({
+  fontFamily: "'Plus Jakarta Sans', sans-serif",
+  fontSize: size, fontWeight: weight, lineHeight: lh, color,
+})
+const inter = (size, weight, lh, color) => ({
+  fontFamily: "'Inter', sans-serif",
+  fontSize: size, fontWeight: weight, lineHeight: lh, color,
+})
+
+
 const CATEGORIES = [
-  { value: 'all',         label: 'All',         emoji: '🔍', color: '#4f46e5', bg: '#eef2ff' },
-  { value: 'electronics', label: 'Electronics', emoji: '💻', color: '#4f46e5', bg: '#eef2ff' },
-  { value: 'keys',        label: 'Keys',        emoji: '🔑', color: '#d97706', bg: '#fffbeb' },
-  { value: 'id_card',     label: 'ID Card',     emoji: '🪪', color: '#2563eb', bg: '#eff6ff' },
-  { value: 'clothing',    label: 'Clothing',    emoji: '👕', color: '#db2777', bg: '#fdf2f8' },
-  { value: 'books',       label: 'Books',       emoji: '📚', color: '#16a34a', bg: '#f0fdf4' },
-  { value: 'bag',         label: 'Bag',         emoji: '🎒', color: '#ea580c', bg: '#fff7ed' },
-  { value: 'wallet',      label: 'Wallet',      emoji: '👛', color: '#ca8a04', bg: '#fefce8' },
-  { value: 'jewellery',   label: 'Jewellery',   emoji: '💍', color: '#9333ea', bg: '#faf5ff' },
-  { value: 'sports',      label: 'Sports',      emoji: '⚽', color: '#0d9488', bg: '#f0fdfa' },
-  { value: 'other',       label: 'Other',       emoji: '📦', color: '#64748b', bg: '#f8fafc' },
+  { value: 'all',         label: 'All',         icon: LayoutGrid, color: '#4f46e5', bg: '#eef2ff' },
+  { value: 'electronics', label: 'Electronics', icon: MonitorSmartphone, color: '#4f46e5', bg: '#eef2ff' },
+  { value: 'keys',        label: 'Keys',        icon: Key, color: '#d97706', bg: '#fffbeb' },
+  { value: 'id_card',     label: 'ID Card',     icon: Contact, color: '#2563eb', bg: '#eff6ff' },
+  { value: 'clothing',    label: 'Clothing',    icon: Shirt, color: '#db2777', bg: '#fdf2f8' },
+  { value: 'books',       label: 'Books',       icon: Book, color: '#16a34a', bg: '#f0fdf4' },
+  { value: 'bag',         label: 'Bag',         icon: Backpack, color: '#ea580c', bg: '#fff7ed' },
+  { value: 'wallet',      label: 'Wallet',      icon: Wallet, color: '#ca8a04', bg: '#fefce8' },
+  { value: 'jewellery',   label: 'Jewellery',   icon: Activity, color: '#9333ea', bg: '#faf5ff' },
+  { value: 'sports',      label: 'Sports',      icon: Activity, color: '#0d9488', bg: '#f0fdfa' },
+  { value: 'other',       label: 'Other',       icon: Box, color: '#64748b', bg: '#f8fafc' },
 ]
 const catInfo = (v) => CATEGORIES.find(c => c.value === v) || CATEGORIES[CATEGORIES.length - 1]
 
 const STATUS_CONFIG = {
-  lost:     { label: 'Lost',     bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' },
-  found:    { label: 'Found',    bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' },
+  lost: { label: 'Lost', bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' },
+  found: { label: 'Found', bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' },
   resolved: { label: 'Resolved', bg: '#f0f9ff', color: '#0369a1', border: '#bae6fd' },
 }
 
@@ -48,7 +59,55 @@ function StatusBadge({ status }) {
 
 function CatBadge({ category }) {
   const c = catInfo(category)
-  return <span style={{ background: c.bg, color: c.color, padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>{c.emoji} {c.label}</span>
+  const Icon = c.icon
+  return (
+    <span style={{ 
+      background: c.bg, color: c.color, 
+      padding: '2px 8px', borderRadius: 6, 
+      fontSize: 11, fontWeight: 600, 
+      display: 'inline-flex', alignItems: 'center', gap: 5 
+    }}>
+      <Icon size={12} strokeWidth={2.5} /> {c.label}
+    </span>
+  )
+}
+
+
+function CustomConfirmModal({ open, title, message, onConfirm, onCancel, confirmText = 'Confirm', type = 'danger' }) {
+  if (!open) return null
+  const isDanger = type === 'danger'
+  const isSuccess = type === 'success'
+  
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.4)', backdropFilter: 'blur(8px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ background: '#fff', borderRadius: 28, padding: '32px 32px 24px', width: '100%', maxWidth: 400, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', border: '1px solid #f1f5f9', textAlign: 'center' }}>
+        <div style={{ width: 64, height: 64, borderRadius: '50%', background: isDanger ? '#fef2f2' : isSuccess ? '#f0fdf4' : '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+          {isDanger ? <AlertCircle size={32} color="#dc2626" /> : isSuccess ? <CheckCircle2 size={32} color="#16a34a" /> : <RotateCcw size={32} color="#4f46e5" />}
+        </div>
+        <h3 style={{ margin: '0 0 10px', ...pjs(20, 800, '28px', '#0f172a') }}>{title}</h3>
+        <p style={{ margin: '0 0 28px', ...pjs(14, 400, '22px', '#64748b') }}>{message}</p>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button onClick={onCancel} style={{ flex: 1, padding: '14px', borderRadius: 16, border: '1.5px solid #e2e8f0', background: '#fff', ...pjs(14, 700, '20px', '#475569'), cursor: 'pointer' }}>Cancel</button>
+          <button onClick={onConfirm} style={{ 
+            flex: 1, padding: '14px', borderRadius: 16, border: 'none', 
+            background: isDanger ? '#dc2626' : '#4f46e5', color: '#fff', 
+            ...pjs(14, 700, '20px', '#fff'), cursor: 'pointer',
+            boxShadow: isDanger ? '0 8px 20px rgba(220, 38, 38, 0.25)' : '0 8px 20px rgba(79, 70, 229, 0.25)' 
+          }}>{confirmText}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ImageModal({ url, onClose }) {
+  if (!url) return null
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.92)', backdropFilter: 'blur(12px)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={onClose}>
+      <button style={{ position: 'absolute', top: 30, right: 30, background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 14, padding: 12, cursor: 'pointer', color: '#fff' }}><X size={24} /></button>
+      <img src={url} alt="full view" style={{ maxWidth: '95vw', maxHeight: '90vh', borderRadius: 24, boxShadow: '0 24px 64px rgba(0,0,0,0.4)', objectFit: 'contain' }} onClick={e => e.stopPropagation()} />
+    </div>
+  )
 }
 
 function shareOnWhatsApp(item) {
@@ -58,73 +117,142 @@ function shareOnWhatsApp(item) {
 }
 
 function ItemCard({ item, currentUserId, onClaim, onChat }) {
+  const [descExpanded, setDescExpanded] = useState(false)
   const ci = catInfo(item.category)
   const isResolved = item.status === 'resolved'
   const isOwn = item.reporter?.id === currentUserId
+
+  const itemDate = item.date ? new Date(item.date) : new Date(item.created_at || Date.now())
+  const timeStr = isNaN(itemDate.getTime()) ? '' : itemDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+
+  const isLost = item.status === 'lost'
+  const statusLabel = isLost ? 'LOST' : item.status === 'resolved' ? 'RESOLVED' : 'FOUND'
+  const fallbackBg = isLost ? 'linear-gradient(135deg, #4F46E5, #818CF8)' : 'linear-gradient(135deg, #059669, #34d399)'
+
   return (
-    <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #f1f5f9', boxShadow: '0 2px 10px rgba(0,0,0,0.04)', overflow: 'hidden', opacity: isResolved ? 0.72 : 1, transition: 'box-shadow 0.15s, transform 0.15s' }}
-      onMouseEnter={e => { if (!isResolved) { e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,0,0,0.09)'; e.currentTarget.style.transform = 'translateY(-2px)' } }}
-      onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.04)'; e.currentTarget.style.transform = 'none' }}
-    >
-      <div style={{ height: 140, background: isResolved ? '#f8fafc' : ci.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-        {item.image_url ? <img src={item.image_url} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          : <span style={{ fontSize: 56, filter: isResolved ? 'grayscale(0.6)' : 'none' }}>{ci.emoji}</span>}
-        <div style={{ position: 'absolute', top: 10, left: 10 }}><StatusBadge status={item.status} /></div>
+    <div style={{ background: '#fff', borderRadius: 24, border: '1px solid #f1f5f9', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'transform 0.2s', opacity: isResolved ? 0.72 : 1 }}
+      onMouseEnter={e => { if (!isResolved) e.currentTarget.style.transform = 'translateY(-4px)' }}
+      onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
+      <div style={{ height: 260, position: 'relative', background: fallbackBg, cursor: item.image_url ? 'zoom-in' : 'default' }} onClick={() => item.image_url && onClaim(item, 'view')}>
+        {item.image_url ?
+          <img src={item.image_url} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' } } /> :
+          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ci.icon size={64} color="rgba(255,255,255,0.2)" />
+          </div>
+        }
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 80, background: 'linear-gradient(to bottom, rgba(0,0,0,0.4), transparent)' }}></div>
+
+        {!isResolved && (
+          <div style={{ position: 'absolute', top: 16, left: 16, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+            <span style={{
+              background: isLost ? '#f1f5f9' : '#14b8a6',
+              color: isLost ? '#4f46e5' : '#ffffff',
+              padding: '4px 12px',
+              borderRadius: 20,
+              fontSize: 10,
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}>{statusLabel}</span>
+          </div>
+        )}
+
         {isResolved && (
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ background: '#fff', borderRadius: 50, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <CheckCircle2 size={16} color="#16a34a" /><span style={{ fontSize: 12, fontWeight: 700, color: '#15803d' }}>Resolved</span>
+            <div style={{ background: '#fff', borderRadius: 50, padding: '10px 18px', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+              <CheckCircle2 size={18} color="#16a34a" /><span style={{ fontSize: 13, fontWeight: 800, color: '#15803d' }}>Resolved</span>
             </div>
           </div>
         )}
       </div>
-      <div style={{ padding: '16px 18px 18px' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
-          <div style={{ fontWeight: 700, fontSize: 14, color: '#0f172a', lineHeight: '20px' }}>{item.title}</div>
-          <CatBadge category={item.category} />
+
+      <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
+          <h3 style={{ margin: 0, ...pjs(18, 800, '24px', '#0f172a') }}>{item.title}</h3>
+          <div style={{ background: ci.bg, color: ci.color, padding: '4px 12px', borderRadius: 10, ...inter(11, 700, '15px', ci.color), display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            <ci.icon size={14} strokeWidth={2.5} /> {ci.label}
+          </div>
         </div>
-        {item.description && <p style={{ fontSize: 12, color: '#64748b', lineHeight: '18px', margin: '0 0 10px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.description}</p>}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 12 }}>
-          {item.location && <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#475569' }}><MapPin size={12} color="#94a3b8" />{item.location}</div>}
-          {item.date && <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#475569' }}><Calendar size={12} color="#94a3b8" />{new Date(item.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-          <Avatar name={item.reporter?.full_name} url={item.reporter?.avatar_url} size={26} />
-          <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>{item.reporter?.full_name || 'Anonymous'}</span>
-          {item.claims?.length > 0 && <span style={{ marginLeft: 'auto', background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa', borderRadius: 10, padding: '2px 8px', fontSize: 11, fontWeight: 600 }}>{item.claims.length} claim{item.claims.length !== 1 ? 's' : ''}</span>}
-        </div>
-        {!isResolved && !isOwn && item.reporter && (
-          <div style={{ display: 'flex', gap: 8 }}>
-            {item.status === 'lost' && (
-              <button onClick={() => onClaim(item)} style={{ flex: 1, padding: '9px', borderRadius: 10, border: 'none', background: '#4f46e5', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>This is Mine / Chat</button>
-            )}
-            {item.status === 'found' && (
-              <button onClick={() => onChat(item, item.reporter)} style={{ flex: 1, padding: '9px', borderRadius: 10, border: 'none', background: '#15803d', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                <MessageCircle size={15} /> Chat with Reporter
-              </button>
-            )}
-            <button onClick={() => shareOnWhatsApp(item)} title="Share on WhatsApp"
-              style={{ padding: '9px 10px', borderRadius: 10, border: '1.5px solid #dcfce7', background: '#f0fdf4', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.374 0 0 5.373 0 12c0 2.917 1.044 5.589 2.763 7.663L.957 23.485l3.938-1.033A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.374l-.36-.214-3.716.974.992-3.625-.234-.374A9.818 9.818 0 1121.818 12 9.829 9.829 0 0112 21.818z"/></svg>
-            </button>
+
+        {item.description && (
+          <div style={{ marginBottom: 16, cursor: 'pointer' }} onClick={() => setDescExpanded(!descExpanded)}>
+            <p style={{ margin: 0, ...pjs(14, 400, '22px', '#64748b'), ...(descExpanded ? {} : { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }) }}>
+              {item.description}
+            </p>
           </div>
         )}
-        {isOwn && !isResolved && <div style={{ fontSize: 12, color: '#94a3b8', textAlign: 'center', fontStyle: 'italic' }}>Your post</div>}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+          {item.location && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <MapPin size={14} color="#94a3b8" />
+              <span style={pjs(13, 500, '18px', '#64748b')}>{item.location}</span>
+            </div>
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Calendar size={14} color="#94a3b8" />
+            <span style={pjs(13, 500, '18px', '#64748b')}>{timeStr}</span>
+          </div>
+        </div>
+
+        {item.reporter && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 'auto', marginBottom: 24, padding: '10px 14px', background: '#f8fafc', borderRadius: 16 }}>
+            <Avatar name={item.reporter.full_name} url={item.reporter.avatar_url} size={28} />
+            <span style={pjs(13, 600, '18px', '#475569')}>{item.reporter.full_name}</span>
+          </div>
+        )}
+
+        <div style={{ marginTop: item.reporter ? 0 : 'auto', display: 'flex', gap: 12 }}>
+          {!isResolved && !isOwn && item.reporter && (
+            <>
+              <button
+                onClick={() => isLost ? onClaim(item) : onChat(item, item.reporter)}
+                style={{
+                  flex: 1, padding: '12px', borderRadius: 14, border: 'none',
+                  background: '#4f46e5', color: '#fff',
+                  ...pjs(14, 700, '20px', '#fff'), cursor: 'pointer', transition: 'all 0.2s',
+                  boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = '#4338ca'}
+                onMouseLeave={e => e.currentTarget.style.background = '#4f46e5'}
+              >
+                {isLost ? 'This is Mine / Chat' : 'Contact Reporter'}
+              </button>
+              <button
+                onClick={() => shareOnWhatsApp(item)}
+                style={{ width: 44, height: 44, borderRadius: 14, background: '#dcfce7', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="#16a34a" strokeWidth="2.5" fill="none"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+              </button>
+            </>
+          )}
+          {isOwn && !isResolved && (
+            <div style={{ flex: 1, padding: '12px', background: '#f8fafc', borderRadius: 14, textAlign: 'center', ...pjs(13, 700, '18px', '#94a3b8'), border: '1px solid #f1f5f9' }}>
+              Your Post
+            </div>
+          )}
+          {isResolved && (
+            <div style={{ flex: 1, padding: '12px', background: '#f0fdf4', borderRadius: 14, textAlign: 'center', ...pjs(13, 700, '18px', '#16a34a'), border: '1px solid #dcfce7' }}>
+              Resolved
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
 function ClaimChatModal({ item, otherUser, currentUser, onClose, onSubmit, hasClaim }) {
-  const [activeTab, setActiveTab]   = useState(hasClaim ? 'chat' : 'claim')
-  const [claimed,   setClaimed]     = useState(hasClaim || false)
+  const [activeTab, setActiveTab] = useState(hasClaim ? 'chat' : 'claim')
+  const [claimed, setClaimed] = useState(hasClaim || false)
   const [chatUnread, setChatUnread] = useState(0)
   const activeTabRef = useRef(activeTab)
   useEffect(() => { activeTabRef.current = activeTab }, [activeTab])
   // Claim form state
-  const [message,    setMessage]    = useState('')
+  const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [error,      setError]      = useState('')
+  const [error, setError] = useState('')
   const ci = catInfo(item.category)
 
   const convIdRef = useRef(null)
@@ -160,11 +288,13 @@ function ClaimChatModal({ item, otherUser, currentUser, onClose, onSubmit, hasCl
         {/* Header */}
         <div style={{ padding: '20px 24px 0', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 24 }}>{ci.emoji}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: ci.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: ci.color }}>
+                <ci.icon size={22} strokeWidth={2.5} />
+              </div>
               <div>
-                <div style={{ fontWeight: 800, fontSize: 15, color: '#0f172a' }}>{item.title}</div>
-                <div style={{ fontSize: 12, color: '#64748b' }}>{item.location}</div>
+                <div style={{ fontWeight: 800, fontSize: 16, color: '#0f172a' }}>{item.title}</div>
+                <div style={{ fontSize: 13, color: '#64748b' }}>{item.location}</div>
               </div>
             </div>
             <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: 10, padding: 8, cursor: 'pointer' }}><X size={18} color="#64748b" /></button>
@@ -248,7 +378,7 @@ function ClaimChatModal({ item, otherUser, currentUser, onClose, onSubmit, hasCl
 
 function ReportModal({ initial, onClose, onSaved }) {
   const isEdit = !!initial?.id
-  const [form, setForm] = useState(initial || { title: '', description: '', status: 'lost', category: 'other', location: '', contact_info: '', date: new Date().toISOString().split('T')[0], image_url: '' })
+  const [form, setForm] = useState(initial || { title: '', description: '', status: 'lost', category: 'other', location: '', date: new Date().toISOString().split('T')[0], image_url: '' })
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [preview, setPreview] = useState(initial?.image_url || '')
@@ -281,7 +411,7 @@ function ReportModal({ initial, onClose, onSaved }) {
     try {
       // Only send image_url if it's a real URL (not a local blob preview)
       const imageUrl = form.image_url && !form.image_url.startsWith('blob:') ? form.image_url : undefined
-      const payload = { title: form.title, description: form.description, status: form.status, category: form.category, location: form.location, contact_info: form.contact_info, date: form.date, image_url: imageUrl }
+      const payload = { title: form.title, description: form.description, status: form.status, category: form.category, location: form.location, date: form.date, image_url: imageUrl }
       const res = isEdit ? await api.patch(`/api/lost-found/${initial.id}`, payload) : await api.post('/api/lost-found', payload)
       if (!res.success) throw new Error(res.error || 'Failed')
       onSaved(res.data, isEdit)
@@ -297,38 +427,69 @@ function ReportModal({ initial, onClose, onSaved }) {
         </div>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', gap: 10 }}>
-            {['lost','found'].map(s => (
-              <button key={s} type="button" onClick={() => set('status', s)} style={{ flex: 1, padding: '12px', borderRadius: 12, border: '2px solid', borderColor: form.status === s ? (s==='lost'?'#c2410c':'#15803d') : '#e2e8f0', background: form.status === s ? (s==='lost'?'#fff7ed':'#f0fdf4') : '#fff', color: form.status === s ? (s==='lost'?'#c2410c':'#15803d') : '#64748b', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+            {['lost', 'found'].map(s => (
+              <button key={s} type="button" onClick={() => set('status', s)} style={{ flex: 1, padding: '12px', borderRadius: 12, border: '2px solid', borderColor: form.status === s ? (s === 'lost' ? '#c2410c' : '#15803d') : '#e2e8f0', background: form.status === s ? (s === 'lost' ? '#fff7ed' : '#f0fdf4') : '#fff', color: form.status === s ? (s === 'lost' ? '#c2410c' : '#15803d') : '#64748b', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
                 {s === 'lost' ? '😢 I Lost Something' : '😊 I Found Something'}
               </button>
             ))}
           </div>
           <div>
             <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>Category</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {CATEGORIES.slice(1).map(c => (
-                <button key={c.value} type="button" onClick={() => set('category', c.value)} style={{ padding: '6px 12px', borderRadius: 8, border: '1.5px solid', borderColor: form.category === c.value ? c.color : '#e2e8f0', background: form.category === c.value ? c.bg : '#fff', color: form.category === c.value ? c.color : '#64748b', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                  {c.emoji} {c.label}
-                </button>
-              ))}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {CATEGORIES.slice(1).map(c => {
+                const isSel = form.category === c.value
+                const Icon = c.icon
+                return (
+                  <button key={c.value} type="button" onClick={() => set('category', c.value)} 
+                    style={{ 
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '8px 14px', borderRadius: 10, border: '1.5px solid', 
+                      borderColor: isSel ? c.color : '#e2e8f0', 
+                      background: isSel ? c.bg : '#fff', color: isSel ? c.color : '#64748b', 
+                      fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}>
+                    <Icon size={14} strokeWidth={isSel ? 2.5 : 2} />
+                    {c.label}
+                  </button>
+                )
+              })}
             </div>
           </div>
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Photo <span style={{ fontWeight: 400, color: '#94a3b8' }}>(optional)</span></label>
-            <input type="file" ref={fileRef} onChange={handleFile} accept="image/*" style={{ display: 'none' }} />
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>Item Photo</label>
             {preview ? (
-              <div style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', height: 140 }}>
+              <div style={{ position: 'relative', height: 180, borderRadius: 16, overflow: 'hidden', border: '1.5px solid #e2e8f0' }}>
                 <img src={preview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                <button type="button" onClick={() => { setPreview(''); set('image_url', '') }} style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: 8, padding: 6, cursor: 'pointer', color: '#fff', display: 'flex' }}><X size={14} /></button>
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(15,23,42,0.4)', opacity: 0, transition: 'opacity 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'default' }} 
+                  onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                  onMouseLeave={e => e.currentTarget.style.opacity = 0}>
+                  <button type="button" onClick={() => fileRef.current?.click()} style={{ padding: '8px 16px', borderRadius: 12, border: 'none', background: '#fff', color: '#0f172a', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Camera size={16} /> Change
+                  </button>
+                  <button type="button" onClick={() => { setPreview(''); set('image_url', '') }} style={{ width: 36, height: 36, borderRadius: 12, border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+                {uploading && (
+                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <div style={{ width: 24, height: 24, border: '2.5px solid #e2e8f0', borderTopColor: '#4f46e5', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#4f46e5' }}>Uploading...</span>
+                  </div>
+                )}
               </div>
             ) : (
               <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
-                style={{ width: '100%', padding: '18px', borderRadius: 12, border: '2px dashed #e2e8f0', background: '#fafafa', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = '#4f46e5'} onMouseLeave={e => e.currentTarget.style.borderColor = '#e2e8f0'}>
-                {uploading ? <div style={{ width: 20, height: 20, border: '2px solid #e2e8f0', borderTopColor: '#4f46e5', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                  : <><Camera size={22} color="#94a3b8" /><span style={{ fontSize: 13, color: '#94a3b8' }}>Upload a photo</span></>}
+                style={{ width: '100%', padding: '24px', borderRadius: 16, border: '2px dashed #e2e8f0', background: '#f8fafc', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, transition: 'all 0.2s' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = '#4f46e5'; e.currentTarget.style.background = '#f0f7ff' }} 
+                onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#f8fafc' }}>
+                <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                  <Camera size={22} color={uploading ? '#cbd5e1' : '#64748b'} />
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#64748b' }}>{uploading ? 'Processing...' : 'Upload Item Photo'}</span>
               </button>
             )}
+            <input type="file" ref={fileRef} onChange={handleFile} accept="image/*" style={{ display: 'none' }} />
           </div>
           <div>
             <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Item Name *</label>
@@ -356,12 +517,6 @@ function ReportModal({ initial, onClose, onSaved }) {
               style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 13, resize: 'vertical', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
               onFocus={e => e.target.style.borderColor = '#4f46e5'} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
           </div>
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Contact Info <span style={{ fontWeight: 400, color: '#94a3b8' }}>(phone / email / WhatsApp)</span></label>
-            <input value={form.contact_info} onChange={e => set('contact_info', e.target.value)} placeholder="e.g. 9876543210"
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
-              onFocus={e => e.target.style.borderColor = '#4f46e5'} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
-          </div>
           {error && <div style={{ padding: '10px 14px', borderRadius: 10, background: '#fef2f2', color: '#dc2626', fontSize: 13 }}>{error}</div>}
           <div style={{ display: 'flex', gap: 10 }}>
             <button type="button" onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#475569' }}>Cancel</button>
@@ -383,7 +538,9 @@ function MyPostCard({ item, onEdit, onDelete, onResolve, onClaimAction, onChat }
   return (
     <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
       <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-        <div style={{ width: 48, height: 48, borderRadius: 12, background: ci.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>{ci.emoji}</div>
+        <div style={{ width: 48, height: 48, borderRadius: 12, background: ci.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: ci.color, flexShrink: 0 }}>
+          <ci.icon size={22} strokeWidth={2.5} />
+        </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
             <span style={{ fontWeight: 700, fontSize: 15, color: '#0f172a' }}>{item.title}</span>
@@ -396,12 +553,16 @@ function MyPostCard({ item, onEdit, onDelete, onResolve, onClaimAction, onChat }
             <span style={{ fontSize: 12, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={11} />{new Date(item.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-          {item.status !== 'resolved' && <>
-            <button onClick={() => onEdit(item)} style={{ padding: '7px 12px', borderRadius: 9, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', color: '#475569', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}><Edit2 size={13} />Edit</button>
-            <button onClick={() => onResolve(item.id)} style={{ padding: '7px 12px', borderRadius: 9, border: '1.5px solid #bbf7d0', background: '#f0fdf4', cursor: 'pointer', color: '#15803d', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}><CheckCircle2 size={13} />Resolve</button>
-          </>}
-          <button onClick={() => onDelete(item.id)} style={{ padding: '7px', borderRadius: 9, border: '1px solid #fee2e2', background: '#fff', cursor: 'pointer', color: '#ef4444', display: 'flex', alignItems: 'center' }}><Trash2 size={14} /></button>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          {item.status !== 'resolved' ? (
+            <>
+              <button onClick={() => onEdit(item)} style={{ padding: '8px 14px', borderRadius: 12, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', color: '#475569', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}><Edit2 size={14} />Edit</button>
+              <button onClick={() => onResolve(item.id, item.status)} style={{ padding: '8px 14px', borderRadius: 12, border: 'none', background: '#f0fdf4', cursor: 'pointer', color: '#15803d', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}><CheckCircle2 size={14} />Resolve</button>
+            </>
+          ) : (
+            <button onClick={() => onResolve(item.id, item.status)} style={{ padding: '8px 14px', borderRadius: 12, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', color: '#64748b', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}><RotateCcw size={14} />Unresolve</button>
+          )}
+          <button onClick={() => onDelete(item.id)} style={{ width: 40, height: 40, borderRadius: 12, border: '1.5px solid #fee2e2', background: '#fff', cursor: 'pointer', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={16} /></button>
         </div>
       </div>
       {(item.claims || []).length > 0 && (
@@ -466,11 +627,13 @@ export default function LostFoundPage() {
   const [catFilter, setCatFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [sortBy, setSortBy] = useState('recent')
   // claimChatTarget: item (for lost items — opens combined Claim+Chat modal)
   const [claimChatTarget, setClaimChatTarget] = useState(null)
   // chatTarget: { item, otherUser } (for found items — chat only)
   const [chatTarget, setChatTarget] = useState(null)
   const [reportTarget, setReportTarget] = useState(null)
+  const [viewImageUrl, setViewImageUrl] = useState(null)
 
   useEffect(() => { const t = setTimeout(() => setDebouncedSearch(search), 350); return () => clearTimeout(t) }, [search])
 
@@ -479,8 +642,8 @@ export default function LostFoundPage() {
     try {
       const params = new URLSearchParams()
       if (statusFilter !== 'all') params.set('status', statusFilter)
-      if (catFilter !== 'all')    params.set('category', catFilter)
-      if (debouncedSearch)        params.set('search', debouncedSearch)
+      if (catFilter !== 'all') params.set('category', catFilter)
+      if (debouncedSearch) params.set('search', debouncedSearch)
       const res = await api.get(`/api/lost-found?${params}`)
       const fetched = res.success ? (res.data || []) : []
       setItems(fetched)
@@ -503,8 +666,8 @@ export default function LostFoundPage() {
   useEffect(() => { if (tab === 'mine') fetchMyItems() }, [tab, fetchMyItems])
   useEffect(() => { if (tab === 'claimed') fetchMyClaims() }, [tab, fetchMyClaims])
 
-  const lostCount     = items.filter(i => i.status === 'lost').length
-  const foundCount    = items.filter(i => i.status === 'found').length
+  const lostCount = items.filter(i => i.status === 'lost').length
+  const foundCount = items.filter(i => i.status === 'found').length
   const resolvedCount = items.filter(i => i.status === 'resolved').length
 
   const handleClaim = async ({ message, proof_url }) => {
@@ -518,17 +681,55 @@ export default function LostFoundPage() {
     setClaimChatTarget(null)
     if (switchTab && tab !== 'claimed') setTab('claimed')
   }
-  const handleResolve = async (id) => {
-    if (!window.confirm('Mark this item as resolved?')) return
-    await api.patch(`/api/lost-found/${id}/resolve`); fetchMyItems(); fetchItems()
+  const [confirmConfig, setConfirmConfig] = useState(null)
+
+  const handleResolve = async (id, currentStatus) => {
+    const isResolving = currentStatus !== 'resolved'
+    setConfirmConfig({
+      title: isResolving ? 'Mark as Resolved?' : 'Mark as Unresolved?',
+      message: isResolving 
+        ? 'This will hide the item from public browse and stop new claims.' 
+        : 'This will make the item public again for browsing and claims.',
+      confirmText: isResolving ? 'Confirm Resolve' : 'Make Public',
+      type: isResolving ? 'success' : 'primary',
+      onConfirm: async () => {
+        const endpoint = isResolving ? 'resolve' : 'unresolve'
+        await api.patch(`/api/lost-found/${id}/${endpoint}`)
+        fetchMyItems(); fetchItems()
+        setConfirmConfig(null)
+      }
+    })
   }
+
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this post permanently?')) return
-    await api.delete(`/api/lost-found/${id}`)
-    setMyItems(p => p.filter(i => i.id !== id)); setItems(p => p.filter(i => i.id !== id))
+    setConfirmConfig({
+      title: 'Delete Post?',
+      message: 'This action is permanent and cannot be undone. All claims will be removed.',
+      confirmText: 'Delete Forever',
+      type: 'danger',
+      onConfirm: async () => {
+        await api.delete(`/api/lost-found/${id}`)
+        setMyItems(p => p.filter(i => i.id !== id))
+        setItems(p => p.filter(i => i.id !== id))
+        setConfirmConfig(null)
+      }
+    })
   }
   const handleClaimAction = async (itemId, claimId, action) => {
-    await api.patch(`/api/lost-found/${itemId}/claim/${claimId}`, { action }); fetchMyItems(); fetchItems()
+    const isApprove = action === 'approve'
+    setConfirmConfig({
+      title: isApprove ? 'Approve Claim?' : 'Reject Claim?',
+      message: isApprove 
+        ? 'This will verify the owner. You can still chat with them after approving.' 
+        : 'This will remove the claim. The user can submit a new one if needed.',
+      confirmText: isApprove ? 'Yes, Approve' : 'Yes, Reject',
+      type: isApprove ? 'success' : 'danger',
+      onConfirm: async () => {
+        await api.patch(`/api/lost-found/${itemId}/claim/${claimId}`, { action })
+        fetchMyItems(); fetchItems()
+        setConfirmConfig(null)
+      }
+    })
   }
   const handleSaved = (data, isEdit) => {
     if (isEdit) {
@@ -565,72 +766,189 @@ export default function LostFoundPage() {
         />
       )}
       {reportTarget !== null && <ReportModal initial={reportTarget?.id ? reportTarget : null} onClose={() => setReportTarget(null)} onSaved={handleSaved} />}
+      
+      <ImageModal url={viewImageUrl} onClose={() => setViewImageUrl(null)} />
+      
+      <CustomConfirmModal 
+        open={!!confirmConfig}
+        {...confirmConfig}
+        onCancel={() => setConfirmConfig(null)}
+      />
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+
+      {/* Premium Header */}
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+        padding: '20px 28px', borderRadius: 24,
+        boxShadow: '0 10px 30px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9',
+        gap: 24, flexWrap: 'wrap', marginBottom: 8
+      }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0f172a', margin: 0 }}>Lost & Found</h1>
-          <p style={{ fontSize: 14, color: '#64748b', marginTop: 4, marginBottom: 0 }}>Report lost items or help return found items to their owners.</p>
+          <h1 style={{ ...pjs(28, 800, '36px', '#0f172a'), margin: 0 }}>Lost & Found</h1>
+          <p style={{ ...pjs(14, 400, '22px', '#64748b'), marginTop: 4 }}>Report lost items or help return found items to the community.</p>
         </div>
-        <button onClick={() => setReportTarget({})} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 22px', borderRadius: 12, border: 'none', background: '#4f46e5', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
-          <Plus size={17} /> Report Item
+        <button
+          onClick={() => setReportTarget({})}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '14px 28px', borderRadius: 16,
+            background: '#4f46e5', color: '#fff', border: 'none',
+            ...pjs(15, 700, '22px', '#fff'), cursor: 'pointer',
+            boxShadow: '0 8px 20px rgba(79, 70, 229, 0.25)',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.background = '#4338ca' }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.background = '#4f46e5' }}
+        >
+          <Plus size={18} strokeWidth={2.5} /> <span>Report New Item</span>
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-        {[{ label: 'Lost Items', count: lostCount, color: '#c2410c', bg: '#fff7ed', border: '#fed7aa' },
-          { label: 'Found Items', count: foundCount, color: '#15803d', bg: '#f0fdf4', border: '#bbf7d0' },
-          { label: 'Resolved', count: resolvedCount, color: '#0369a1', bg: '#f0f9ff', border: '#bae6fd' }
-        ].map((s, i) => (
-          <div key={i} style={{ background: s.bg, borderRadius: 16, border: `1px solid ${s.border}`, padding: '18px 22px' }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: s.color, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.label}</div>
-            <div style={{ fontSize: 30, fontWeight: 800, color: s.color }}>{s.count}</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid #f1f5f9' }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 8, padding: 4, background: '#f1f5f9', borderRadius: 18, width: 'fit-content' }}>
         {[
-          { id: 'browse',  label: 'Browse Items' },
-          { id: 'claimed', label: `My Claims${myClaims.length ? ` (${myClaims.length})` : ''}` },
-          { id: 'mine',    label: `My Posts${myItems.length ? ` (${myItems.length})` : ''}` },
+          { id: 'browse', label: 'Browse Items', icon: Package },
+          { id: 'claimed', label: 'My Claims', count: myClaims.length, icon: CheckCircle2 },
+          { id: 'mine', label: 'My Posts', count: myItems.length, icon: PlusSquare },
         ].map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} style={{ padding: '12px 24px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: tab === t.id ? 700 : 500, color: tab === t.id ? '#4f46e5' : '#64748b', borderBottom: tab === t.id ? '2px solid #4f46e5' : '2px solid transparent', marginBottom: -2 }}>{t.label}</button>
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '6px 14px', borderRadius: 14,
+              background: tab === t.id ? '#fff' : 'transparent',
+              border: 'none', cursor: 'pointer',
+              ...pjs(14, tab === t.id ? 800 : 500, '20px', tab === t.id ? '#4f46e5' : '#64748b'),
+              boxShadow: tab === t.id ? '0 4px 12px rgba(0,0,0,0.05)' : 'none',
+              transition: 'all 0.2s'
+            }}
+          >
+            <t.icon size={16} strokeWidth={tab === t.id ? 2.5 : 2} />
+            {t.label}
+            {!!t.count && (
+              <span style={{
+                background: tab === t.id ? '#4f46e5' : '#cbd5e1',
+                color: '#fff', fontSize: 11, fontWeight: 700,
+                padding: '2px 8px', borderRadius: 8, marginLeft: 4
+              }}>
+                {t.count}
+              </span>
+            )}
+          </button>
         ))}
       </div>
 
       {tab === 'browse' && (
         <>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', padding: '16px 20px' }}>
-            <div style={{ position: 'relative' }}>
-              <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by item name, location..."
-                style={{ width: '100%', padding: '10px 36px 10px 36px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
-                onFocus={e => e.target.style.borderColor = '#4f46e5'} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
-              {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer' }}><X size={14} color="#94a3b8" /></button>}
+          <div style={{ background: '#fff', borderRadius: 28, border: '1px solid #f1f5f9', padding: '24px', marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+              {/* Search */}
+              <div style={{ position: 'relative', flex: '1 1 300px', maxWidth: 400 }}>
+                <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="15" height="15" viewBox="0 0 15 15" fill="none">
+                  <circle cx="6.5" cy="6.5" r="5.5" stroke="#94a3b8" strokeWidth="1.3"/>
+                  <path d="M11 11l3 3" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round"/>
+                </svg>
+                <input
+                  placeholder="Search items, areas, descriptions..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  style={{
+                    width: '100%', padding: '12px 16px 12px 42px',
+                    background: '#fff', border: '1.5px solid #f1f5f9', borderRadius: 14,
+                    ...pjs(14, 400, '20px', '#0f172a'), outline: 'none',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}><X size={18} color="#94a3b8" /></button>}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                {/* Status Switcher */}
+                <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: 14, padding: 4 }}>
+                  {['all', 'lost', 'found', 'resolved'].map(s => {
+                    const isSelected = statusFilter === s
+                    const lbl = s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)
+                    const col = s === 'all' ? '#4f46e5' : STATUS_CONFIG[s].color
+                    return (
+                      <button key={s} onClick={() => setStatusFilter(s)}
+                        style={{
+                          padding: '8px 18px', borderRadius: 11, border: 'none',
+                          background: isSelected ? '#fff' : 'transparent',
+                          color: isSelected ? col : '#64748b',
+                          ...pjs(13, isSelected ? 800 : 500, '18px', isSelected ? col : '#64748b'),
+                          cursor: 'pointer',
+                          boxShadow: isSelected ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                          transition: 'all 0.2s'
+                        }}>
+                        {lbl}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* Sort Dropdown */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f8fafc', border: '1px solid #e2e8f0', padding: '8px 16px', borderRadius: 14 }}>
+                  <span style={pjs(13, 600, '18px', '#94a3b8')}>Sort:</span>
+                  <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ border: 'none', background: 'transparent', ...pjs(13, 700, '18px', '#0f172a'), outline: 'none', cursor: 'pointer' }}>
+                    <option value="recent">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                  </select>
+                </div>
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {['all','lost','found','resolved'].map(s => {
-                const lbl = s === 'all' ? 'All Items' : STATUS_CONFIG[s].label
-                const col = s === 'all' ? '#4f46e5' : STATUS_CONFIG[s].color
-                return <button key={s} onClick={() => setStatusFilter(s)} style={{ padding: '7px 14px', borderRadius: 10, border: '1.5px solid', borderColor: statusFilter === s ? col : '#e2e8f0', background: statusFilter === s ? col : '#fff', color: statusFilter === s ? '#fff' : '#475569', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{lbl}</button>
+
+            <div style={{ height: 1, background: '#f1f5f9' }} />
+
+            {/* Category Chips */}
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              {CATEGORIES.map(c => {
+                const isSelected = catFilter === c.value
+                const Icon = c.icon
+                return (
+                  <button key={c.value} onClick={() => setCatFilter(c.value)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '8px 18px', borderRadius: 12, border: '1.5px solid',
+                      borderColor: isSelected ? c.color : '#e2e8f0',
+                      background: isSelected ? c.bg : '#fff',
+                      ...pjs(13, isSelected ? 700 : 500, '18px', isSelected ? c.color : '#64748b'),
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={e => !isSelected && (e.currentTarget.style.borderColor = c.color)}
+                    onMouseLeave={e => !isSelected && (e.currentTarget.style.borderColor = '#e2e8f0')}>
+                    <Icon size={16} strokeWidth={isSelected ? 2.5 : 2} />
+                    {c.label}
+                  </button>
+                )
               })}
-            </div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {CATEGORIES.map(c => <button key={c.value} onClick={() => setCatFilter(c.value)} style={{ padding: '6px 12px', borderRadius: 8, border: '1.5px solid', borderColor: catFilter === c.value ? c.color : '#e2e8f0', background: catFilter === c.value ? c.bg : '#fff', color: catFilter === c.value ? c.color : '#64748b', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{c.emoji} {c.label}</button>)}
             </div>
           </div>
 
-          {loading ? <div style={{ textAlign: 'center', padding: '60px 0', color: '#94a3b8', fontSize: 14 }}>Loading items...</div>
-            : items.length === 0 ? (
+          {(() => {
+            const sortedItems = [...items].sort((a, b) => {
+              const dA = new Date(a.date || a.created_at).getTime()
+              const dB = new Date(b.date || b.created_at).getTime()
+              return sortBy === 'recent' ? dB - dA : dA - dB
+            })
+
+            return loading ? (
+              <div style={{ textAlign: 'center', padding: '60px 0', color: '#94a3b8', fontSize: 14 }}>Loading items...</div>
+            ) : sortedItems.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '60px 0' }}>
                 <Package size={44} style={{ opacity: 0.2, margin: '0 auto 14px', display: 'block' }} />
                 <p style={{ fontSize: 15, color: '#64748b', fontWeight: 600 }}>No items found</p>
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
-                {items.map(item => <ItemCard key={item.id} item={item} currentUserId={user?.id} onClaim={setClaimChatTarget} onChat={(item, otherUser) => setChatTarget({ item, otherUser })} />)}
+                {sortedItems.map(item => (
+                  <ItemCard key={item.id} item={item} currentUserId={user?.id} onClaim={(item, mode) => mode === 'view' ? setViewImageUrl(item.image_url) : setClaimChatTarget(item)} onChat={(item, otherUser) => setChatTarget({ item, otherUser })} />
+                ))}
               </div>
-            )}
+            )
+          })()}
         </>
       )}
 
@@ -653,45 +971,65 @@ export default function LostFoundPage() {
               const STATUS_MAP = { pending: { label: 'Pending Review', color: '#92400e', bg: '#fffbeb', border: '#fde68a' }, approved: { label: 'Approved', color: '#15803d', bg: '#f0fdf4', border: '#bbf7d0' }, rejected: { label: 'Rejected', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' } }
               const cs = STATUS_MAP[claim.status] || STATUS_MAP.pending
               return (
-                <div key={claim.id} style={{ background: '#fff', borderRadius: 18, border: '1px solid #f1f5f9', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
-                  <div style={{ display: 'flex', gap: 16, padding: '18px 20px', alignItems: 'flex-start' }}>
-                    <div style={{ width: 52, height: 52, borderRadius: 14, background: ci.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>{ci.emoji}</div>
+                <div key={claim.id} style={{ background: '#fff', borderRadius: 24, border: '1px solid #f1f5f9', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', overflow: 'hidden', marginBottom: 16 }}>
+                  <div style={{ padding: '24px', display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+                    {/* Item Image or Icon */}
+                    <div style={{ width: 80, height: 80, borderRadius: 18, background: ci.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden', cursor: item.image_url ? 'zoom-in' : 'default' }} onClick={() => item.image_url && setViewImageUrl(item.image_url)}>
+                      {item.image_url ? (
+                        <img src={item.image_url} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <ci.icon size={32} color={ci.color} strokeWidth={2.5} />
+                      )}
+                    </div>
+                    
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
-                        <span style={{ fontWeight: 700, fontSize: 15, color: '#0f172a' }}>{item.title}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
+                        <span style={{ fontWeight: 800, fontSize: 17, color: '#0f172a' }}>{item.title}</span>
                         <StatusBadge status={item.status} />
-                        <span style={{ background: cs.bg, color: cs.color, border: `1px solid ${cs.border}`, padding: '2px 9px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>{cs.label}</span>
+                        <span style={{ background: cs.bg, color: cs.color, border: `1.5px solid ${cs.border}`, padding: '3px 12px', borderRadius: 20, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{cs.label}</span>
                       </div>
-                      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
-                        {item.location && <span style={{ fontSize: 12, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={11} />{item.location}</span>}
-                        {item.date && <span style={{ fontSize: 12, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}><Calendar size={11} />{new Date(item.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}
+                      
+                      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 16 }}>
+                        {item.location && <span style={{ fontSize: 13, color: '#64748b', display: 'flex', alignItems: 'center', gap: 6 }}><MapPin size={14} />{item.location}</span>}
+                        {item.date && <span style={{ fontSize: 13, color: '#64748b', display: 'flex', alignItems: 'center', gap: 6 }}><Calendar size={14} />{new Date(item.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>}
                       </div>
-                      <div style={{ background: '#f8fafc', borderRadius: 10, padding: '10px 14px', marginBottom: 10, borderLeft: `3px solid ${cs.border}` }}>
-                        <div style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Your claim</div>
-                        <p style={{ fontSize: 13, color: '#374151', margin: 0, lineHeight: '18px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{claim.message}</p>
+
+                      <div style={{ background: '#f8fafc', borderRadius: 16, padding: '16px', marginBottom: 16, borderLeft: `4px solid ${cs.border}` }}>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: '#94a3b8', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Your claim details</div>
+                        <p style={{ fontSize: 14, color: '#334155', margin: 0, lineHeight: '22px' }}>{claim.message}</p>
                       </div>
+
                       {claim.admin_note && (
-                        <div style={{ background: claim.status === 'approved' ? '#f0fdf4' : '#fef2f2', borderRadius: 8, padding: '8px 12px', marginBottom: 10, fontSize: 12, color: claim.status === 'approved' ? '#15803d' : '#dc2626' }}>
+                        <div style={{ background: claim.status === 'approved' ? '#f0fdf4' : '#fef2f2', borderRadius: 12, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: claim.status === 'approved' ? '#15803d' : '#dc2626', border: '1px solid', borderColor: claim.status === 'approved' ? '#bbf7d0' : '#fecaca' }}>
                           <strong>Note:</strong> {claim.admin_note}
                         </div>
                       )}
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        {item.reporter && item.status !== 'resolved' && (
-                          <button
-                            onClick={() => setClaimChatTarget({ ...item, claims: [{ ...claim, claimer_id: user?.id }] })}
-                            style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: '#4f46e5', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <MessageCircle size={14} /> Chat with Reporter
-                          </button>
-                        )}
-                        {claim.proof_url && (
-                          <a href={claim.proof_url} target="_blank" rel="noopener noreferrer" style={{ padding: '8px 16px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: 13, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
-                            View Proof
-                          </a>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+                        <div style={{ display: 'flex', gap: 10 }}>
+                          {item.reporter && item.status !== 'resolved' && (
+                            <button
+                              onClick={() => setClaimChatTarget({ ...item, claims: [{ ...claim, claimer_id: user?.id }] })}
+                              style={{ padding: '10px 20px', borderRadius: 14, border: 'none', background: '#4f46e5', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)' }}>
+                              <MessageCircle size={16} /> Chat with Reporter
+                            </button>
+                          )}
+                          {claim.proof_url && (
+                            <a href={claim.proof_url} target="_blank" rel="noopener noreferrer" style={{ padding: '10px 20px', borderRadius: 14, border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: 14, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+                              View Proof
+                            </a>
+                          )}
+                        </div>
+
+                          {/* Reporter Profile Info */}
+                        {item.reporter && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 14px', background: '#f1f5f9', borderRadius: 14 }}>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b' }}>Reporter:</span>
+                            <Avatar name={item.reporter.full_name} url={item.reporter.avatar_url} size={24} />
+                            <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{item.reporter.full_name}</span>
+                          </div>
                         )}
                       </div>
-                    </div>
-                    <div style={{ flexShrink: 0 }}>
-                      <Avatar name={item.reporter?.full_name} url={item.reporter?.avatar_url} size={32} />
                     </div>
                   </div>
                 </div>

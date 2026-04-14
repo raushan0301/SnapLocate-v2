@@ -230,9 +230,34 @@ export default function ShopsPage() {
     <PageLayout>
       <MenuModal isOpen={!!selectedMenuShop} onClose={() => setSelectedMenuShop(null)} shop={selectedMenuShop} />
       
-      <div>
-        <h1 style={pjs(26, 700, '34px', '#0f172a')}>Campus Shop</h1>
-        <p style={{ ...pjs(13, 400, '18px', '#64748b'), marginTop: 4 }}>Find your daily essentials effortlessly</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20, flexWrap: 'wrap' }}>
+        <div>
+          <h1 style={pjs(26, 700, '34px', '#0f172a')}>Campus Shop</h1>
+          <p style={{ ...pjs(13, 400, '18px', '#64748b'), marginTop: 4 }}>Find your daily essentials effortlessly</p>
+        </div>
+
+        <div style={{ position: 'relative', flex: '1 1 300px', maxWidth: 400 }}>
+          <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <circle cx="6.5" cy="6.5" r="5.5" stroke="#94a3b8" strokeWidth="1.3"/>
+            <path d="M11 11l3 3" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round"/>
+          </svg>
+          <input 
+            value={search} 
+            onChange={e => setSearch(e.target.value)} 
+            placeholder="Search shops..." 
+            style={{ 
+              padding: '12px 16px 12px 42px', 
+              borderRadius: 14, 
+              border: '1px solid #e2e8f0', 
+              background: '#ffffff', 
+              ...pjs(14, 400, '20px', '#0f172a'), 
+              outline: 'none', 
+              width: '100%', 
+              boxSizing: 'border-box',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.04)' 
+            }} 
+          />
+        </div>
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
@@ -248,11 +273,6 @@ export default function ShopsPage() {
               }}>{loc}</button>
             ))}
           </div>
-        </div>
-
-        <div style={{ position: 'relative', minWidth: 220 }}>
-          <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="5" stroke="#94a3b8" strokeWidth="1.2" /><path d="M10 10l3 3" stroke="#94a3b8" strokeWidth="1.2" strokeLinecap="round" /></svg>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search shops..." style={{ padding: '10px 14px 10px 36px', borderRadius: 12, border: '1px solid #e2e8f0', background: '#ffffff', ...pjs(13, 400, '18px', '#0f172a'), outline: 'none', width: '100%', boxSizing: 'border-box' }} />
         </div>
       </div>
 
