@@ -36,9 +36,10 @@ import lmsSubmissionsRoutes   from './routes/lms/submissions.js'
 import lmsGradesRoutes        from './routes/lms/grades.js'
 import lmsAnnouncementsRoutes from './routes/lms/announcements.js'
 import lmsMaterialsRoutes    from './routes/lms/materials.js'
-import attendanceRoutes       from './routes/attendance.js'
-import examScheduleRoutes     from './routes/examSchedule.js'
-import feesRoutes             from './routes/fees.js'
+import attendanceRoutes          from './routes/attendance.js'
+import examScheduleRoutes        from './routes/examSchedule.js'
+import feesRoutes                from './routes/fees.js'
+import webkioskStudentSyncRoutes from './routes/webkioskStudentSync.js'
 import studentProfilesRoutes  from './routes/studentProfiles.js'
 import syncWebkioskRoutes     from './routes/sync/webkiosk.js'
 import syncMoodleRoutes       from './routes/sync/moodle.js'
@@ -110,6 +111,7 @@ app.use('/api/attendance',        attendanceRoutes)
 app.use('/api/exam-schedule',     examScheduleRoutes)
 app.use('/api/fees',              feesRoutes)
 app.use('/api/student-profiles',  studentProfilesRoutes)
+app.use('/api/webkiosk',          webkioskStudentSyncRoutes)
 // External sync routes
 app.use('/api/sync/webkiosk',     syncWebkioskRoutes)
 app.use('/api/sync/moodle',       syncMoodleRoutes)

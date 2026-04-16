@@ -10,7 +10,7 @@ const pjs = (size, weight, lh, color) => ({
 })
 
 /* ─── Request Modal ───────────────────────────────────────────── */
-const REQUEST_TYPES = ['Office Hour', 'Course Waiver', 'Grade Review', 'Extension', 'Research Query']
+const REQUEST_TYPES = ['Office Hour', 'Attendance', 'Grade Review', 'Extension', 'Research Query']
 
 function RequestModal({ prof, onClose, onSuccess }) {
   const [type,    setType]    = useState(REQUEST_TYPES[0])

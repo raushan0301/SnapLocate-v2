@@ -4,7 +4,7 @@ import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
 
 const depts   = ['All Departments', 'CSED', 'Physics', 'Mathematics', 'Electronics', 'Mechanical']
-const sortOps = ['Relevance', 'Name A-Z', 'Name Z-A']
+const sortOps = ['Default', 'Name A-Z', 'Name Z-A', 'Department', 'Designation']
 
 const pjs = (size, weight, lh, color) => ({
   fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -36,7 +36,7 @@ function ProfCard({ prof, onClick }) {
   const isHOD = badgeLabel.includes('HEAD') || badgeLabel.includes('HOD')
 
   return (
-    <button
+    <div
       onClick={onClick}
       style={{
         background:'#ffffff', border:'1px solid #f1f5f9', borderRadius:16,
@@ -101,7 +101,7 @@ function ProfCard({ prof, onClick }) {
       </div>
 
       {/* View Profile button */}
-      <button
+      <div
         style={{
           width:'100%', padding:'11px 0', background:'transparent',
           border:'1.5px solid #e2e8f0', borderRadius:12,
@@ -112,8 +112,8 @@ function ProfCard({ prof, onClick }) {
         onMouseLeave={e => { e.currentTarget.style.borderColor='#e2e8f0'; e.currentTarget.style.color='#0f172a' }}
       >
         View Full Profile <span style={{ fontSize:14 }}>→</span>
-      </button>
-    </button>
+      </div>
+    </div>
   )
 }
 
@@ -173,6 +173,8 @@ export default function ProfessorsPage() {
     .sort((a, b) => {
       if (sort === 'Name A-Z') return (a.full_name || '').localeCompare(b.full_name || '')
       if (sort === 'Name Z-A') return (b.full_name || '').localeCompare(a.full_name || '')
+      if (sort === 'Department') return (a.dept || '').localeCompare(b.dept || '')
+      if (sort === 'Designation') return (a.designation || '').localeCompare(b.designation || '')
       return 0
     })
 
@@ -212,8 +214,8 @@ export default function ProfessorsPage() {
             style={{ width:44, height:44, borderRadius:12, background:'#4f46e5', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}
             onMouseEnter={e => e.currentTarget.style.background='#4338ca'}
             onMouseLeave={e => e.currentTarget.style.background='#4f46e5'}
-            onClick={() => setSearch('')}
-            title="Clear filters"
+            onClick={() => { setSearch(''); setDept(depts[0]) }}
+            title="Reset filters"
           >
             <svg width="18" height="14" viewBox="0 0 18 14" fill="none">
               <path d="M1 1h16M3 7h12M6 13h6" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>

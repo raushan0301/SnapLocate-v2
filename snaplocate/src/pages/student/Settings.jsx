@@ -14,7 +14,9 @@ import {
   Sun, 
   Moon,
   Loader2,
-  Globe
+  Globe,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 
 const pjs = (size, weight, lh, color) => ({
@@ -25,6 +27,33 @@ const inter = (size, weight, lh, color) => ({
   fontFamily: "'Inter', sans-serif",
   fontSize: size, fontWeight: weight, lineHeight: lh, color,
 })
+
+function Toast({ msg, type, onClose }) {
+  if (!msg) return null
+  return (
+    <div style={{
+      position: 'fixed', bottom: 32, right: 32, zIndex: 9999,
+      padding: '14px 22px', borderRadius: 14,
+      background: type === 'success' ? '#16a34a' : '#ef4444',
+      color: '#fff', boxShadow: '0 8px 32px rgba(0,0,0,.18)',
+      fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 600,
+      display: 'flex', alignItems: 'center', gap: 10,
+      animation: 'slideIn 0.3s ease-out'
+    }}>
+      <style>{`
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `}</style>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }}>
+        {type === 'success' ? '✓' : '!'}
+      </div>
+      <span>{msg}</span>
+      <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', marginLeft: 10, opacity: 0.7, fontSize: 16 }}>×</button>
+    </div>
+  )
+}
 
 /* ─── UI Components ─────────────────────────────────────────────── */
 function Card({ children, style = {} }) {
@@ -113,8 +142,17 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving,  setSaving]  = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [savingPwd, setSavingPwd] = useState(false)
   const [pwModal, setPwModal] = useState(false)
   const [pwForm,  setPwForm]  = useState({ current: '', next: '', confirm: '' })
+  const [pwError, setPwError] = useState('')
+  const [showPwd, setShowPwd] = useState({ current: false, next: false, confirm: false })
+  const [toast, setToast] = useState({ msg: '', type: 'success' })
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type })
+    setTimeout(() => setToast({ msg: '', type: 'success' }), 4000)
+  }
 
   useEffect(() => {
     const fetchFullProfile = async () => {
@@ -149,10 +187,10 @@ export default function SettingsPage() {
       const res = await api.patch('/api/users/profile', { full_name })
       if (res.success) {
         updateUser({ full_name })
-        alert('Profile updated!')
+        showToast('Profile updated!')
       }
     } catch (err) {
-      alert(`Error: ${err.message}`)
+      showToast(err.message, 'error')
     } finally {
       setSaving(false)
     }
@@ -177,8 +215,9 @@ export default function SettingsPage() {
 
       setProfile(s => ({ ...s, avatar_url: newUrl }))
       updateUser({ avatar_url: newUrl })
+      showToast('Avatar updated!')
     } catch (err) {
-      alert(`Error uploading image: ${err.message}`)
+      showToast(`Error uploading image: ${err.message}`, 'error')
     } finally {
       setUploading(false)
     }
@@ -196,20 +235,34 @@ export default function SettingsPage() {
 
   const handlePasswordUpdate = async (e) => {
     e.preventDefault()
-    if (pwForm.next !== pwForm.confirm) return alert('Passwords do not match')
+    setPwError('')
+    if (pwForm.current === pwForm.next) return setPwError('New password cannot be the same as current password')
+    if (pwForm.next !== pwForm.confirm) return setPwError('Passwords do not match')
+    if (pwForm.next.length < 8) return setPwError('Password must be at least 8 characters')
+    
+    setSavingPwd(true)
     try {
       const res = await api.put('/api/users/password', {
         current_password: pwForm.current,
         new_password: pwForm.next
       })
       if (res.success) {
-        alert('Password updated successfully!')
+        showToast('Password updated successfully!')
         setPwModal(false)
         setPwForm({ current: '', next: '', confirm: '' })
       }
     } catch (err) {
-      alert(`Update failed: ${err.message}`)
+      setPwError(err.message || 'Update failed')
+    } finally {
+      setSavingPwd(false)
     }
+  }
+  
+  const closePwModal = () => {
+    setPwModal(false)
+    setPwError('')
+    setPwForm({ current: '', next: '', confirm: '' })
+    setShowPwd({ current: false, next: false, confirm: false })
   }
 
   const inputStyle = {
@@ -249,6 +302,7 @@ export default function SettingsPage() {
 
   return (
     <PageLayout>
+      <Toast msg={toast.msg} type={toast.type} onClose={() => setToast({ msg: '', type: 'success' })} />
       {/* Page Header */}
       <div style={{ marginBottom: 32 }}>
         <h1 style={pjs(30, 700, '38px', '#0f172a')}>Settings</h1>
@@ -455,19 +509,72 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <Modal isOpen={pwModal} onClose={() => setPwModal(false)} title="Change Password">
+      <Modal isOpen={pwModal} onClose={closePwModal} title="Change Password">
         <form onSubmit={handlePasswordUpdate} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {pwError && (
+            <div style={{ padding: '10px 14px', borderRadius: 8, background: '#fef2f2', border: '1px solid #fee2e2', color: '#b91c1c', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>⚠️</span> {pwError}
+            </div>
+          )}
           <div>
             <label style={labelStyle}>Current Password</label>
-            <input type="password" required style={inputStyle} value={pwForm.current} onChange={e => setPwForm({...pwForm, current: e.target.value})} />
+            <div style={{ position: 'relative' }}>
+              <input 
+                type={showPwd.current ? 'text' : 'password'} 
+                required 
+                style={{...inputStyle, paddingRight: 44}} 
+                value={pwForm.current} 
+                onChange={e => setPwForm({...pwForm, current: e.target.value})} 
+              />
+              <button 
+                type="button" 
+                onClick={() => setShowPwd({...showPwd, current: !showPwd.current})}
+                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }}
+              >
+                {showPwd.current ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
           <div>
             <label style={labelStyle}>New Password</label>
-            <input type="password" required style={inputStyle} value={pwForm.next} onChange={e => setPwForm({...pwForm, next: e.target.value})} />
+            <div style={{ position: 'relative' }}>
+              <input 
+                type={showPwd.next ? 'text' : 'password'} 
+                required 
+                style={{...inputStyle, paddingRight: 44}} 
+                value={pwForm.next} 
+                onChange={e => setPwForm({...pwForm, next: e.target.value})} 
+              />
+              <button 
+                type="button" 
+                onClick={() => setShowPwd({...showPwd, next: !showPwd.next})}
+                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }}
+              >
+                {showPwd.next ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
           <div>
             <label style={labelStyle}>Confirm New Password</label>
-            <input type="password" required style={inputStyle} value={pwForm.confirm} onChange={e => setPwForm({...pwForm, confirm: e.target.value})} />
+            <div style={{ position: 'relative' }}>
+              <input 
+                type={showPwd.confirm ? 'text' : 'password'} 
+                required 
+                style={{...inputStyle, paddingRight: 44, borderColor: pwForm.confirm && pwForm.next && pwForm.confirm !== pwForm.next ? '#ef4444' : '#e2e8f0'}} 
+                value={pwForm.confirm} 
+                onChange={e => setPwForm({...pwForm, confirm: e.target.value})} 
+              />
+              <button 
+                type="button" 
+                onClick={() => setShowPwd({...showPwd, confirm: !showPwd.confirm})}
+                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }}
+              >
+                {showPwd.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            {pwForm.confirm && pwForm.next && pwForm.confirm !== pwForm.next && (
+              <p style={{ fontSize: 11, color: '#ef4444', margin: '4px 0 0', fontFamily: "'Inter', sans-serif" }}>Passwords do not match</p>
+            )}
           </div>
           <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end', gap: 14 }}>
             <button 
@@ -481,11 +588,12 @@ export default function SettingsPage() {
             </button>
             <button 
               type="submit" 
+              disabled={savingPwd}
               style={primaryButtonStyle}
               onMouseEnter={e => e.currentTarget.style.background = '#4338ca'}
               onMouseLeave={e => e.currentTarget.style.background = '#4f46e5'}
             >
-              Update Password
+              {savingPwd ? 'Updating...' : 'Update Password'}
             </button>
           </div>
         </form>

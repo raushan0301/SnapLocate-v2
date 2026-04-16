@@ -11,7 +11,7 @@ const inter = (size, weight, lh, color) => ({
   fontSize: size, fontWeight: weight, lineHeight: lh, color,
 })
 
-const categories = ['All Units', 'Block A', 'Block B', 'CSED', 'Lab', 'Lecture Hall']
+const categories = ['All Units', 'Block A', 'Block B', 'Block TAN', 'CSED', 'Lab', 'Lecture Hall']
 
 function RoomCard({ room, selected, onClick }) {
   return (
@@ -124,74 +124,105 @@ export default function ClassroomPage() {
 
   const filteredRooms = rooms
     .filter(room => {
+      // 1. Category Filter
       if (selected !== 'All Units') {
-        if (selected === 'Lab' && room.type !== 'LAB') return false
-        if (selected === 'Lecture Hall' && room.type !== 'LEC') return false
-        if (selected === 'Block A' && room.block !== 'A') return false
-        if (selected === 'Block B' && room.block !== 'B') return false
-        if (selected === 'CSED' && room.block !== 'CSED') return false
+        const selLower = selected.toLowerCase()
+        if (selLower === 'lab') {
+          if (room.type !== 'LAB') return false
+        } else if (selLower === 'lecture hall') {
+          if (room.type !== 'LEC') return false
+        } else if (selLower.startsWith('block ')) {
+          const blockLetter = selLower.replace('block ', '')
+          if (room.block?.toLowerCase() !== blockLetter) return false
+        } else if (selLower === 'csed') {
+          if (room.block?.toLowerCase() !== 'csed') return false
+        }
       }
       
+      // 2. Search Filter
       if (searchTerm) {
-        const q = searchTerm.toLowerCase()
-        if (!room.name?.toLowerCase().includes(q) && 
-            !room.subtitle?.toLowerCase().includes(q) &&
-            !room.block?.toLowerCase().includes(q)) {
-          return false
-        }
+        const q = searchTerm.toLowerCase().trim()
+        const match = 
+          room.name?.toLowerCase().includes(q) || 
+          room.subtitle?.toLowerCase().includes(q) ||
+          room.block?.toLowerCase().includes(q) ||
+          room.type?.toLowerCase().includes(q)
+        if (!match) return false
       }
       return true
     })
     .sort((a, b) => {
-      if (sort === 'A-Z') return (a.name || '').localeCompare(b.name || '')
-      if (sort === 'Z-A') return (b.name || '').localeCompare(a.name || '')
-      if (sort === 'Capacity') return parseInt(b.capacity || 0) - parseInt(a.capacity || 0)
+      if (sort === 'A-Z') return (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+      if (sort === 'Z-A') return (b.name || '').localeCompare(a.name || '', undefined, { sensitivity: 'base' })
+      if (sort === 'Capacity') return (parseInt(b.capacity) || 0) - (parseInt(a.capacity) || 0)
       return 0
     })
 
   return (
     <PageLayout>
 
-      {/* ── Page title ──────────────────────────────────── */}
-      <div>
-        <h1 style={pjs(26, 700, '34px', '#0f172a')}>Classroom Discovery</h1>
-        <p  style={{ ...pjs(14, 400, '20px', '#64748b'), marginTop: 4 }}>Discover and Join your classes</p>
+      {/* ── Page header ──────────────────────────────────── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 28 }}>
+        <div>
+          <h1 style={pjs(26, 700, '34px', '#0f172a')}>Classroom Discovery</h1>
+          <p  style={{ ...pjs(14, 400, '20px', '#64748b'), marginTop: 4 }}>Discover and Join your classes</p>
+        </div>
+
+        <div style={{ position: 'relative', flex: '1 1 300px', maxWidth: 400 }}>
+          <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <circle cx="6.5" cy="6.5" r="5.5" stroke="#94a3b8" strokeWidth="1.3"/>
+            <path d="M11 11l3 3" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round"/>
+          </svg>
+          <input
+            placeholder="Find a room, block or lab..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            style={{
+              width: '100%', padding: '12px 16px 12px 42px',
+              background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14,
+              ...pjs(14, 400, '20px', '#0f172a'), outline: 'none',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+              boxSizing: 'border-box',
+            }}
+          />
+        </div>
       </div>
 
       {/* ── Two-column layout: rooms list + detail panel ─ */}
-      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
 
-        {/* ── LEFT: search + filters + grid ─────────────── */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* ── LEFT: filters + grid ─────────────── */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-          {/* Search + sort */}
+          {/* Filter Bar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-            <div style={{ position: 'relative', flex: 1, maxWidth: 320 }}>
-              <svg style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)' }} width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <circle cx="6" cy="6" r="5" stroke="#94a3b8" strokeWidth="1.3"/>
-                <path d="M10 10l2.5 2.5" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round"/>
-              </svg>
-              <input
-                placeholder="Find a room or lab..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                style={{
-                  width: '100%', padding: '10px 14px 10px 34px',
-                  background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 12,
-                  ...pjs(13, 400, '18px', '#0f172a'), outline: 'none',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                }}
-              />
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {categories.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setSelected(cat)}
+                  style={{
+                    padding: '8px 18px', borderRadius: 24,
+                    border: selected === cat ? 'none' : '1.5px solid #e2e8f0',
+                    background: selected === cat ? '#4f46e5' : '#ffffff',
+                    ...pjs(13, selected === cat ? 700 : 500, '18px', selected === cat ? '#ffffff' : '#64748b'),
+                    cursor: 'pointer', transition: 'all 0.15s',
+                  }}
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={pjs(13, 400, '18px', '#64748b')}>Sort by:</span>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+              <span style={pjs(13, 400, '18px', '#64748b')}>Sort:</span>
               <select
                 value={sort}
                 onChange={e => setSort(e.target.value)}
                 style={{
                   ...pjs(13, 600, '18px', '#0f172a'),
                   background: '#ffffff', border: '1px solid #e2e8f0',
-                  borderRadius: 10, padding: '8px 14px',
+                  borderRadius: 10, padding: '7px 12px',
                   outline: 'none', cursor: 'pointer',
                   appearance: 'none', paddingRight: '28px',
                   backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3Csvg width=\\\'10\\\' height=\\\'6\\\' viewBox=\\\'0 0 10 6\\\' fill=\\\'none\\\' xmlns=\\\'http://www.w3.org/2000/svg\\\'%3E%3Cpath d=\\\'M1 1L5 5L9 1\\\' stroke=\\\'%2364748b\\\' stroke-width=\\\'1.3\\\' stroke-linecap=\\\'round\\\' stroke-linejoin=\\\'round\\\'/%3E%3C/svg%3E")',
@@ -202,25 +233,6 @@ export default function ClassroomPage() {
                 <option value="Capacity">Capacity</option>
               </select>
             </div>
-          </div>
-
-          {/* Category pills */}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setSelected(cat)}
-                style={{
-                  padding: '8px 18px', borderRadius: 24,
-                  border: selected === cat ? 'none' : '1.5px solid #e2e8f0',
-                  background: selected === cat ? '#4f46e5' : '#ffffff',
-                  ...pjs(13, selected === cat ? 700 : 500, '18px', selected === cat ? '#ffffff' : '#64748b'),
-                  cursor: 'pointer', transition: 'all 0.15s',
-                }}
-              >
-                {cat}
-              </button>
-            ))}
           </div>
 
           {/* Rooms grid — 2 columns */}

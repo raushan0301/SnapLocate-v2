@@ -50,7 +50,7 @@ function FaqItem({ item }) {
         </svg>
       </div>
       {open && (
-        <div style={{ padding: '0 18px 16px', ...inter(13, 400, '20px', '#475569'), borderTop: '1px solid #f1f5f9' }}>
+        <div style={{ padding: '0 18px 16px', ...pjs(13, 400, '20px', '#475569'), borderTop: '1px solid #f1f5f9' }}>
           <div style={{ paddingTop: 12 }}>{item.answer}</div>
         </div>
       )}
@@ -107,14 +107,14 @@ function ChatPanel({ ticket, user, onClose }) {
       }}>
         <div>
           <div style={pjs(14, 700, '18px', '#fff')}>Live Chat</div>
-          <div style={{ ...inter(11, 400, '15px', '#94a3b8'), marginTop: 2 }}>
+          <div style={{ ...pjs(11, 400, '15px', '#94a3b8'), marginTop: 2 }}>
             Ticket #{ticket.id.slice(0, 8).toUpperCase()}
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e' }} />
-            <span style={inter(11, 600, '15px', '#22c55e')}>Online</span>
+            <span style={pjs(11, 600, '15px', '#22c55e')}>Online</span>
           </div>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: 18, lineHeight: 1 }}>✕</button>
         </div>
@@ -123,7 +123,7 @@ function ChatPanel({ ticket, user, onClose }) {
       {/* Messages */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         {messages.length === 0 && (
-          <div style={{ textAlign: 'center', margin: 'auto', ...inter(13, 400, '18px', '#94a3b8') }}>
+          <div style={{ textAlign: 'center', margin: 'auto', ...pjs(13, 400, '18px', '#94a3b8') }}>
             Start the conversation. Our support team will respond shortly.
           </div>
         )}
@@ -137,12 +137,12 @@ function ChatPanel({ ticket, user, onClose }) {
                 border: isMe ? 'none' : '1px solid #e2e8f0',
               }}>
                 {!isMe && (
-                  <div style={{ ...inter(10, 700, '14px', '#4f46e5'), marginBottom: 4, textTransform: 'uppercase' }}>
+                  <div style={{ ...pjs(10, 700, '14px', '#4f46e5'), marginBottom: 4, textTransform: 'uppercase' }}>
                     {m.sender_role === 'admin' ? '🛡 Support Agent' : m.sender_name}
                   </div>
                 )}
-                <div style={inter(13, 400, '18px', isMe ? '#fff' : '#0f172a')}>{m.message}</div>
-                <div style={{ ...inter(10, 400, '14px', isMe ? 'rgba(255,255,255,0.6)' : '#94a3b8'), marginTop: 4, textAlign: 'right' }}>
+                <div style={pjs(13, 400, '18px', isMe ? '#fff' : '#0f172a')}>{m.message}</div>
+                <div style={{ ...pjs(10, 400, '14px', isMe ? 'rgba(255,255,255,0.6)' : '#94a3b8'), marginTop: 4, textAlign: 'right' }}>
                   {new Date(m.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
@@ -161,7 +161,7 @@ function ChatPanel({ ticket, user, onClose }) {
           placeholder="Type a message..."
           style={{
             flex: 1, padding: '10px 14px', borderRadius: 12, border: '1px solid #e2e8f0',
-            background: '#f8fafc', ...inter(13, 400, '18px', '#0f172a'), outline: 'none',
+            background: '#f8fafc', ...pjs(13, 400, '18px', '#0f172a'), outline: 'none',
           }}
         />
         <button
@@ -192,7 +192,7 @@ export default function SupportPage() {
   const [faqs, setFaqs] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [activeTab, setActiveTab] = useState('tickets') // tickets | faqs
+  const [activeTab, setActiveTab] = useState('faqs') // faqs | tickets
   const [chatTicket, setChatTicket] = useState(null)
 
   // New Ticket Form
@@ -250,7 +250,7 @@ export default function SupportPage() {
     border: '1px solid #e2e8f0', background: '#f8fafc',
     ...pjs(13, 400, '18px', '#0f172a'), outline: 'none', boxSizing: 'border-box',
   }
-  const labelStyle = { ...inter(10, 700, '14px', '#64748b'), textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 6 }
+  const labelStyle = { ...pjs(10, 700, '14px', '#64748b'), textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 6 }
 
   return (
     <PageLayout>
@@ -262,8 +262,8 @@ export default function SupportPage() {
         </p>
         <div style={{ position: 'relative', maxWidth: 400, margin: '0 auto' }}>
           <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="15" height="15" viewBox="0 0 15 15" fill="none">
-            <circle cx="6.5" cy="6.5" r="5.5" stroke="#94a3b8" strokeWidth="1.3"/>
-            <path d="M11 11l3 3" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round"/>
+            <circle cx="6.5" cy="6.5" r="5.5" stroke="#94a3b8" strokeWidth="1.3" />
+            <path d="M11 11l3 3" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round" />
           </svg>
           <input
             value={search} onChange={e => setSearch(e.target.value)}
@@ -280,7 +280,7 @@ export default function SupportPage() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, background: '#f1f5f9', borderRadius: 12, padding: 4, width: 'fit-content', marginBottom: 4 }}>
-        {[{ id: 'tickets', label: `My Tickets (${tickets.length})` }, { id: 'faqs', label: 'FAQs' }].map(t => (
+        {[{ id: 'faqs', label: 'FAQs' }, { id: 'tickets', label: `My Tickets (${tickets.length})` }].map(t => (
           <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
             padding: '10px 24px', borderRadius: 10, border: 'none', cursor: 'pointer',
             background: activeTab === t.id ? '#fff' : 'transparent',
@@ -292,7 +292,7 @@ export default function SupportPage() {
       </div>
 
       {/* Main Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 20, alignItems: 'start' }}>
 
         {/* LEFT */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -303,12 +303,12 @@ export default function SupportPage() {
               <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
                 <h2 style={{ ...pjs(17, 700, '23px', '#0f172a'), marginBottom: 20 }}>Your Support Tickets</h2>
                 {loading ? (
-                  <div style={{ textAlign: 'center', padding: '40px 0', ...inter(14, 400, '20px', '#94a3b8') }}>Loading tickets...</div>
+                  <div style={{ textAlign: 'center', padding: '40px 0', ...pjs(14, 400, '20px', '#94a3b8') }}>Loading tickets...</div>
                 ) : tickets.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '40px 0' }}>
                     <div style={{ fontSize: 40, marginBottom: 12 }}>🎫</div>
                     <div style={pjs(15, 600, '21px', '#0f172a')}>No tickets yet</div>
-                    <div style={{ ...inter(13, 400, '18px', '#94a3b8'), marginTop: 4 }}>Submit a ticket using the form on the right</div>
+                    <div style={{ ...pjs(13, 400, '18px', '#94a3b8'), marginTop: 4 }}>Submit a ticket using the form on the right</div>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -334,18 +334,18 @@ export default function SupportPage() {
                           </div>
                           <div style={{ flex: 1 }}>
                             <div style={pjs(14, 700, '19px', '#0f172a')}>{t.subject}</div>
-                            <div style={{ ...inter(12, 400, '16px', '#94a3b8'), marginTop: 2 }}>
+                            <div style={{ ...pjs(12, 400, '16px', '#94a3b8'), marginTop: 2 }}>
                               #{t.id.slice(0, 8).toUpperCase()} · {new Date(t.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                             </div>
                             {t.admin_reply && (
-                              <div style={{ ...inter(12, 400, '16px', '#4f46e5'), marginTop: 4 }}>
+                              <div style={{ ...pjs(12, 400, '16px', '#4f46e5'), marginTop: 4 }}>
                                 💬 Admin replied · Click to view chat
                               </div>
                             )}
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-                            <div style={{ padding: '4px 10px', borderRadius: 20, background: sc.bg, border: `1px solid ${sc.border}`, ...inter(11, 700, '15px', sc.color) }}>{t.status}</div>
-                            <div style={{ padding: '3px 8px', borderRadius: 8, background: pc.bg, ...inter(11, 600, '15px', pc.color) }}>{t.priority}</div>
+                            <div style={{ padding: '4px 10px', borderRadius: 20, background: sc.bg, border: `1px solid ${sc.border}`, ...pjs(11, 700, '15px', sc.color) }}>{t.status}</div>
+                            <div style={{ padding: '3px 8px', borderRadius: 8, background: pc.bg, ...pjs(11, 600, '15px', pc.color) }}>{t.priority}</div>
                           </div>
                         </div>
                       )
@@ -360,7 +360,7 @@ export default function SupportPage() {
             <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
               <h2 style={{ ...pjs(17, 700, '23px', '#0f172a'), marginBottom: 20 }}>Frequently Asked Questions</h2>
               {filteredFaqs.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px 0', ...inter(13, 400, '18px', '#94a3b8') }}>No FAQs match your search.</div>
+                <div style={{ textAlign: 'center', padding: '40px 0', ...pjs(13, 400, '18px', '#94a3b8') }}>No FAQs match your search.</div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {filteredFaqs.map(f => <FaqItem key={f.id} item={f} />)}
@@ -452,7 +452,7 @@ export default function SupportPage() {
             )}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16, justifyContent: 'center' }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e' }} />
-              <span style={{ ...inter(11, 600, '15px', '#22c55e'), letterSpacing: '0.06em', textTransform: 'uppercase' }}>Support Online</span>
+              <span style={{ ...pjs(11, 600, '15px', '#22c55e'), letterSpacing: '0.06em', textTransform: 'uppercase' }}>Support Online</span>
             </div>
           </div>
 

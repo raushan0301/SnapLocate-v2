@@ -105,6 +105,8 @@ export default function Workspace({ role = 'student' }) {
   const [linkModal, setLinkModal] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
 
+  const [showTaskForm, setShowTaskForm] = useState(false)
+
   // Sub-forms state
   const [taskInput, setTaskInput] = useState('')
   const [taskSubInput, setTaskSubInput] = useState('')
@@ -182,7 +184,7 @@ export default function Workspace({ role = 'student' }) {
     setSaving(true)
     try {
       const res = await api.post(`${apiBase}/tasks`, { label: taskInput, sub: taskSubInput })
-      setTasks(prev => [res.data, ...prev]); setTaskInput(''); setTaskSubInput('')
+      setTasks(prev => [res.data, ...prev]); setTaskInput(''); setTaskSubInput(''); setShowTaskForm(false)
     } catch (err) { alert(err.message) }
     finally { setSaving(false) }
   }
@@ -343,8 +345,8 @@ export default function Workspace({ role = 'student' }) {
       )}
 
       {/* ── Timetable Grid ── */}
-      <div style={{ marginBottom: 32 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <h1 style={pjs(24, 700, '32px', '#0f172a')}>{L.title}</h1>
           <p style={{ ...pjs(14, 500, '20px', '#64748b'), margin: 0 }}>Click any cell to add or edit a {L.desc}.</p>
         </div>
@@ -376,16 +378,23 @@ export default function Workspace({ role = 'student' }) {
       </div>
 
       {/* ── Productivity Grid ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 272px', gap: 16, marginTop: 32 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 272px', gap: 16, marginTop: 16 }}>
 
-        {/* Notes */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: '18px 18px', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <IconNotes />
-              <span style={pjs(14, 700, '19px', '#0f172a')}>Notes</span>
+        {/* Notes Section */}
+        <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <IconNotes />
+              </div>
+              <span style={pjs(18, 700, '24px', '#0f172a')}>Notes</span>
             </div>
-            <button onClick={() => setNoteModal(true)} style={{ background: '#eef2ff', color: '#4f46e5', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontWeight: 700 }}>+ Add Note</button>
+            <button 
+              onClick={() => setNoteModal(true)}
+              style={{ background: '#eef2ff', color: '#4f46e5', border: 'none', borderRadius: 6, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: 20 }}
+            >
+              +
+            </button>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, flex: 1 }}>
             {notes.map(n => (
@@ -403,31 +412,83 @@ export default function Workspace({ role = 'student' }) {
           </div>
         </div>
 
-        {/* Tasks */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: '18px 18px', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <IconTasks />
-            <span style={pjs(14, 700, '19px', '#0f172a')}>My Tasks</span>
-          </div>
-          <form onSubmit={saveTask} style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <input value={taskInput} onChange={e => setTaskInput(e.target.value)} placeholder="E.g., Finish Math Assign." required style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #e2e8f0', outline: 'none' }} />
-              <input value={taskSubInput} onChange={e => setTaskSubInput(e.target.value)} placeholder="Optional Sub-text" style={{ width: '100%', padding: '6px 12px', borderRadius: 8, border: '1px solid #e2e8f0', outline: 'none', fontSize: 12 }} />
+        {/* Tasks Section */}
+        <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <IconTasks />
+              </div>
+              <span style={pjs(18, 700, '24px', '#0f172a')}>My Tasks</span>
             </div>
-            <button type="submit" disabled={saving} style={{ padding: '0 16px', background: '#4f46e5', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>ADD</button>
-          </form>
-          <div style={{ display: 'flex', flexDirection: 'column', overflowY: 'auto', flex: 1 }}>
-            {tasks.map((t, i) => (
-              <div key={t.id}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 0' }}>
-                  <div onClick={() => toggleTask(t.id, t.is_done)} style={{ width: 20, height: 20, borderRadius: 6, flexShrink: 0, border: t.is_done ? 'none' : '1.5px solid #cbd5e1', background: t.is_done ? '#4f46e5' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                    {t.is_done && <svg width="12" height="10" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" strokeWidth="1.6" strokeLinecap="round" /></svg>}
+            {!showTaskForm && (
+              <button 
+                onClick={() => setShowTaskForm(true)}
+                style={{ background: '#eef2ff', color: '#4f46e5', border: 'none', borderRadius: 6, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: 20 }}
+              >
+                +
+              </button>
+            )}
+          </div>
+          
+          {showTaskForm && (
+            <form onSubmit={saveTask} style={{ display: 'flex', gap: 12, border: '1px solid #f1f5f9', padding: 16, borderRadius: 16, background: '#f8fafc' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <input 
+                  value={taskInput} onChange={e => setTaskInput(e.target.value)} 
+                  placeholder="Task title" required autoFocus
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e2e8f0', outline: 'none', ...pjs(14, 500, '20px', '#0f172a'), boxSizing: 'border-box' }} 
+                />
+                <input 
+                  value={taskSubInput} onChange={e => setTaskSubInput(e.target.value)} 
+                  placeholder="Extra info" 
+                  style={{ width: '100%', padding: '8px 14px', borderRadius: 10, border: '1px solid #e2e8f0', outline: 'none', ...pjs(12, 400, '18px', '#64748b'), boxSizing: 'border-box' }} 
+                />
+                <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                  <button 
+                    type="submit" disabled={saving || !taskInput.trim()} 
+                    style={{ flex: 1, padding: '8px', background: taskInput.trim() ? '#4f46e5' : '#e2e8f0', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: taskInput.trim() ? 'pointer' : 'default', fontSize: 13 }}
+                  >
+                    Add Task
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setShowTaskForm(false)}
+                    style={{ padding: '8px 16px', background: '#fff', color: '#64748b', border: '1px solid #e2e8f0', borderRadius: 8, fontWeight: 600, cursor: 'pointer', fontSize: 13 }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, overflowY: 'auto' }}>
+            {tasks.length === 0 ? (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.6, padding: '20px 0' }}>
+                <span style={{ fontSize: 24, marginBottom: 8 }}>✅</span>
+                <span style={pjs(14, 500, '20px', '#94a3b8')}>All tasks completed</span>
+              </div>
+            ) : tasks.map((t, i) => (
+              <div key={t.id} style={{ transition: 'all 0.2s' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 4px' }}>
+                  <div 
+                    onClick={() => toggleTask(t.id, t.is_done)} 
+                    style={{ 
+                      width: 20, height: 20, borderRadius: 7, flexShrink: 0, 
+                      border: t.is_done ? 'none' : '2px solid #e2e8f0', 
+                      background: t.is_done ? '#4f46e5' : 'transparent', 
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {t.is_done && <svg width="12" height="10" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ ...pjs(14, 600, '18px', t.is_done ? '#94a3b8' : '#0f172a'), textDecoration: t.is_done ? 'line-through' : 'none' }}>{t.label}</div>
-                    {t.sub && <div style={{ ...pjs(12, 400, '16px', '#94a3b8') }}>{t.sub}</div>}
+                    <div style={{ ...pjs(14, 600, '20px', t.is_done ? '#94a3b8' : '#0f172a'), textDecoration: t.is_done ? 'line-through' : 'none', transition: 'color 0.2s' }}>{t.label}</div>
+                    {t.sub && <div style={{ ...pjs(12, 400, '16px', '#94a3b8'), marginTop: 2 }}>{t.sub}</div>}
                   </div>
-                  <button onClick={() => setDeleteConfirm({ id: t.id, type: 'task', label: t.label })} style={{ background: 'transparent', border: 'none', color: '#cbd5e1', cursor: 'pointer', fontSize: 18 }}>×</button>
+                  <button onClick={() => setDeleteConfirm({ id: t.id, type: 'task', label: t.label })} style={{ background: 'transparent', border: 'none', color: '#cbd5e1', cursor: 'pointer', fontSize: 20, transition: 'color 0.15s' }} onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}>×</button>
                 </div>
                 {i < tasks.length - 1 && <div style={{ height: 1, background: '#f8fafc' }} />}
               </div>
@@ -437,15 +498,23 @@ export default function Workspace({ role = 'student' }) {
 
         {/* Files & Links */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: '16px 18px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <IconLink />
-                <span style={pjs(14, 700, '19px', '#0f172a')}>Links</span>
+          {/* Links Section */}
+          <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', padding: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <IconLink />
+                </div>
+                <span style={pjs(18, 700, '24px', '#0f172a')}>Links</span>
               </div>
-              <button onClick={() => setLinkModal(true)} style={{ background: '#eef2ff', color: '#4f46e5', fontWeight: 700, border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer' }}>+ Add</button>
+              <button 
+                onClick={() => setLinkModal(true)} 
+                style={{ background: '#eef2ff', color: '#4f46e5', border: 'none', borderRadius: 6, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: 20 }}
+              >
+                +
+              </button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {links.map(l => (
                 <div key={l.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 10, border: '1px solid #f1f5f9', background: 'transparent', transition: 'background 0.15s', cursor: 'pointer' }} onClick={() => openLink(l.url)} onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                   <span style={pjs(13, 600, '18px', '#0f172a')}>{l.label}</span>
@@ -457,14 +526,24 @@ export default function Workspace({ role = 'student' }) {
               ))}
             </div>
           </div>
-          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: '16px 18px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <IconCloud />
-                <span style={pjs(14, 700, '19px', '#0f172a')}>Files</span>
+
+          {/* Files Section */}
+          <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', padding: 20, flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <IconCloud />
+                </div>
+                <span style={pjs(18, 700, '24px', '#0f172a')}>Files</span>
               </div>
               <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileUpload} />
-              <button onClick={() => fileInputRef.current.click()} disabled={uploadingFile} style={{ ...pjs(11, 700, '14px', '#4f46e5'), background: 'none', border: 'none', cursor: 'pointer' }}>{uploadingFile ? '...' : '+ UPLOAD'}</button>
+              <button 
+                onClick={() => fileInputRef.current.click()} 
+                disabled={uploadingFile} 
+                style={{ background: '#eef2ff', color: '#4f46e5', border: 'none', borderRadius: 6, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: 20 }}
+              >
+                {uploadingFile ? '...' : '+'}
+              </button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, overflowY: 'auto' }}>
               {files.map(f => (

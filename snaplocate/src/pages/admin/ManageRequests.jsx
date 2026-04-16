@@ -13,10 +13,11 @@ const statusStyle = (s) => {
 }
 
 const TYPE_COLORS = {
-  'meeting':   { bg: '#eef2ff', color: '#4f46e5' },
-  'doubt':     { bg: '#f0f9ff', color: '#0369a1' },
-  'project':   { bg: '#fdf4ff', color: '#7e22ce' },
-  'internship':{ bg: '#fefce8', color: '#854d0e' },
+  'office hour':   { bg: '#eef2ff', color: '#4f46e5' },
+  'attendance':    { bg: '#fdf4ff', color: '#7e22ce' },
+  'grade review':  { bg: '#fff7ed', color: '#c2410c' },
+  'extension':     { bg: '#f0fdf4', color: '#15803d' },
+  'research query':{ bg: '#ecfdf5', color: '#0d9488' },
 }
 
 export default function ManageRequests() {

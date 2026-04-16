@@ -9,7 +9,7 @@ const pjs = (size, weight, lh, color) => ({
   fontSize: size, fontWeight: weight, lineHeight: lh, color,
 })
 
-const REQUEST_TYPES = ['Office Hour', 'Course Waiver', 'Grade Review', 'Extension', 'Other']
+const REQUEST_TYPES = ['Office Hour', 'Attendance', 'Grade Review', 'Extension', 'Research Query']
 
 const statusConfig = {
   pending:  { bg: '#fffbeb', color: '#d97706', border: '#fde68a', label: 'PENDING' },
@@ -27,7 +27,7 @@ export default function StudentRequests() {
   const [faculty, setFaculty]           = useState([])
   const [facultySearch, setFacultySearch] = useState('')
   const [selectedFaculty, setSelectedFaculty] = useState(null)
-  const [reqType, setReqType]           = useState('Office Hour')
+  const [reqType, setReqType]           = useState(REQUEST_TYPES[0])
   const [detail, setDetail]             = useState('')
   const [submitting, setSubmitting]     = useState(false)
   const [facultyLoading, setFacultyLoading] = useState(false)
@@ -63,7 +63,7 @@ export default function StudentRequests() {
   )
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    if (e) e.preventDefault()
     if (!selectedFaculty) return
     setSubmitting(true)
     try {
@@ -75,7 +75,7 @@ export default function StudentRequests() {
       setShowModal(false)
       setSelectedFaculty(null)
       setFacultySearch('')
-      setReqType('Office Hour')
+      setReqType(REQUEST_TYPES[0])
       setDetail('')
       fetchRequests()
     } catch (err) {
@@ -195,35 +195,37 @@ export default function StudentRequests() {
             {/* Modal header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px 28px', borderBottom: '1px solid #f1f5f9' }}>
               <div>
-                <h2 style={{ ...pjs(20, 700, '28px', '#0f172a'), margin: 0 }}>New Request</h2>
-                <p style={{ ...pjs(13, 400, '18px', '#64748b'), margin: 0, marginTop: 2 }}>Send a request to a professor</p>
+                <h2 style={{ ...pjs(20, 800, '28px', '#0f172a'), margin: 0 }}>Request Appointment</h2>
+                <p style={{ ...pjs(13, 400, '18px', '#64748b'), margin: 0, marginTop: 2 }}>
+                  {selectedFaculty ? `Sending to ${selectedFaculty.full_name}` : 'Send a request to a professor'}
+                </p>
               </div>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }}>
-                <X size={22} />
+                <svg width="22" height="22" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} style={{ overflowY: 'auto', flex: 1, padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div style={{ overflowY: 'auto', flex: 1, padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
 
               {/* Step 1: Pick faculty */}
               <div>
-                <label style={{ ...pjs(12, 700, '16px', '#475569'), display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <label style={{ ...pjs(11, 700, '16px', '#475569'), display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   Select Professor
                 </label>
                 {selectedFaculty ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: '#eef2ff', borderRadius: 12, border: '1.5px solid #4f46e5' }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 10, background: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: '#f8fafc', borderRadius: 16, border: '1.5px solid #4f46e5' }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 10, background: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
                       {selectedFaculty.avatar_url
                         ? <img src={selectedFaculty.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        : <span style={pjs(13, 700, '16px', '#fff')}>{(selectedFaculty.full_name || 'F').charAt(0)}</span>
+                        : <span style={pjs(14, 700, '16px', '#fff')}>{(selectedFaculty.full_name || 'F').charAt(0)}</span>
                       }
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={pjs(14, 700, '18px', '#4f46e5')}>{selectedFaculty.full_name}</div>
-                      <div style={pjs(12, 400, '16px', '#6366f1')}>{selectedFaculty.designation} · {selectedFaculty.dept}</div>
+                      <div style={pjs(14, 700, '18px', '#0f172a')}>{selectedFaculty.full_name}</div>
+                      <div style={pjs(12, 400, '16px', '#64748b')}>{selectedFaculty.designation} · {selectedFaculty.dept}</div>
                     </div>
-                    <button type="button" onClick={() => setSelectedFaculty(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6366f1' }}>
-                      <X size={16} />
+                    <button onClick={() => setSelectedFaculty(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4f46e5' }}>
+                      <X size={18} />
                     </button>
                   </div>
                 ) : (
@@ -235,7 +237,7 @@ export default function StudentRequests() {
                         onChange={e => setFacultySearch(e.target.value)}
                         placeholder="Search by name, department..."
                         autoFocus
-                        style={{ width: '100%', padding: '10px 14px 10px 36px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                        style={{ width: '100%', padding: '12px 14px 12px 36px', borderRadius: 12, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
                         onFocus={e => e.target.style.borderColor = '#4f46e5'}
                         onBlur={e => e.target.style.borderColor = '#e2e8f0'}
                       />
@@ -263,11 +265,6 @@ export default function StudentRequests() {
                             <div style={pjs(13, 700, '16px', '#0f172a')}>{f.full_name}</div>
                             <div style={pjs(11, 400, '14px', '#64748b')}>{f.designation} · {f.dept}</div>
                           </div>
-                          {f.is_verified && (
-                            <div style={{ marginLeft: 'auto', width: 16, height: 16, borderRadius: 8, background: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                            </div>
-                          )}
                         </div>
                       ))}
                     </div>
@@ -277,17 +274,17 @@ export default function StudentRequests() {
 
               {/* Step 2: Request type */}
               <div>
-                <label style={{ ...pjs(12, 700, '16px', '#475569'), display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Request Type</label>
+                <label style={{ ...pjs(11, 700, '16px', '#475569'), display: 'block', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Request Type</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {REQUEST_TYPES.map(t => (
                     <button
                       key={t} type="button"
                       onClick={() => setReqType(t)}
                       style={{
-                        padding: '7px 16px', borderRadius: 20, cursor: 'pointer',
-                        border: reqType === t ? '1.5px solid #4f46e5' : '1.5px solid #e2e8f0',
-                        background: reqType === t ? '#eef2ff' : '#fff',
-                        ...pjs(13, reqType === t ? 700 : 500, '18px', reqType === t ? '#4f46e5' : '#64748b'),
+                        padding: '8px 18px', borderRadius: 20, cursor: 'pointer',
+                        border: reqType === t ? 'none' : '1px solid #e2e8f0',
+                        background: reqType === t ? '#4f46e5' : '#fff',
+                        ...pjs(12, 600, '16px', reqType === t ? '#fff' : '#64748b'),
                         transition: 'all 0.15s',
                       }}
                     >
@@ -299,25 +296,35 @@ export default function StudentRequests() {
 
               {/* Step 3: Details */}
               <div>
-                <label style={{ ...pjs(12, 700, '16px', '#475569'), display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Details <span style={{ color: '#94a3b8', fontWeight: 400, textTransform: 'none' }}>(optional)</span></label>
+                <label style={{ ...pjs(11, 700, '16px', '#475569'), display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Details</label>
                 <textarea
                   value={detail} onChange={e => setDetail(e.target.value)}
-                  rows={3}
-                  placeholder={`Briefly describe why you're sending this ${reqType.toLowerCase()} request...`}
-                  style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: "'Plus Jakarta Sans', sans-serif", resize: 'none', lineHeight: '20px' }}
+                  rows={4}
+                  placeholder="Describe your request in detail..."
+                  style={{ width: '100%', padding: '14px 16px', borderRadius: 14, border: '1.5px solid #e2e8f0', background: '#f8fafc', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: "'Plus Jakarta Sans', sans-serif", resize: 'none', lineHeight: '20px' }}
                   onFocus={e => e.target.style.borderColor = '#4f46e5'}
                   onBlur={e => e.target.style.borderColor = '#e2e8f0'}
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={!selectedFaculty || submitting}
-                style={{ padding: '13px', borderRadius: 14, background: selectedFaculty ? '#4f46e5' : '#e2e8f0', color: selectedFaculty ? '#fff' : '#94a3b8', border: 'none', ...pjs(15, 700, '22px', selectedFaculty ? '#fff' : '#94a3b8'), cursor: selectedFaculty && !submitting ? 'pointer' : 'not-allowed', transition: 'background 0.2s' }}
-              >
-                {submitting ? 'Sending...' : selectedFaculty ? `Send ${reqType} Request` : 'Select a professor first'}
-              </button>
-            </form>
+              <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  style={{ flex: 1, padding: '13px', borderRadius: 14, background: '#fff', border: '1.5px solid #e2e8f0', cursor: 'pointer', ...pjs(14, 600, '20px', '#64748b') }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={!selectedFaculty || submitting}
+                  style={{ flex: 2, padding: '13px', borderRadius: 14, background: selectedFaculty ? '#4f46e5' : '#cbd5e1', color: '#fff', border: 'none', ...pjs(14, 700, '20px', '#fff'), cursor: selectedFaculty && !submitting ? 'pointer' : 'not-allowed', transition: 'all 0.2s', boxShadow: selectedFaculty ? '0 4px 12px rgba(79,70,229,0.3)' : 'none' }}
+                >
+                  {submitting ? 'Sending...' : 'Send Request →'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

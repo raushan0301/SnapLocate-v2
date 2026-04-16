@@ -50,17 +50,42 @@ router.put('/password', authenticate, async (req, res) => {
     .eq('id', req.user.id)
     .single()
 
-  if (fetchErr || !user) return res.status(404).json({ success: false, message: 'User not found' })
+  if (fetchErr || !user) {
+    console.error(`[PasswordUpdate] User fetch error:`, fetchErr)
+    return res.status(404).json({ success: false, message: 'User not found' })
+  }
 
-  const isMatch = await bcrypt.compare(current_password, user.password_hash)
-  if (!isMatch) return res.status(401).json({ success: false, message: 'Incorrect current password' })
+  if (!user.password_hash) {
+    console.warn(`[PasswordUpdate] User ${req.user.id} has no password hash set`)
+    return res.status(400).json({ success: false, message: 'No password set for this account. Please use social login or contact support.' })
+  }
+
+  console.log(`[PasswordUpdate] ID: ${req.user.id}, Input: "${current_password}" (len: ${current_password.length})`)
+  
+  let isMatch = false
+  if (user.password_hash.startsWith('$2')) {
+    isMatch = await bcrypt.compare(current_password, user.password_hash)
+  } else {
+    isMatch = (current_password === user.password_hash)
+  }
+
+  if (!isMatch) {
+    return res.status(401).json({ success: false, message: 'Incorrect current password' })
+  }
+
+  if (new_password.length < 8) {
+    return res.status(400).json({ success: false, message: 'New password must be at least 8 characters long' })
+  }
 
   // Hash new password
   const new_hash = await bcrypt.hash(new_password, 12)
 
   const { error: patchErr } = await supabaseAdmin
     .from('users')
-    .update({ password_hash: new_hash })
+    .update({ 
+      password_hash: new_hash,
+      updated_at: new Date().toISOString()
+    })
     .eq('id', req.user.id)
 
   if (patchErr) return res.status(500).json({ success: false, message: patchErr.message })

@@ -135,7 +135,7 @@ router.post('/verify-otp', otpLimiter, async (req, res) => {
     success: true,
     message: 'Email verified successfully!',
     token,
-    user: { id: user.id, full_name: user.full_name, email, role: user.role },
+    user: { id: user.id, full_name: user.full_name, email, role: user.role, is_verified: true },
   })
 })
 
@@ -204,6 +204,7 @@ router.post('/login', authLimiter, async (req, res) => {
       full_name:  user.full_name,
       role:       user.role,
       avatar_url: user.avatar_url,
+      is_verified: user.is_verified,
     },
   })
 })

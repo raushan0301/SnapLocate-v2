@@ -14,7 +14,7 @@ router.get('/summary', authenticate, async (req, res) => {
   try {
     let query = supabaseAdmin
       .from('attendance')
-      .select('student_id, status, users(full_name, avatar_url)')
+      .select('student_id, status, users!student_id(full_name, avatar_url)')
       .eq('course_id', course_id)
 
     if (role === 'student') query = query.eq('student_id', userId)
@@ -110,7 +110,7 @@ router.get('/', authenticate, async (req, res) => {
   try {
     let query = supabaseAdmin
       .from('attendance')
-      .select('*, users(full_name, avatar_url)')
+      .select('*, users!student_id(full_name, avatar_url)')
       .order('date', { ascending: false })
 
     if (role === 'student') {
@@ -126,6 +126,7 @@ router.get('/', authenticate, async (req, res) => {
     if (error) throw error
     res.json({ success: true, data })
   } catch (err) {
+    console.error('[Attendance] Error:', err)
     res.status(500).json({ success: false, error: err.message })
   }
 })

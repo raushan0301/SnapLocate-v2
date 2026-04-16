@@ -1,265 +1,510 @@
-import axios from 'axios'
+/**
+ * Thapar WebKiosk Scraper  (webkiosk.thapar.edu — JSP-based)
+ *
+ *  Login  : POST /index.jsp   type=S  loginid=ENROLL  passwd=PASS
+ *  Session: JSESSIONID cookie (auto-propagated)
+ *  Data   : /StudentFiles/*.jsp
+ */
+import axios    from 'axios'
 import * as cheerio from 'cheerio'
-import crypto from 'crypto'
-import https from 'https'
+import crypto   from 'crypto'
+import https    from 'https'
 import { supabaseAdmin } from './supabase.js'
 
-const httpsAgent = new https.Agent({ rejectUnauthorized: false })
+const THAPAR_BASE = 'https://webkiosk.thapar.edu'
+const httpsAgent  = new https.Agent({ rejectUnauthorized: false })
 
+// ─── Encryption ───────────────────────────────────────────────────
 const ALGORITHM = 'aes-256-gcm'
+const encKey = () =>
+  Buffer.from(process.env.SYNC_ENCRYPTION_KEY || 'default_key_32bytes_placeholder!!', 'utf8').slice(0, 32)
 
 function encrypt(text) {
-  const key = Buffer.from(process.env.SYNC_ENCRYPTION_KEY || 'default_key_32bytes_placeholder!!', 'utf8').slice(0, 32)
-  const iv  = crypto.randomBytes(16)
-  const cipher = crypto.createCipheriv(ALGORITHM, key, iv)
-  const encrypted = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()])
-  const tag = cipher.getAuthTag()
-  return iv.toString('hex') + ':' + tag.toString('hex') + ':' + encrypted.toString('hex')
+  const iv     = crypto.randomBytes(16)
+  const cipher = crypto.createCipheriv(ALGORITHM, encKey(), iv)
+  const enc    = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()])
+  const tag    = cipher.getAuthTag()
+  return `${iv.toString('hex')}:${tag.toString('hex')}:${enc.toString('hex')}`
 }
 
 function decrypt(ciphertext) {
-  const key = Buffer.from(process.env.SYNC_ENCRYPTION_KEY || 'default_key_32bytes_placeholder!!', 'utf8').slice(0, 32)
   const [ivHex, tagHex, encHex] = ciphertext.split(':')
-  const decipher = crypto.createDecipheriv(ALGORITHM, key, Buffer.from(ivHex, 'hex'))
-  decipher.setAuthTag(Buffer.from(tagHex, 'hex'))
-  const decrypted = Buffer.concat([decipher.update(Buffer.from(encHex, 'hex')), decipher.final()])
-  return decrypted.toString('utf8')
+  const dec = crypto.createDecipheriv(ALGORITHM, encKey(), Buffer.from(ivHex, 'hex'))
+  dec.setAuthTag(Buffer.from(tagHex, 'hex'))
+  return Buffer.concat([dec.update(Buffer.from(encHex, 'hex')), dec.final()]).toString('utf8')
 }
 
-// Common WebKiosk login paths used by different institutions
-const LOGIN_PATHS = [
-  '/Login.aspx',
-  '/login.aspx',
-  '/Account/Login',
-  '/account/login',
-  '/WebKiosk/Login.aspx',
-  '/',
-]
-
-// Candidate paths for each data page
-const DATA_PATHS = {
-  attendance: [
-    '/Attendance.aspx',
-    '/StudentAttendanceDetails.aspx',
-    '/Student/Attendance.aspx',
-    '/webkiosk/Attendance.aspx',
-    '/StudentPortal/Attendance.aspx',
-    '/attendance',
-  ],
-  marks: [
-    '/Marks.aspx',
-    '/StudentMarks.aspx',
-    '/Student/Marks.aspx',
-    '/GradeReport.aspx',
-    '/Grades.aspx',
-    '/webkiosk/Marks.aspx',
-  ],
-  fees: [
-    '/FeeDetails.aspx',
-    '/FeeStatus.aspx',
-    '/Student/FeeDetails.aspx',
-    '/Fees.aspx',
-  ],
-  examSchedule: [
-    '/ExamSchedule.aspx',
-    '/DateSheet.aspx',
-    '/Student/ExamSchedule.aspx',
-    '/Exam/Schedule.aspx',
-    '/ExamDateSheet.aspx',
-  ],
+export const encryptCredentials = (creds) => ({ encrypted: encrypt(JSON.stringify(creds)) })
+export const redactConfig = (config) => {
+  const { credentials_json, ...safe } = config
+  return { ...safe, credentials_json: { configured: !!credentials_json?.encrypted } }
 }
 
-export class WebKioskScraper {
-  constructor(baseUrl) {
-    this.baseUrl    = baseUrl.replace(/\/$/, '') // strip trailing slash
-    this.cookie     = null
-    this.loginPath  = null
-    this.client     = axios.create({ baseURL: this.baseUrl, timeout: 30000, withCredentials: true, httpsAgent })
+// ─── Thapar WebKiosk Scraper (JSP) ───────────────────────────────
+export class ThaparWebKioskScraper {
+  constructor() {
+    this._cookie = {}
+    this.client  = axios.create({
+      baseURL:        THAPAR_BASE,
+      timeout:        30_000,
+      maxRedirects:   10,
+      httpsAgent,
+      validateStatus: () => true,
+      headers: {
+        'User-Agent':      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept':          'text/html,application/xhtml+xml,*/*;q=0.9',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Cache-Control':   'no-cache',
+      },
+    })
+
+    // Auto-accumulate Set-Cookie headers
+    this.client.interceptors.response.use(res => {
+      const setCookies = res.headers['set-cookie'] || []
+      for (const c of setCookies) {
+        const [pair] = c.split(';')
+        const [k, v] = pair.split('=')
+        if (k) this._cookie[k.trim()] = (v || '').trim()
+      }
+      this.client.defaults.headers['Cookie'] =
+        Object.entries(this._cookie).map(([k, v]) => `${k}=${v}`).join('; ')
+      return res
+    })
   }
 
-  // Try to find a reachable data page from a list of candidates
-  async discoverDataPath(candidates) {
-    for (const path of candidates) {
-      try {
-        const res = await this.client.get(path, { maxRedirects: 5 })
-        // Accept any 200 response that isn't redirected back to login
-        if (res.status === 200 && !res.request?.path?.toLowerCase().includes('login')) {
-          return path
-        }
-      } catch {}
-    }
-    throw new Error(`Could not find page. Tried: ${candidates.slice(0, 3).join(', ')}...`)
-  }
-
-  // Try to find a reachable login page
-  async discoverLoginPath() {
-    for (const path of LOGIN_PATHS) {
-      try {
-        const res = await this.client.get(path, { maxRedirects: 5 })
-        if (res.status === 200) { this.loginPath = path; return path }
-      } catch {}
-    }
-    throw new Error(`Could not reach any login page on ${this.baseUrl}. Tried: ${LOGIN_PATHS.join(', ')}`)
-  }
-
-  async login(username, password) {
-    if (!this.loginPath) await this.discoverLoginPath()
-
-    // First GET the login page to grab any hidden form fields (ASP.NET ViewState etc.)
-    let extraFields = {}
+  // ── Login ───────────────────────────────────────────────────────
+  async login(enrollmentNo, password) {
+    // 1. GET login page — capture any hidden ASP/JSP ViewState fields
+    let hiddenFields = {}
     try {
-      const getRes = await this.client.get(this.loginPath, { maxRedirects: 5 })
+      const getRes = await this.client.get('/index.jsp')
       const $ = cheerio.load(getRes.data)
       $('input[type=hidden]').each((_, el) => {
         const name = $(el).attr('name')
         const val  = $(el).attr('value') || ''
-        if (name) extraFields[name] = val
+        if (name) hiddenFields[name] = val
       })
-      // Store any cookies from the GET
-      const getCookies = getRes.headers['set-cookie']
-      if (getCookies) {
-        this.cookie = getCookies.map(c => c.split(';')[0]).join('; ')
-        this.client.defaults.headers['Cookie'] = this.cookie
-      }
-    } catch {}
+    } catch { /* ignore — we'll try without hidden fields */ }
 
-    // Try common username/password field name variations
-    const fieldCombos = [
-      { usernameField: 'username', passwordField: 'password' },
-      { usernameField: 'UserName', passwordField: 'Password' },
-      { usernameField: 'userid',   passwordField: 'password' },
-      { usernameField: 'user_id',  passwordField: 'user_password' },
-      { usernameField: 'LoginId',  passwordField: 'Password' },
-    ]
-
-    let lastErr = null
-    for (const { usernameField, passwordField } of fieldCombos) {
-      try {
-        const body = new URLSearchParams({ ...extraFields, [usernameField]: username, [passwordField]: password })
-        const res = await this.client.post(this.loginPath, body, {
-          maxRedirects: 5,
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        })
-        const setCookie = res.headers['set-cookie']
-        if (setCookie) {
-          this.cookie = setCookie.map(c => c.split(';')[0]).join('; ')
-          this.client.defaults.headers['Cookie'] = this.cookie
-          return true
-        }
-      } catch (err) { lastErr = err }
-    }
-    throw new Error(`Login failed. The portal may use a custom login form. Last error: ${lastErr?.message || 'unknown'}`)
-  }
-
-  // Generic table scraper — finds the largest table on the page
-  _scrapeTable(html) {
-    const $ = cheerio.load(html)
-    let bestRows = []
-    $('table').each((_, table) => {
-      const rows = []
-      $(table).find('tr').each((i, tr) => {
-        const cells = []
-        $(tr).find('td, th').each((_, td) => cells.push($(td).text().trim()))
-        if (cells.length > 0) rows.push(cells)
-      })
-      if (rows.length > bestRows.length) bestRows = rows
+    // 2. POST credentials
+    const form = new URLSearchParams({
+      ...hiddenFields,
+      type:    'S',
+      loginid: String(enrollmentNo).trim(),
+      passwd:  String(password).trim(),
     })
-    return bestRows // bestRows[0] = header, bestRows[1..] = data rows
+
+    const res = await this.client.post('/index.jsp', form, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    })
+
+    const html = res.data || ''
+    const text = html.toLowerCase()
+
+    // Detect explicit failure messages
+    if (
+      text.includes('invalid login') ||
+      text.includes('incorrect password') ||
+      text.includes('wrong password') ||
+      text.includes('login failed') ||
+      text.includes('authentication failed') ||
+      text.includes('कृपया') // Hindi error messages
+    ) {
+      throw new Error('Invalid enrollment number or password. Please verify your credentials.')
+    }
+
+    // SUCCESS indicator: JSESSIONID cookie was set, or page changed to student data
+    const hasSession =
+      this._cookie['JSESSIONID'] ||
+      text.includes('studentpage') ||
+      text.includes('student personal information') ||
+      text.includes('tiet [')
+
+    if (!hasSession) {
+      // One more attempt with a slightly different form field name
+      const form2 = new URLSearchParams({
+        ...hiddenFields,
+        type:      'S',
+        LoginId:   String(enrollmentNo).trim(),
+        Password:  String(password).trim(),
+      })
+      const res2 = await this.client.post('/index.jsp', form2, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      })
+      if (!this._cookie['JSESSIONID']) {
+        throw new Error(
+          'Login unsuccessful — session not established. ' +
+          'This may be caused by a CAPTCHA or incorrect credentials. ' +
+          'Please verify your enrollment number and password.'
+        )
+      }
+    }
+
+    return true
   }
 
+  // ── Fetch a JSP page (after login) ─────────────────────────────
+  async _fetch(path) {
+    const res = await this.client.get(path)
+    const url = res.request?.res?.responseUrl || ''
+    if (url.includes('index.jsp') && !path.includes('index.jsp')) {
+      throw new Error(`Session expired or page ${path} requires re-login.`)
+    }
+    return res.data || ''
+  }
+
+  // ── Generic helpers ─────────────────────────────────────────────
+  _largest_table($) {
+    let best = { len: 0, el: null }
+    $('table').each((_, t) => {
+      const len = $(t).find('tr').length
+      if (len > best.len) { best.len = len; best.el = t }
+    })
+    return best.el
+  }
+
+  _table_data($, tableEl) {
+    const headers = []
+    const rows    = []
+    $(tableEl).find('tr').each((i, tr) => {
+      const cells = []
+      $(tr).find('td, th').each((_, td) =>
+        cells.push($(td).text().replace(/\s+/g, ' ').trim())
+      )
+      if (!cells.some(c => c)) return
+      if (i === 0 || !rows.length && cells.every((c, ci) => !parseFloat(c) && ci > 0))
+        headers.push(...cells)
+      else rows.push(cells)
+    })
+    return { headers, rows }
+  }
+
+  _hi(headers, ...keywords) {
+    for (const kw of keywords) {
+      const i = headers.findIndex(h => h.toLowerCase().includes(kw.toLowerCase()))
+      if (i >= 0) return i
+    }
+    return -1
+  }
+
+  // ── Student Personal Information ────────────────────────────────
+  async fetchProfile() {
+    const html = await this._fetch('/StudentFiles/StudentPage.jsp')
+    const $ = cheerio.load(html)
+
+    const kv = {}
+    $('table tr').each((_, tr) => {
+      const tds = $(tr).find('td')
+      if (tds.length < 2) return
+      const key   = $(tds.first()).text().replace(/[:*]+$/, '').replace(/\s+/g, ' ').trim()
+      const value = $(tds.last()).text().replace(/\s+/g, ' ').trim()
+      if (key && value && key !== value && key.length < 60) kv[key] = value
+    })
+
+    const g  = (...keys) => keys.reduce((v, k) => v || kv[k] || '', '')
+    const photoEl = $('img[src*="photo" i], img[src*="Photo"], img[src*="student" i]').first()
+    const photoSrc = photoEl.attr('src') || ''
+
+    return {
+      name:             g('Name', 'Student Name', 'STUDENT NAME'),
+      enrollmentNo:     g('Enrollment No', 'Enrollment Number', 'EnrollmentNo'),
+      rollNo:           g('Roll No', 'Roll Number', 'RollNo'),
+      dateOfBirth:      g('Date of Birth', 'DOB', 'Birth Date'),
+      fatherName:       g("Father's Name", 'Father Name', 'FatherName'),
+      motherName:       g("Mother's Name", 'Mother Name', 'MotherName'),
+      program:          g('Program', 'Course', 'Programme'),
+      branch:           g('Branch', 'Department', 'Discipline'),
+      section:          g('Section', 'Sec'),
+      semester:         g('Semester', 'Current Semester', 'Sem'),
+      batchYear:        g('Batch Year', 'Batch', 'Year of Admission', 'Admission Year'),
+      category:         g('Category', 'Caste'),
+      bloodGroup:       g('Blood Group', 'Blood'),
+      email:            g('Email', 'E-Mail', 'Email ID'),
+      mobile:           g('Mobile No', 'Mobile Number', 'Contact No', 'Phone'),
+      address:          g('Permanent Address', 'Address', 'Local Address'),
+      photoUrl:         photoSrc
+        ? (photoSrc.startsWith('http') ? photoSrc : `${THAPAR_BASE}/${photoSrc.replace(/^\//, '')}`)
+        : null,
+      raw: kv,
+    }
+  }
+
+  // ── Attendance ──────────────────────────────────────────────────
   async fetchAttendance() {
-    const path = await this.discoverDataPath(DATA_PATHS.attendance)
-    const res  = await this.client.get(path)
-    const rows = this._scrapeTable(res.data)
-    if (rows.length < 2) return []
-    // Try to auto-detect columns by header names
-    const header = rows[0].map(h => h.toLowerCase())
-    const codeIdx = header.findIndex(h => h.includes('code') || h.includes('subject'))
-    const nameIdx = header.findIndex(h => h.includes('name') || h.includes('subject'))
-    const totIdx  = header.findIndex(h => h.includes('total') || h.includes('held'))
-    const preIdx  = header.findIndex(h => h.includes('present') || h.includes('pres'))
-    const absIdx  = header.findIndex(h => h.includes('absent') || h.includes('abs'))
-    const pctIdx  = header.findIndex(h => h.includes('%') || h.includes('percent') || h.includes('attend'))
+    const html = await this._fetch('/StudentFiles/StudentAttendanceDetails.jsp')
+    const $ = cheerio.load(html)
+    const tableEl = this._largest_table($)
+    if (!tableEl) return []
+    const { headers, rows } = this._table_data($, tableEl)
+    if (!headers.length && !rows.length) return []
 
-    return rows.slice(1).map(cols => ({
-      course_code: cols[codeIdx >= 0 ? codeIdx : 0] || '',
-      course_name: cols[nameIdx >= 0 ? nameIdx : 1] || '',
-      total:       parseInt(cols[totIdx  >= 0 ? totIdx  : 2]) || 0,
-      present:     parseInt(cols[preIdx  >= 0 ? preIdx  : 3]) || 0,
-      absent:      parseInt(cols[absIdx  >= 0 ? absIdx  : 4]) || 0,
-      percentage:  parseFloat(cols[pctIdx >= 0 ? pctIdx : 5]) || 0,
-    })).filter(r => r.course_code)
+    const hi = (...kw) => this._hi(headers, ...kw)
+    const codeI = hi('code', 'subject code', 'sub code')
+    const nameI = hi('name', 'subject', 'title', 'course')
+    const totI  = hi('total', 'held', 'conducted')
+    const preI  = hi('present', 'attended', 'attend')
+    const absI  = hi('absent')
+    const pctI  = hi('%', 'percent', 'attendance %')
+
+    return rows
+      .map(cols => {
+        const total   = parseInt((cols[totI >= 0 ? totI : 3]  || '').replace(/\D/g, '')) || 0
+        const present = parseInt((cols[preI >= 0 ? preI : 4]  || '').replace(/\D/g, '')) || 0
+        const absent  = absI >= 0
+          ? parseInt((cols[absI] || '').replace(/\D/g, '')) || (total - present)
+          : total - present
+        const pct     = pctI >= 0
+          ? parseFloat((cols[pctI] || '').replace(/[^\d.]/g, '')) || (total > 0 ? +(present / total * 100).toFixed(1) : 0)
+          : (total > 0 ? +(present / total * 100).toFixed(1) : 0)
+
+        return {
+          courseCode:  (cols[codeI >= 0 ? codeI : 1] || '').trim(),
+          courseName:  (cols[nameI >= 0 ? nameI : 2] || '').trim(),
+          total,
+          present,
+          absent,
+          percentage:  pct,
+        }
+      })
+      .filter(r => r.courseCode || r.courseName)
   }
 
-  async fetchMarks() {
-    const path = await this.discoverDataPath(DATA_PATHS.marks)
-    const res  = await this.client.get(path)
-    const rows = this._scrapeTable(res.data)
-    if (rows.length < 2) return []
-    const header   = rows[0].map(h => h.toLowerCase())
-    const codeIdx  = header.findIndex(h => h.includes('code') || h.includes('subject'))
-    const typeIdx  = header.findIndex(h => h.includes('exam') || h.includes('type') || h.includes('test'))
-    const marksIdx = header.findIndex(h => h.includes('obtain') || h.includes('marks') || h.includes('score'))
-    const maxIdx   = header.findIndex(h => h.includes('max') || h.includes('total') || h.includes('out'))
+  // ── Academic Result (SGPA / CGPA + marks) ──────────────────────
+  async fetchResult() {
+    const html = await this._fetch('/StudentFiles/StudentResultDetails.jsp')
+    const $ = cheerio.load(html)
+    const text = $.text()
 
-    return rows.slice(1).map(cols => ({
-      course_code: cols[codeIdx  >= 0 ? codeIdx  : 0] || '',
-      exam_type:   (cols[typeIdx  >= 0 ? typeIdx  : 1] || 'internal').toLowerCase(),
-      marks:       parseFloat(cols[marksIdx >= 0 ? marksIdx : 2]) || 0,
-      max_marks:   parseFloat(cols[maxIdx   >= 0 ? maxIdx   : 3]) || 100,
-    })).filter(r => r.course_code)
+    const matchNum = (pattern) => {
+      const m = text.match(pattern)
+      return m ? parseFloat(m[1]) : null
+    }
+
+    const cgpa = matchNum(/CGPA\s*[:\-]?\s*(\d+\.?\d*)/i)
+    const sgpa = matchNum(/SGPA\s*[:\-]?\s*(\d+\.?\d*)/i)
+
+    const tableEl = this._largest_table($)
+    const { headers, rows } = tableEl ? this._table_data($, tableEl) : { headers: [], rows: [] }
+
+    return { cgpa, sgpa, headers, rows: rows.filter(r => r.some(c => c)) }
   }
 
-  async fetchFeeDetails() {
-    const path = await this.discoverDataPath(DATA_PATHS.fees)
-    const res  = await this.client.get(path)
-    const rows = this._scrapeTable(res.data)
-    if (rows.length < 2) return []
-    const header  = rows[0].map(h => h.toLowerCase())
-    const semIdx  = header.findIndex(h => h.includes('sem'))
-    const typeIdx = header.findIndex(h => h.includes('type') || h.includes('fee'))
-    const dueIdx  = header.findIndex(h => h.includes('due') || h.includes('demand'))
-    const paidIdx = header.findIndex(h => h.includes('paid') || h.includes('deposited'))
-    const stIdx   = header.findIndex(h => h.includes('status'))
+  // ── Registered Courses ──────────────────────────────────────────
+  async fetchRegisteredCourses() {
+    const html = await this._fetch('/StudentFiles/StudentRegisteredCourses.jsp')
+    const $ = cheerio.load(html)
+    const tableEl = this._largest_table($)
+    if (!tableEl) return []
+    const { headers, rows } = this._table_data($, tableEl)
 
-    return rows.slice(1).map(cols => ({
-      semester:    parseInt(cols[semIdx  >= 0 ? semIdx  : 0]) || 1,
-      fee_type:    (cols[typeIdx >= 0 ? typeIdx : 1] || 'tuition').toLowerCase().split(' ')[0],
-      amount_due:  parseFloat((cols[dueIdx  >= 0 ? dueIdx  : 2] || '').replace(/[^0-9.]/g, '')) || 0,
-      amount_paid: parseFloat((cols[paidIdx >= 0 ? paidIdx : 3] || '').replace(/[^0-9.]/g, '')) || 0,
-      status:      (cols[stIdx >= 0 ? stIdx : 4] || 'pending').toLowerCase(),
-    })).filter(r => r.amount_due > 0)
+    const hi = (...kw) => this._hi(headers, ...kw)
+    const codeI   = hi('code', 'course code')
+    const nameI   = hi('name', 'title', 'subject')
+    const creditI = hi('credit', 'unit', 'ch')
+    const facI    = hi('faculty', 'teacher', 'instructor', 'professor')
+
+    return rows
+      .map(cols => ({
+        code:    (cols[codeI >= 0 ? codeI : 1]    || '').trim(),
+        name:    (cols[nameI >= 0 ? nameI : 2]    || '').trim(),
+        credits: parseFloat((cols[creditI >= 0 ? creditI : 3] || '').replace(/\D/g, '')) || 0,
+        faculty: (cols[facI >= 0 ? facI : 4]      || '').trim(),
+      }))
+      .filter(r => r.code || r.name)
   }
 
-  async fetchExamSchedule() {
-    const path = await this.discoverDataPath(DATA_PATHS.examSchedule)
-    const res  = await this.client.get(path)
-    const rows = this._scrapeTable(res.data)
-    if (rows.length < 2) return []
-    const header  = rows[0].map(h => h.toLowerCase())
-    const codeIdx = header.findIndex(h => h.includes('code') || h.includes('subject'))
-    const nameIdx = header.findIndex(h => h.includes('name'))
-    const dateIdx = header.findIndex(h => h.includes('date'))
-    const timeIdx = header.findIndex(h => h.includes('time'))
-    const venIdx  = header.findIndex(h => h.includes('venue') || h.includes('room') || h.includes('hall'))
+  // ── Fee Details ─────────────────────────────────────────────────
+  async fetchFees() {
+    const html = await this._fetch('/StudentFiles/FeeDetails.jsp')
+    const $ = cheerio.load(html)
+    const text = $.text()
+    const tableEl = this._largest_table($)
+    const { headers, rows } = tableEl ? this._table_data($, tableEl) : { headers: [], rows: [] }
 
-    return rows.slice(1).map(cols => ({
-      course_code: cols[codeIdx >= 0 ? codeIdx : 0] || '',
-      course_name: cols[nameIdx >= 0 ? nameIdx : 1] || '',
-      exam_type:   'end',
-      exam_date:   cols[dateIdx >= 0 ? dateIdx : 2] || '',
-      start_time:  cols[timeIdx >= 0 ? timeIdx : 3] || '09:00',
-      venue:       cols[venIdx  >= 0 ? venIdx  : 4] || '',
-    })).filter(r => r.course_code && r.exam_date)
+    const parseAmt = (str) => parseFloat((str || '').replace(/[^\d.]/g, '')) || 0
+
+    const hi = (...kw) => this._hi(headers, ...kw)
+    const semI  = hi('sem', 'semester')
+    const typeI = hi('type', 'particular', 'fee')
+    const dueI  = hi('due', 'demand', 'required')
+    const paidI = hi('paid', 'receipt', 'deposited')
+    const balI  = hi('balance', 'remaining', 'arrear')
+    const stI   = hi('status')
+
+    const records = rows
+      .map(cols => ({
+        semester:   parseInt((cols[semI >= 0 ? semI : 0] || '').replace(/\D/g, '')) || null,
+        feeType:    (cols[typeI >= 0 ? typeI : 1] || 'tuition').trim(),
+        amountDue:  parseAmt(cols[dueI >= 0 ? dueI : 2]),
+        amountPaid: parseAmt(cols[paidI >= 0 ? paidI : 3]),
+        balance:    balI >= 0 ? parseAmt(cols[balI]) : null,
+        status:     (cols[stI >= 0 ? stI : cols.length - 1] || '').trim() || 'pending',
+      }))
+      .filter(r => r.amountDue > 0 || r.amountPaid > 0)
+
+    const totalDue  = records.reduce((s, r) => s + r.amountDue, 0)
+    const totalPaid = records.reduce((s, r) => s + r.amountPaid, 0)
+
+    // Also try to read summary figures from page text
+    const dueTxt  = text.match(/(?:total due|amount due|outstanding)\s*:?\s*₹?\s*([\d,]+\.?\d*)/i)
+    const paidTxt = text.match(/(?:total paid|amount paid)\s*:?\s*₹?\s*([\d,]+\.?\d*)/i)
+
+    return {
+      records,
+      summary: {
+        totalDue:  dueTxt  ? parseFloat(dueTxt[1].replace(/,/g, ''))  : totalDue,
+        totalPaid: paidTxt ? parseFloat(paidTxt[1].replace(/,/g, '')) : totalPaid,
+        balance:   (dueTxt ? parseFloat(dueTxt[1].replace(/,/g, '')) : totalDue) -
+                   (paidTxt ? parseFloat(paidTxt[1].replace(/,/g, '')) : totalPaid),
+      },
+    }
   }
 
+  // ── Timetable ───────────────────────────────────────────────────
+  async fetchTimetable() {
+    try {
+      const html = await this._fetch('/StudentFiles/StudentTimeTable.jsp')
+      const $ = cheerio.load(html)
+      const tableEl = this._largest_table($)
+      if (!tableEl) return []
+      const { headers, rows } = this._table_data($, tableEl)
+      return { headers, rows: rows.filter(r => r.some(c => c)) }
+    } catch { return [] }
+  }
+
+  // ── Logout ──────────────────────────────────────────────────────
   async logout() {
-    try { await this.client.get('/Logout.aspx') } catch {}
-    this.cookie = null
+    for (const path of ['/Logout.jsp', '/logout.do', '/LogOff.jsp']) {
+      try { await this.client.get(path) } catch {}
+    }
+    this._cookie = {}
   }
 }
 
-// ─── Main sync runner ────────────────────────────────────────────────────────
+// Alias for any existing code referencing WebKioskScraper
+export const WebKioskScraper = ThaparWebKioskScraper
+
+// ─── Per-Student WebKiosk Sync ────────────────────────────────────
+export async function runStudentWebKioskSync(userId) {
+  // Fetch the user's webkiosk config
+  const { data: config } = await supabaseAdmin
+    .from('student_sync_config')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('provider', 'webkiosk')
+    .maybeSingle()
+
+  if (!config) throw new Error('No WebKiosk credentials configured.')
+  const creds = config.credentials_json || {}
+  if (!creds.username || !creds.password) throw new Error('Missing WebKiosk credentials.')
+
+  const log  = []
+  let status = 'success'
+  let data   = {}
+
+  try {
+    const scraper = new ThaparWebKioskScraper()
+
+    log.push('Connecting to Thapar WebKiosk...')
+    await scraper.login(creds.username, creds.password)
+    log.push('Login successful')
+
+    // Parallel scrape of all modules
+    const [profRes, attRes, resultRes, coursesRes, feesRes, ttRes] = await Promise.allSettled([
+      scraper.fetchProfile(),
+      scraper.fetchAttendance(),
+      scraper.fetchResult(),
+      scraper.fetchRegisteredCourses(),
+      scraper.fetchFees(),
+      scraper.fetchTimetable(),
+    ])
+
+    if (profRes.status === 'fulfilled') {
+      data.profile = profRes.value
+      log.push(`✓ Profile: ${profRes.value.name || '—'}`)
+      // Mirror into student_profiles
+      await supabaseAdmin.from('student_profiles').upsert({
+        user_id:       userId,
+        enrollment_no: profRes.value.enrollmentNo || creds.username,
+        roll_no:       profRes.value.rollNo       || null,
+        branch:        profRes.value.branch        || null,
+        dept:          profRes.value.branch        || null,
+        section:       profRes.value.section       || null,
+        batch_year:    parseInt(profRes.value.batchYear) || null,
+        updated_at:    new Date().toISOString(),
+      }, { onConflict: 'user_id' }).catch(() => {})
+    } else {
+      log.push(`✗ Profile: ${profRes.reason?.message}`)
+      status = 'partial'
+    }
+
+    if (attRes.status === 'fulfilled') {
+      data.attendance = attRes.value
+      log.push(`✓ Attendance: ${attRes.value.length} subjects`)
+    } else {
+      log.push(`✗ Attendance: ${attRes.reason?.message}`)
+      status = 'partial'
+    }
+
+    if (resultRes.status === 'fulfilled') {
+      data.result = resultRes.value
+      log.push(`✓ Result: CGPA=${resultRes.value.cgpa ?? '—'}, SGPA=${resultRes.value.sgpa ?? '—'}`)
+      if (resultRes.value.cgpa) {
+        await supabaseAdmin.from('student_profiles').upsert({
+          user_id:      userId,
+          current_cgpa: resultRes.value.cgpa,
+          updated_at:   new Date().toISOString(),
+        }, { onConflict: 'user_id' }).catch(() => {})
+      }
+    } else {
+      log.push(`✗ Result: ${resultRes.reason?.message}`)
+      status = 'partial'
+    }
+
+    if (coursesRes.status === 'fulfilled') {
+      data.registeredCourses = coursesRes.value
+      log.push(`✓ Registered Courses: ${coursesRes.value.length}`)
+    } else {
+      log.push(`✗ Courses: ${coursesRes.reason?.message}`)
+    }
+
+    if (feesRes.status === 'fulfilled') {
+      data.fees = feesRes.value
+      log.push(`✓ Fees: balance ₹${feesRes.value.summary.balance.toLocaleString()}`)
+    } else {
+      log.push(`✗ Fees: ${feesRes.reason?.message}`)
+      status = 'partial'
+    }
+
+    if (ttRes.status === 'fulfilled') {
+      data.timetable = ttRes.value
+      log.push(`✓ Timetable: fetched`)
+    } else {
+      log.push(`○ Timetable: ${ttRes.reason?.message}`)
+    }
+
+    await scraper.logout()
+    log.push('Sync complete')
+  } catch (err) {
+    status = 'failed'
+    log.push(`✗ Error: ${err.message}`)
+  }
+
+  // Persist sync status + all data
+  await supabaseAdmin
+    .from('student_sync_config')
+    .update({
+      last_synced_at:   new Date().toISOString(),
+      last_sync_status: status,
+      last_sync_log:    JSON.stringify({ log: log.join('\n'), data }),
+    })
+    .eq('user_id', userId)
+    .eq('provider', 'webkiosk')
+
+  return { status, log, data }
+}
+
+// ─── Admin-level sync (unchanged contract) ────────────────────────
 export async function runWebKioskSync() {
   const { data: configs } = await supabaseAdmin
     .from('external_sync_config')
@@ -271,79 +516,41 @@ export async function runWebKioskSync() {
     const log    = []
     let   status = 'success'
     try {
-      // Decrypt stored credentials
       let creds = {}
-      try {
-        creds = JSON.parse(decrypt(config.credentials_json?.encrypted))
-      } catch {
-        throw new Error('Could not decrypt stored credentials. Please re-save your credentials in Sync Config.')
+      try { creds = JSON.parse(decrypt(config.credentials_json?.encrypted)) } catch {
+        throw new Error('Could not decrypt stored credentials.')
       }
+      if (!creds.username || !creds.password) throw new Error('No credentials stored.')
 
-      if (!creds.username || !creds.password) {
-        throw new Error('No username/password found in stored credentials. Please re-configure.')
-      }
-
-      const scraper = new WebKioskScraper(config.base_url)
-      log.push(`Discovering login page on ${config.base_url}...`)
-
-      try {
-        await scraper.login(creds.username, creds.password)
-      } catch (loginErr) {
-        if (loginErr.message?.includes('404') || loginErr.message?.includes('ECONNREFUSED') || loginErr.message?.includes('ENOTFOUND')) {
-          throw new Error(`Cannot reach ${config.base_url}. WebKiosk is likely on an internal campus network — your server must be running on the same network (e.g., campus Wi-Fi or VPN). Original error: ${loginErr.message}`)
-        }
-        throw loginErr
-      }
+      const scraper = new ThaparWebKioskScraper()
+      log.push(`Discovering login on ${THAPAR_BASE}...`)
+      await scraper.login(creds.username, creds.password)
       log.push('Login successful')
 
-      const modules = config.sync_modules || {}
+      const [att, marks, fees] = await Promise.allSettled([
+        scraper.fetchAttendance(),
+        scraper.fetchResult(),
+        scraper.fetchFees(),
+      ])
 
-      if (modules.exam_schedule) {
-        try {
-          const exams = await scraper.fetchExamSchedule()
-          if (exams.length > 0) {
-            const rows = exams.map(e => ({ ...e, synced_from: 'webkiosk' }))
-            await supabaseAdmin.from('exam_schedule').upsert(rows, { onConflict: 'course_code,exam_type,exam_date' })
-            log.push(`Synced ${exams.length} exam schedule entries`)
-          } else {
-            log.push('Exam schedule: no data found on page')
-          }
-        } catch (e) { log.push(`Exam schedule sync failed: ${e.message}`); status = 'partial' }
-      }
+      if (att.status === 'fulfilled') log.push(`Attendance: ${att.value.length} rows`)
+      else { log.push(`Attendance failed: ${att.reason?.message}`); status = 'partial' }
 
-      if (modules.attendance) {
-        try {
-          const rows = await scraper.fetchAttendance()
-          log.push(`Attendance: fetched ${rows.length} course rows`)
-        } catch (e) { log.push(`Attendance sync failed: ${e.message}`); status = 'partial' }
-      }
+      if (marks.status === 'fulfilled') log.push(`Result: CGPA=${marks.value.cgpa}`)
+      else { log.push(`Result failed: ${marks.reason?.message}`); status = 'partial' }
 
-      if (modules.grades) {
-        try {
-          const rows = await scraper.fetchMarks()
-          log.push(`Grades: fetched ${rows.length} mark rows`)
-        } catch (e) { log.push(`Grades sync failed: ${e.message}`); status = 'partial' }
-      }
+      if (fees.status === 'fulfilled') log.push(`Fees: ${fees.value.records.length} records`)
+      else { log.push(`Fees failed: ${fees.reason?.message}`); status = 'partial' }
 
       await scraper.logout()
-      log.push('Sync complete')
+      log.push('Done')
     } catch (err) {
       status = 'failed'
-      log.push(`Sync failed: ${err.message}`)
+      log.push(`Error: ${err.message}`)
     }
 
-    await supabaseAdmin
-      .from('external_sync_config')
+    await supabaseAdmin.from('external_sync_config')
       .update({ last_synced_at: new Date().toISOString(), last_sync_status: status, last_sync_log: log.join('\n') })
       .eq('id', config.id)
   }
-}
-
-export function encryptCredentials(creds) {
-  return { encrypted: encrypt(JSON.stringify(creds)) }
-}
-
-export function redactConfig(config) {
-  const { credentials_json, ...safe } = config
-  return { ...safe, credentials_json: { configured: !!credentials_json?.encrypted } }
 }
