@@ -1,26 +1,26 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
-import { Search, Trash2, CheckCircle2, AlertCircle, MapPin, ExternalLink, Package, RefreshCw } from 'lucide-react'
+import { Search, Trash2, CheckCircle2, AlertCircle, MapPin, ExternalLink, Package, RefreshCw, LayoutGrid, MonitorSmartphone, Key, Contact, Shirt, Book, Backpack, Wallet, Activity, Box } from 'lucide-react'
 
 // ─── Config ──────────────────────────────────────────────────
 const CATS = [
-  { value: 'electronics', label: 'Electronics', emoji: '💻', color: '#4f46e5', bg: '#eef2ff' },
-  { value: 'keys',        label: 'Keys',        emoji: '🔑', color: '#d97706', bg: '#fffbeb' },
-  { value: 'id_card',     label: 'ID Card',     emoji: '🪪', color: '#2563eb', bg: '#eff6ff' },
-  { value: 'clothing',    label: 'Clothing',    emoji: '👕', color: '#db2777', bg: '#fdf2f8' },
-  { value: 'books',       label: 'Books',       emoji: '📚', color: '#16a34a', bg: '#f0fdf4' },
-  { value: 'bag',         label: 'Bag',         emoji: '🎒', color: '#ea580c', bg: '#fff7ed' },
-  { value: 'wallet',      label: 'Wallet',      emoji: '👛', color: '#ca8a04', bg: '#fefce8' },
-  { value: 'jewellery',   label: 'Jewellery',   emoji: '💍', color: '#9333ea', bg: '#faf5ff' },
-  { value: 'sports',      label: 'Sports',      emoji: '⚽', color: '#0d9488', bg: '#f0fdfa' },
-  { value: 'other',       label: 'Other',       emoji: '📦', color: '#64748b', bg: '#f8fafc' },
+  { value: 'electronics', label: 'Electronics', icon: MonitorSmartphone, color: '#4f46e5', bg: '#eef2ff' },
+  { value: 'keys',        label: 'Keys',        icon: Key,               color: '#d97706', bg: '#fffbeb' },
+  { value: 'id_card',     label: 'ID Card',     icon: Contact,           color: '#2563eb', bg: '#eff6ff' },
+  { value: 'clothing',    label: 'Clothing',    icon: Shirt,             color: '#db2777', bg: '#fdf2f8' },
+  { value: 'books',       label: 'Books',       icon: Book,              color: '#16a34a', bg: '#f0fdf4' },
+  { value: 'bag',         label: 'Bag',         icon: Backpack,          color: '#ea580c', bg: '#fff7ed' },
+  { value: 'wallet',      label: 'Wallet',      icon: Wallet,            color: '#ca8a04', bg: '#fefce8' },
+  { value: 'jewellery',   label: 'Jewellery',   icon: Activity,          color: '#9333ea', bg: '#faf5ff' },
+  { value: 'sports',      label: 'Sports',      icon: Activity,          color: '#0d9488', bg: '#f0fdfa' },
+  { value: 'other',       label: 'Other',       icon: Box,               color: '#64748b', bg: '#f8fafc' },
 ]
-const catInfo = v => CATS.find(c => c.value === v) || { emoji: '📦', label: v || 'Other', color: '#64748b', bg: '#f8fafc' }
+const catInfo = v => CATS.find(c => c.value === v) || CATS[CATS.length - 1]
 
 const STATUS = {
-  lost:     { label: 'Lost',     color: '#c2410c', bg: '#fff7ed', border: '#fed7aa' },
-  found:    { label: 'Found',    color: '#15803d', bg: '#f0fdf4', border: '#bbf7d0' },
+  lost: { label: 'Lost', color: '#c2410c', bg: '#fff7ed', border: '#fed7aa' },
+  found: { label: 'Found', color: '#15803d', bg: '#f0fdf4', border: '#bbf7d0' },
   resolved: { label: 'Resolved', color: '#0369a1', bg: '#f0f9ff', border: '#bae6fd' },
 }
 
@@ -39,22 +39,27 @@ function StatusBadge({ status }) {
 
 function CatChip({ category }) {
   const c = catInfo(category)
-  return <span style={{ background: c.bg, color: c.color, padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>{c.emoji} {c.label}</span>
+  const Icon = c.icon
+  return (
+    <span style={{ background: c.bg, color: c.color, padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+      <Icon size={12} strokeWidth={2.5} /> {c.label}
+    </span>
+  )
 }
 
 // ─── Main page ───────────────────────────────────────────────
 export default function ManageLostFound() {
-  const [tab,        setTab]        = useState('items')
-  const [allItems,   setAllItems]   = useState([])   // raw from API
-  const [claims,     setClaims]     = useState([])
-  const [stats,      setStats]      = useState(null)
-  const [loading,    setLoading]    = useState(true)
+  const [tab, setTab] = useState('items')
+  const [allItems, setAllItems] = useState([])   // raw from API
+  const [claims, setClaims] = useState([])
+  const [stats, setStats] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [claimsLoad, setClaimsLoad] = useState(false)
 
   // Filters — applied client-side on items
   const [statusF, setStatusF] = useState('all')
-  const [catF,    setCatF]    = useState('all')
-  const [search,  setSearch]  = useState('')
+  const [catF, setCatF] = useState('all')
+  const [search, setSearch] = useState('')
 
   // Claims filter
   const [claimF, setClaimF] = useState('pending')
@@ -76,7 +81,7 @@ export default function ManageLostFound() {
     try {
       const res = await api.get('/api/admin/lost-found/stats')
       if (res.success) setStats(res.data)
-    } catch {}
+    } catch { }
   }, [])
 
   const loadClaims = useCallback(async () => {
@@ -85,7 +90,7 @@ export default function ManageLostFound() {
       const params = claimF !== 'all' ? `?status=${claimF}` : ''
       const res = await api.get(`/api/admin/lost-found/claims${params}`)
       if (res.success) setClaims(res.data || [])
-    } catch {} finally { setClaimsLoad(false) }
+    } catch { } finally { setClaimsLoad(false) }
   }, [claimF])
 
   useEffect(() => { loadItems(); loadStats() }, [loadItems, loadStats])
@@ -95,7 +100,7 @@ export default function ManageLostFound() {
   const filtered = useMemo(() => {
     let list = allItems
     if (statusF !== 'all') list = list.filter(i => i.status === statusF)
-    if (catF    !== 'all') list = list.filter(i => (i.category || 'other') === catF)
+    if (catF !== 'all') list = list.filter(i => (i.category || 'other') === catF)
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(i =>
@@ -147,10 +152,10 @@ export default function ManageLostFound() {
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14 }}>
         {[
-          { label: 'Total',          value: stats?.total    ?? allItems.length,    color: '#4f46e5', bg: '#eef2ff', border: '#e0e7ff' },
-          { label: 'Lost',           value: stats?.lost     ?? allItems.filter(i=>i.status==='lost').length,     color: '#c2410c', bg: '#fff7ed', border: '#fed7aa' },
-          { label: 'Found',          value: stats?.found    ?? allItems.filter(i=>i.status==='found').length,    color: '#15803d', bg: '#f0fdf4', border: '#bbf7d0' },
-          { label: 'Resolved',       value: stats?.resolved ?? allItems.filter(i=>i.status==='resolved').length, color: '#0369a1', bg: '#f0f9ff', border: '#bae6fd' },
+          { label: 'Total', value: stats?.total ?? allItems.length, color: '#4f46e5', bg: '#eef2ff', border: '#e0e7ff' },
+          { label: 'Lost', value: stats?.lost ?? allItems.filter(i => i.status === 'lost').length, color: '#c2410c', bg: '#fff7ed', border: '#fed7aa' },
+          { label: 'Found', value: stats?.found ?? allItems.filter(i => i.status === 'found').length, color: '#15803d', bg: '#f0fdf4', border: '#bbf7d0' },
+          { label: 'Resolved', value: stats?.resolved ?? allItems.filter(i => i.status === 'resolved').length, color: '#0369a1', bg: '#f0f9ff', border: '#bae6fd' },
           { label: 'Pending Claims', value: pendingCount, color: pendingCount > 0 ? '#92400e' : '#64748b', bg: pendingCount > 0 ? '#fffbeb' : '#f8fafc', border: pendingCount > 0 ? '#fde68a' : '#f1f5f9' },
         ].map((s, i) => (
           <div key={i} style={{ background: s.bg, borderRadius: 14, border: `1px solid ${s.border}`, padding: '14px 18px' }}>
@@ -163,7 +168,7 @@ export default function ManageLostFound() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid #f1f5f9' }}>
         {[
-          { id: 'items',  label: `All Items (${filtered.length}${filtered.length !== allItems.length ? `/${allItems.length}` : ''})` },
+          { id: 'items', label: `All Items (${filtered.length}${filtered.length !== allItems.length ? `/${allItems.length}` : ''})` },
           { id: 'claims', label: 'Claims' },
         ].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
@@ -188,64 +193,75 @@ export default function ManageLostFound() {
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #f1f5f9', padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
 
             {/* Row 1: search + status chips */}
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-              <div style={{ position: 'relative', flex: '1 1 180px', minWidth: 160 }}>
-                <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} />
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ position: 'relative', width: '300px', flexShrink: 0 }}>
+                <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} />
                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by title, location, reporter..."
-                  style={{ width: '100%', padding: '8px 10px 8px 30px', borderRadius: 9, border: '1.5px solid #e2e8f0', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                  style={{ width: '100%', padding: '10px 16px 10px 34px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: "'Inter', sans-serif", transition: '0.2s' }}
                   onFocus={e => e.target.style.borderColor = '#4f46e5'}
                   onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
               </div>
-              <div style={{ display: 'flex', gap: 5 }}>
-                {['all', 'lost', 'found', 'resolved'].map(s => {
-                  const active = statusF === s
-                  const cfg = s === 'all' ? { color: '#4f46e5', bg: '#eef2ff', border: '#e0e7ff' } : STATUS[s]
-                  return (
-                    <button key={s} onClick={() => setStatusF(s)} style={{
-                      padding: '7px 13px', borderRadius: 9, cursor: 'pointer',
-                      border: `1.5px solid ${active ? cfg.border : '#e2e8f0'}`,
-                      background: active ? cfg.bg : '#fff',
-                      color: active ? cfg.color : '#64748b',
-                      fontSize: 12, fontWeight: active ? 700 : 500,
-                    }}>
-                      {s === 'all' ? 'All' : STATUS[s].label}
-                    </button>
-                  )
-                })}
+              
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                <select
+                  value={statusF}
+                  onChange={(e) => setStatusF(e.target.value)}
+                  style={{
+                    padding: '10px 36px 10px 16px', borderRadius: 10, border: '1.5px solid #e2e8f0',
+                    fontSize: 14, fontWeight: 500, color: '#0f172a', background: '#fff',
+                    outline: 'none', cursor: 'pointer', appearance: 'none', fontFamily: "'Inter', sans-serif",
+                    transition: '0.2s', backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%2364748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>')`,
+                    backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center',
+                  }}
+                  onFocus={e => e.target.style.borderColor = '#4f46e5'}
+                  onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                >
+                  <option value="all">All Status</option>
+                  <option value="lost">Lost</option>
+                  <option value="found">Found</option>
+                  <option value="resolved">Resolved</option>
+                </select>
+                {(statusF !== 'all' || catF !== 'all' || search) && (
+                  <button onClick={() => { setStatusF('all'); setCatF('all'); setSearch('') }}
+                    style={{ padding: '7px 12px', borderRadius: 9, border: '1.5px solid #fee2e2', background: '#fef2f2', color: '#dc2626', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    Clear filters
+                  </button>
+                )}
               </div>
-              {(statusF !== 'all' || catF !== 'all' || search) && (
-                <button onClick={() => { setStatusF('all'); setCatF('all'); setSearch('') }}
-                  style={{ padding: '7px 12px', borderRadius: 9, border: '1.5px solid #fee2e2', background: '#fef2f2', color: '#dc2626', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                  Clear filters
-                </button>
-              )}
             </div>
 
             {/* Row 2: category chips — horizontal scroll */}
             <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2, scrollbarWidth: 'none' }}>
               <button onClick={() => setCatF('all')} style={{
-                flexShrink: 0, padding: '5px 12px', borderRadius: 8, cursor: 'pointer',
+                flexShrink: 0, padding: '7px 14px', borderRadius: 10, cursor: 'pointer',
                 border: `1.5px solid ${catF === 'all' ? '#4f46e5' : '#e2e8f0'}`,
                 background: catF === 'all' ? '#eef2ff' : '#fff',
                 color: catF === 'all' ? '#4f46e5' : '#64748b',
-                fontSize: 12, fontWeight: catF === 'all' ? 700 : 500,
-              }}>All</button>
-              {CATS.map(c => (
-                <button key={c.value} onClick={() => setCatF(c.value)} style={{
-                  flexShrink: 0, padding: '5px 11px', borderRadius: 8, cursor: 'pointer',
-                  border: `1.5px solid ${catF === c.value ? c.color : '#e2e8f0'}`,
-                  background: catF === c.value ? c.bg : '#fff',
-                  color: catF === c.value ? c.color : '#64748b',
-                  fontSize: 12, fontWeight: catF === c.value ? 700 : 500,
-                }}>
-                  {c.emoji} {c.label}
-                </button>
-              ))}
+                fontSize: 12, fontWeight: catF === 'all' ? 700 : 600, display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s'
+              }}>
+                <LayoutGrid size={14} strokeWidth={catF === 'all' ? 2.5 : 2} />
+                All
+              </button>
+              {CATS.map(c => {
+                const isSel = catF === c.value
+                const Icon = c.icon
+                return (
+                  <button key={c.value} onClick={() => setCatF(c.value)} style={{
+                    flexShrink: 0, padding: '7px 14px', borderRadius: 10, cursor: 'pointer',
+                    border: `1.5px solid ${isSel ? c.color : '#e2e8f0'}`,
+                    background: isSel ? c.bg : '#fff', color: isSel ? c.color : '#64748b',
+                    fontSize: 12, fontWeight: isSel ? 700 : 600, display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s'
+                  }}>
+                    <Icon size={14} strokeWidth={isSel ? 2.5 : 2} />
+                    {c.label}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
           {/* Table */}
-          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', overflow: 'hidden' }}>
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9' }}>
             {loading ? (
               <div style={{ padding: '56px 0', textAlign: 'center', color: '#94a3b8', fontSize: 14 }}>Loading items...</div>
             ) : filtered.length === 0 ? (
@@ -255,7 +271,7 @@ export default function ManageLostFound() {
                 <p style={{ fontSize: 12, marginTop: 6, color: '#cbd5e1' }}>Try a different status or category</p>
               </div>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
+              <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: 'calc(100vh - 380px)' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 680 }}>
                   <thead>
                     <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
@@ -336,10 +352,10 @@ export default function ManageLostFound() {
         <>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {[
-              { v: 'all',      label: 'All Claims', color: '#4f46e5', bg: '#eef2ff', border: '#e0e7ff' },
-              { v: 'pending',  label: 'Pending',    color: '#92400e', bg: '#fffbeb', border: '#fde68a' },
-              { v: 'approved', label: 'Approved',   color: '#15803d', bg: '#f0fdf4', border: '#bbf7d0' },
-              { v: 'rejected', label: 'Rejected',   color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
+              { v: 'all', label: 'All Claims', color: '#4f46e5', bg: '#eef2ff', border: '#e0e7ff' },
+              { v: 'pending', label: 'Pending', color: '#92400e', bg: '#fffbeb', border: '#fde68a' },
+              { v: 'approved', label: 'Approved', color: '#15803d', bg: '#f0fdf4', border: '#bbf7d0' },
+              { v: 'rejected', label: 'Rejected', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
             ].map(s => (
               <button key={s.v} onClick={() => setClaimF(s.v)} style={{
                 padding: '8px 16px', borderRadius: 10, cursor: 'pointer',
@@ -371,7 +387,9 @@ export default function ManageLostFound() {
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap', justifyContent: 'space-between' }}>
                       {/* Item */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: '1 1 200px' }}>
-                        <div style={{ width: 38, height: 38, borderRadius: 10, background: ci.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{ci.emoji}</div>
+                        <div style={{ width: 44, height: 44, borderRadius: 12, background: ci.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: ci.color, flexShrink: 0 }}>
+                          <ci.icon size={22} strokeWidth={2.5} />
+                        </div>
                         <div>
                           <div style={{ fontWeight: 700, fontSize: 14, color: '#0f172a' }}>{claim.item?.title || '—'}</div>
                           <div style={{ display: 'flex', gap: 5, marginTop: 3, flexWrap: 'wrap' }}>
@@ -390,7 +408,7 @@ export default function ManageLostFound() {
                         <span style={{
                           fontSize: 11, fontWeight: 700, textTransform: 'uppercase', padding: '3px 10px', borderRadius: 20, marginLeft: 6,
                           background: claim.status === 'pending' ? '#fffbeb' : claim.status === 'approved' ? '#f0fdf4' : '#f8fafc',
-                          color:      claim.status === 'pending' ? '#92400e' : claim.status === 'approved' ? '#15803d' : '#64748b',
+                          color: claim.status === 'pending' ? '#92400e' : claim.status === 'approved' ? '#15803d' : '#64748b',
                           border: `1px solid ${claim.status === 'pending' ? '#fde68a' : claim.status === 'approved' ? '#bbf7d0' : '#e2e8f0'}`,
                         }}>{claim.status}</span>
                       </div>

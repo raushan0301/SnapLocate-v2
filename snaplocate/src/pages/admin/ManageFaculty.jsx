@@ -1,7 +1,22 @@
 import { useState, useEffect } from 'react'
 import AdminPageTemplate from '../../components/admin/AdminPageTemplate'
 import api from '../../lib/api'
-import { UserX, Mail, BadgeCheck, Users, ShieldCheck, Clock, X, Save, Plus, Download, CheckSquare } from 'lucide-react'
+import { UserX, Mail, BadgeCheck, Users, ShieldCheck, Clock, X, Save, Plus, Download, CheckSquare, Trash2 } from 'lucide-react'
+
+const inputStyle = { 
+  width: '100%', padding: '0 16px', height: '48px', borderRadius: 12, border: '1.5px solid #e2e8f0', 
+  outline: 'none', boxSizing: 'border-box', fontFamily: "'Inter', sans-serif", 
+  fontSize: 14, color: '#1e293b', background: '#fff', transition: 'border-color 0.2s'
+}
+
+const selectStyle = {
+  ...inputStyle,
+  cursor: 'pointer',
+  appearance: 'none',
+  backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3Csvg width='12' height='7' viewBox='0 0 12 7' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 16px center'
+}
 
 /* ─── Faculty Form Modal ────────────────────────── */
 function FacultyModal({ user, onClose, onSave }) {
@@ -27,51 +42,50 @@ function FacultyModal({ user, onClose, onSave }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
       <form onSubmit={handleSubmit} style={{ background: '#fff', borderRadius: 24, width: '100%', maxWidth: 440, padding: 32, boxShadow: '0 20px 50px rgba(0,0,0,0.15)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
           <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', margin: 0 }}>{user ? 'Edit Professor' : 'Add New Professor'}</h2>
-          <button type="button" onClick={onClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#64748b' }}><X size={24} /></button>
+          <button type="button" onClick={onClose} style={{ border: 'none', background: '#f1f5f9', cursor: 'pointer', width: 32, height: 32, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}><X size={18} /></button>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6, display: 'block' }}>FULL NAME</label>
+            <label style={{ fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8, display: 'block' }}>Full Name *</label>
             <input
               required value={formData.full_name} onChange={e => setFormData({ ...formData, full_name: e.target.value })}
-              style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e2e8f0', outline: 'none', boxSizing: 'border-box' }}
+              style={inputStyle}
               placeholder="e.g. Dr. Jane Doe"
             />
           </div>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6, display: 'block' }}>OFFICIAL EMAIL</label>
+            <label style={{ fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8, display: 'block' }}>Official Email *</label>
             <input
               required type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })}
               disabled={!!user}
-              style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e2e8f0', outline: 'none', boxSizing: 'border-box', background: user ? '#f8fafc' : '#fff' }}
+              style={{ ...inputStyle, background: user ? '#f8fafc' : '#fff', color: user ? '#94a3b8' : '#1e293b' }}
               placeholder="jane.doe@thapar.edu"
             />
           </div>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6, display: 'block' }}>DEPARTMENT</label>
+            <label style={{ fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8, display: 'block' }}>Department *</label>
             <select
               value={formData.dept} onChange={e => setFormData({ ...formData, dept: e.target.value })}
-              style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e2e8f0', outline: 'none', background: '#fff' }}
+              style={selectStyle}
             >
               {['CSED', 'Electronics', 'Mechanical', 'Civil', 'Physics', 'Mathematics', 'Biotech'].map(d => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: '#f8fafc', borderRadius: 12 }}>
-            <input type="checkbox" checked={formData.is_verified} onChange={e => setFormData({ ...formData, is_verified: e.target.checked })} style={{ width: 18, height: 18, cursor: 'pointer' }} />
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#0f172a' }}>Verified Scholar Account</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', background: '#f8fafc', borderRadius: 12, border: '1.5px solid #e2e8f0', marginTop: 4 }}>
+            <input type="checkbox" checked={formData.is_verified} onChange={e => setFormData({ ...formData, is_verified: e.target.checked })} style={{ width: 18, height: 18, cursor: 'pointer', accentColor: '#4f46e5' }} />
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Verified Scholar Account</span>
           </div>
         </div>
 
         <div style={{ display: 'flex', gap: 12, marginTop: 32 }}>
-          <button type="button" onClick={onClose} style={{ flex: 1, padding: '12px', borderRadius: 12, border: '1.5px solid #e2e8f0', background: 'transparent', fontWeight: 600, color: '#475569', cursor: 'pointer' }}>Cancel</button>
-          <button type="submit" disabled={loading} style={{ flex: 2, padding: '12px', borderRadius: 12, border: 'none', background: '#4f46e5', color: '#fff', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            {loading ? 'Processing...' : (user ? <Save size={18} /> : <Plus size={18} />)}
-            {loading ? '' : (user ? 'Update Profile' : 'Add Professor')}
+          <button type="button" onClick={onClose} style={{ flex: 1, padding: '14px', borderRadius: 12, border: '1.5px solid #e2e8f0', background: 'transparent', fontWeight: 700, color: '#475569', cursor: 'pointer', fontSize: 15 }}>Cancel</button>
+          <button type="submit" disabled={loading} style={{ flex: 2, padding: '14px', borderRadius: 12, border: 'none', background: '#4f46e5', color: '#fff', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 15 }}>
+            {loading ? 'Processing...' : (user ? 'Update Profile' : 'Add Professor')}
           </button>
         </div>
       </form>
@@ -204,7 +218,17 @@ export default function ManageFaculty() {
   const columns = [
     {
       key: 'select',
-      label: '',
+      label: (
+        <input
+          type="checkbox"
+          checked={data.length > 0 && selectedIds.size === data.length}
+          onChange={(e) => {
+            if (e.target.checked) setSelectedIds(new Set(data.map(d => d.id)))
+            else setSelectedIds(new Set())
+          }}
+          style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#4f46e5' }}
+        />
+      ),
       render: (row) => (
         <input
           type="checkbox"
@@ -259,25 +283,24 @@ export default function ManageFaculty() {
       key: 'is_verified',
       label: 'Status',
       render: (row) => (
-        <div
-          onClick={(e) => { e.stopPropagation(); toggleVerify(row) }}
+        <select
+          value={row.is_verified ? 'verified' : 'pending'}
+          onChange={(e) => { e.stopPropagation(); toggleVerify(row); }}
+          onClick={(e) => e.stopPropagation()}
           style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            background: row.is_verified ? '#ecfdf5' : '#fff7ed',
+            backgroundColor: row.is_verified ? '#ecfdf5' : '#fff7ed',
             color: row.is_verified ? '#047857' : '#9a3412',
-            padding: '6px 14px', borderRadius: 50, fontSize: 10, fontWeight: 800,
+            padding: '6px 28px 6px 14px', borderRadius: 50, fontSize: 10, fontWeight: 800,
             cursor: 'pointer', border: row.is_verified ? '1px solid #a7f3d0' : '1px solid #fed7aa',
-            transition: 'all 0.2s', letterSpacing: '0.05em'
+            outline: 'none', letterSpacing: '0.05em', fontFamily: "'Plus Jakarta Sans', sans-serif",
+            appearance: 'none',
+            backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='${encodeURIComponent(row.is_verified ? '#047857' : '#9a3412')}' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+            backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center'
           }}
         >
-          {row.is_verified ? (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L14.8 5.4L19.2 6L19.8 10.4L23 13L20 16L19.8 20.4L15.4 21L12 24L8.6 21L4.2 20.4L4 16L1 13L4.2 10.4L4.8 6L9.2 5.4L12 2Z" fill="#10b981"/>
-              <path d="M8.5 12.5L10.5 14.5L15.5 9.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          ) : <UserX size={14} />}
-          {row.is_verified ? 'VERIFIED' : 'PENDING'}
-        </div>
+          <option value="verified" style={{color: '#0f172a'}}>VERIFIED</option>
+          <option value="pending" style={{color: '#0f172a'}}>PENDING</option>
+        </select>
       )
     }
   ]
@@ -293,6 +316,16 @@ export default function ManageFaculty() {
       onEdit={(u) => setModalUser(u)}
       onDelete={handleDelete}
       hideTable={false}
+      headerAction={
+        <button
+          onClick={() => exportFacultyCSV(data)}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: '0.2s' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = '#4f46e5'; e.currentTarget.style.color = '#4f46e5' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.color = '#475569' }}
+        >
+          <Download size={15} /> Export CSV
+        </button>
+      }
     >
       {/* Stats Section */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, marginBottom: selectedIds.size > 0 ? 16 : 24 }}>
@@ -311,51 +344,50 @@ export default function ManageFaculty() {
         ))}
       </div>
 
-      {/* CSV Export */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16, marginTop: -8 }}>
-        <button
-          onClick={() => exportFacultyCSV(data)}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: '0.2s' }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = '#4f46e5'; e.currentTarget.style.color = '#4f46e5' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.color = '#475569' }}
-        >
-          <Download size={15} /> Export CSV
-        </button>
-      </div>
-
       {/* Bulk Action Bar */}
       {selectedIds.size > 0 && (
-        <div style={{ background: '#1e293b', borderRadius: 16, padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
-            <CheckSquare size={18} color="#a5b4fc" />
-            <span style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 600 }}>
-              {selectedIds.size} member{selectedIds.size !== 1 ? 's' : ''} selected
-            </span>
+        <div style={{ background: '#ffffff', borderRadius: 16, padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 20, border: '1px solid #e2e8f0', boxShadow: '0 8px 24px rgba(0,0,0,0.04)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
+            <div style={{ background: '#eef2ff', padding: '8px 12px', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <CheckSquare size={18} color="#4f46e5" />
+              <span style={{ color: '#4f46e5', fontSize: 14, fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                {selectedIds.size} member{selectedIds.size !== 1 ? 's' : ''} selected
+              </span>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button
               onClick={() => bulkVerify(true)} disabled={bulkLoading}
-              style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: '#10b981', color: '#fff', fontSize: 13, fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+              style={{ padding: '10px 18px', borderRadius: 12, border: '1px solid #a7f3d0', background: '#ecfdf5', color: '#047857', fontSize: 13, fontWeight: 700, cursor: bulkLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: '0.2s', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#d1fae5' }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#ecfdf5' }}
             >
-              <BadgeCheck size={15} /> Bulk Verify
+              <BadgeCheck size={16} /> Bulk Verify
             </button>
             <button
               onClick={() => bulkVerify(false)} disabled={bulkLoading}
-              style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: '#f59e0b', color: '#fff', fontSize: 13, fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+              style={{ padding: '10px 18px', borderRadius: 12, border: '1px solid #fed7aa', background: '#fff7ed', color: '#9a3412', fontSize: 13, fontWeight: 700, cursor: bulkLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: '0.2s', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#ffedd5' }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#fff7ed' }}
             >
-              <UserX size={15} /> Bulk Unverify
+              <UserX size={16} /> Bulk Unverify
             </button>
             <button
               onClick={bulkDelete} disabled={bulkLoading}
-              style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: '#ef4444', color: '#fff', fontSize: 13, fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+              style={{ padding: '10px 18px', borderRadius: 12, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', fontSize: 13, fontWeight: 700, cursor: bulkLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: '0.2s', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#fee2e2' }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#fef2f2' }}
             >
-              Delete Selected
+              <Trash2 size={16} /> Delete Selected
             </button>
+            <div style={{ width: 1, background: '#e2e8f0', margin: '0 4px' }} />
             <button
               onClick={() => setSelectedIds(new Set())}
-              style={{ padding: '8px', borderRadius: 10, border: '1px solid #334155', background: 'transparent', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+              style={{ padding: '10px', borderRadius: 12, border: '1px solid #e2e8f0', background: '#f8fafc', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: '0.2s' }}
+               onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9' }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#f8fafc' }}
             >
-              <X size={16} />
+              <X size={18} />
             </button>
           </div>
         </div>

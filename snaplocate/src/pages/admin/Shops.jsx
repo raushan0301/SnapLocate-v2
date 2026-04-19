@@ -132,7 +132,20 @@ export default function Shops() {
     }
   }
 
-  const inputStyle = { width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', outline: 'none', boxSizing: 'border-box' }
+  const inputStyle = { 
+    width: '100%', padding: '0 16px', height: '48px', borderRadius: 12, border: '1.5px solid #e2e8f0', 
+    outline: 'none', boxSizing: 'border-box', fontFamily: "'Inter', sans-serif", 
+    fontSize: 14, color: '#1e293b', background: '#fff', transition: 'border-color 0.2s'
+  }
+
+  const selectStyle = {
+    ...inputStyle,
+    cursor: 'pointer',
+    appearance: 'none',
+    backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3Csvg width='12' height='7' viewBox='0 0 12 7' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 16px center'
+  }
 
   const columns = [
     { label: 'Shop Details', key: 'name', render: (row) => (
@@ -160,11 +173,52 @@ export default function Shops() {
       <span style={{ fontSize: 12, color: '#64748b', textTransform: 'capitalize' }}>{row.menu_type || 'None'}</span>
     )},
     { label: 'Status', key: 'status', render: (row) => {
-      const open = row.status === 'OPEN'
+      const isClosed = row.status === 'CLOSED'
+      const isClosingSoon = row.status === 'CLOSING SOON'
+      
+      let bg = '#dcfce7'
+      let color = '#166534'
+      
+      if (isClosed) {
+        bg = '#fee2e2'
+        color = '#991b1b'
+      } else if (isClosingSoon) {
+        bg = '#fef3c7'
+        color = '#92400e'
+      }
+
       return (
-        <span style={{ background: open ? '#dcfce7' : '#fee2e2', color: open ? '#16a34a' : '#dc2626', padding: '4px 8px', borderRadius: 12, fontSize: 11, fontWeight: 800 }}>
-          {row.status}
-        </span>
+        <select
+          value={row.status}
+          onChange={async (e) => {
+            e.stopPropagation()
+            const newStatus = e.target.value
+            setShops(prev => prev.map(s => s.id === row.id ? { ...s, status: newStatus } : s))
+            try {
+              const payload = { ...row, status: newStatus }
+              // Remove fields that might cause issues if they're complex depending on backend, but flat spreading usually works.
+              const res = await api.put(`/api/shops/${row.id}`, payload)
+              if (!res.success) fetchShops()
+            } catch {
+              fetchShops()
+            }
+          }}
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            backgroundColor: bg,
+            color: color,
+            padding: '6px 28px 6px 14px', borderRadius: 50, fontSize: 10, fontWeight: 800,
+            cursor: 'pointer', border: `1px solid ${bg === '#dcfce7' ? '#a7f3d0' : bg === '#fee2e2' ? '#fecaca' : '#fde68a'}`,
+            outline: 'none', letterSpacing: '0.05em', fontFamily: "'Plus Jakarta Sans', sans-serif",
+            appearance: 'none',
+            backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='${encodeURIComponent(color)}' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+            backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center'
+          }}
+        >
+          {STATUSES.map(s => (
+            <option key={s} value={s} style={{color: '#0f172a'}}>{s}</option>
+          ))}
+        </select>
       )
     }},
   ]
@@ -184,120 +238,126 @@ export default function Shops() {
 
       <Modal isOpen={modalOpen} onClose={() => !submitting && setModalOpen(false)} title={editId ? "Edit Shop" : "Add Shop"}>
         <div style={{ maxHeight: '70vh', overflowY: 'auto', paddingRight: 8 }}>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             
+            {/* Basic Info */}
             <div style={{ display: 'flex', gap: 16 }}>
               <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Shop Name *</label>
-                <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} style={inputStyle} />
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Shop Name *</label>
+                <input required type="text" placeholder="e.g. Sip & Bite" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} style={inputStyle} />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Shop Type (Subtitle) *</label>
-                <input required type="text" placeholder="e.g. Fast Food" value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value })} style={inputStyle} />
-              </div>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Shop Logo / Image (Optional)</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                {(formData.logo_img || logoFile) && (
-                  <div style={{ width: 60, height: 60, borderRadius: '50%', background: '#fff', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                    <img src={logoFile ? URL.createObjectURL(logoFile) : formData.logo_img} alt="Logo preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
-                )}
-                <div>
-                  <input id="shop-logo-upload" type="file" accept="image/*" onChange={e => setLogoFile(e.target.files[0])} style={{ display: 'none' }} />
-                  <label htmlFor="shop-logo-upload" style={{ display: 'inline-block', padding: '8px 16px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#f8fafc', color: '#1e293b', fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'background 0.2s' }}>
-                    {logoFile || formData.logo_img ? 'Change Image' : 'Upload Image'}
-                  </label>
-                </div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Shop Type (Subtitle) *</label>
+                <input required type="text" placeholder="e.g. Fast Food & Beverages" value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value })} style={inputStyle} />
               </div>
             </div>
 
             <div style={{ display: 'flex', gap: 16 }}>
               <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Root Category *</label>
-                <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} style={{ ...inputStyle, background: '#fff' }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Root Category *</label>
+                <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} style={selectStyle}>
                   {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Current Status *</label>
-                <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })} style={{ ...inputStyle, background: '#fff', fontWeight: 600, color: formData.status === 'OPEN' ? '#16a34a' : '#dc2626' }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Current Status *</label>
+                <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })} style={{ ...selectStyle, color: formData.status === 'OPEN' ? '#16a34a' : '#dc2626', fontWeight: 700 }}>
                   {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
             </div>
 
-            <div style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 16, background: '#f8fafc' }}>
-              <label style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>Menu Management</label>
-              <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
-                  <input type="radio" checked={formData.menu_type === 'image'} onChange={() => setFormData({ ...formData, menu_type: 'image' })} /> Upload Image
+            {/* Location & Contact */}
+            <div style={{ display: 'flex', gap: 16 }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Building / Tag *</label>
+                <select value={formData.location_tag} onChange={e => setFormData({ ...formData, location_tag: e.target.value })} style={selectStyle}>
+                  {LOCATIONS.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Exact Address</label>
+                <input required type="text" placeholder="e.g. COS, 1st Floor" value={formData.location_detail} onChange={e => setFormData({ ...formData, location_detail: e.target.value })} style={inputStyle} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Contact Number</label>
+                <input type="text" placeholder="+91 XXXX" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} style={inputStyle} />
+              </div>
+            </div>
+
+            {/* Logo Upload */}
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Shop Logo / Image</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px', borderRadius: '12px', border: '1.5px dashed #cbd5e1', background: '#f8fafc' }}>
+                {(formData.logo_img || logoFile) ? (
+                  <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#fff', border: '2px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    <img src={logoFile ? URL.createObjectURL(logoFile) : formData.logo_img} alt="Logo preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                ) : (
+                  <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🏪</div>
+                )}
+                <div>
+                  <input id="shop-logo-upload" type="file" accept="image/*" onChange={e => setLogoFile(e.target.files[0])} style={{ display: 'none' }} />
+                  <label htmlFor="shop-logo-upload" style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#fff', color: '#1e293b', fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: '0.2s', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                    {logoFile || formData.logo_img ? 'Replace Logo Image' : 'Upload Logo Image'}
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Menu Management */}
+            <div style={{ border: '1.5px solid #e2e8f0', borderRadius: 16, padding: 24, background: '#f8fafc' }}>
+              <label style={{ display: 'block', fontSize: 15, fontWeight: 800, color: '#0f172a', marginBottom: 16, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Menu Configuration</label>
+              <div style={{ display: 'flex', gap: 20, marginBottom: 20 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, fontWeight: 600, color: '#334155' }}>
+                  <input type="radio" checked={formData.menu_type === 'image'} onChange={() => setFormData({ ...formData, menu_type: 'image' })} style={{ width: 18, height: 18, accentColor: '#4f46e5' }} /> Upload Menu Image
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
-                  <input type="radio" checked={formData.menu_type === 'list'} onChange={() => setFormData({ ...formData, menu_type: 'list' })} /> Manual List
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, fontWeight: 600, color: '#334155' }}>
+                  <input type="radio" checked={formData.menu_type === 'list'} onChange={() => setFormData({ ...formData, menu_type: 'list' })} style={{ width: 18, height: 18, accentColor: '#4f46e5' }} /> Manual Text List
                 </label>
               </div>
 
               {formData.menu_type === 'image' ? (
                 <div>
                   {(formData.menu_img || menuFile) && (
-                    <img src={menuFile ? URL.createObjectURL(menuFile) : formData.menu_img} style={{ width: '100%', maxHeight: 200, objectFit: 'contain', borderRadius: 8, marginBottom: 12, border: '1px solid #e2e8f0' }} />
+                    <img src={menuFile ? URL.createObjectURL(menuFile) : formData.menu_img} style={{ width: '100%', maxHeight: 240, objectFit: 'contain', borderRadius: 12, marginBottom: 16, border: '1.5px solid #e2e8f0', background: '#fff' }} />
                   )}
                   <input id="menu-img-upload" type="file" accept="image/*" onChange={e => setMenuFile(e.target.files[0])} style={{ display: 'none' }} />
-                  <label htmlFor="menu-img-upload" style={{ display: 'block', textAlign: 'center', padding: '12px', border: '2px dashed #cbd5e1', borderRadius: 8, cursor: 'pointer', color: '#64748b', fontSize: 13, fontWeight: 600 }}>
+                  <label htmlFor="menu-img-upload" style={{ display: 'block', textAlign: 'center', padding: '16px', border: '2px dashed #cbd5e1', borderRadius: 12, background: '#fff', cursor: 'pointer', color: '#64748b', fontSize: 14, fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                     {menuFile || formData.menu_img ? 'Replace Menu Image' : 'Click to Upload Menu Image'}
                   </label>
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {formData.menu_items.map((item, idx) => (
-                    <div key={idx} style={{ display: 'flex', gap: 8 }}>
-                      <input placeholder="Item Name" value={item.name} onChange={e => handleMenuItemChange(idx, 'name', e.target.value)} style={{ ...inputStyle, flex: 2 }} />
-                      <input placeholder="Price" value={item.price} onChange={e => handleMenuItemChange(idx, 'price', e.target.value)} style={{ ...inputStyle, flex: 1 }} />
-                      <button type="button" onClick={() => removeMenuItem(idx)} style={{ padding: '0 12px', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: 8, cursor: 'pointer' }}>×</button>
+                    <div key={idx} style={{ display: 'flex', gap: 12 }}>
+                      <input placeholder="Item Name (e.g. Masala Dosa)" value={item.name} onChange={e => handleMenuItemChange(idx, 'name', e.target.value)} style={{ ...inputStyle, flex: 2, marginBottom: 0 }} />
+                      <input placeholder="Price (e.g. ₹60)" value={item.price} onChange={e => handleMenuItemChange(idx, 'price', e.target.value)} style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
+                      <button type="button" onClick={() => removeMenuItem(idx)} style={{ padding: '0 16px', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: 12, cursor: 'pointer', fontWeight: 800, fontSize: 18 }}>×</button>
                     </div>
                   ))}
-                  <button type="button" onClick={addMenuItem} style={{ padding: '8px', background: '#eef2ff', color: '#4f46e5', border: '1px dashed #4f46e5', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>+ Add Item</button>
+                  <button type="button" onClick={addMenuItem} style={{ padding: '14px', background: '#eef2ff', color: '#4f46e5', border: '1.5px dashed #a5b4fc', borderRadius: 12, cursor: 'pointer', fontSize: 14, fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>+ Add Menu Item</button>
                 </div>
               )}
             </div>
 
+            {/* Action Buttons */}
             <div style={{ display: 'flex', gap: 16 }}>
               <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Building / Tag *</label>
-                <select value={formData.location_tag} onChange={e => setFormData({ ...formData, location_tag: e.target.value })} style={{ ...inputStyle, background: '#fff' }}>
-                  {LOCATIONS.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Exact Address</label>
-                <input required type="text" placeholder="e.g. COS, 1st Floor" value={formData.location_detail} onChange={e => setFormData({ ...formData, location_detail: e.target.value })} style={inputStyle} />
-              </div>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Contact Number</label>
-              <input type="text" placeholder="+91 XXXX" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} style={inputStyle} />
-            </div>
-
-            <div style={{ background: '#f8fafc', padding: 16, borderRadius: 12, border: '1px solid #e2e8f0', display: 'flex', gap: 16 }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Button Action Label</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Button Action Label</label>
                 <input type="text" value={formData.btn_label || 'View Menu'} onChange={e => setFormData({ ...formData, btn_label: e.target.value })} style={inputStyle} />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Button Action Icon</label>
-                <select value={formData.btn_icon} onChange={e => setFormData({ ...formData, btn_icon: e.target.value })} style={{ ...inputStyle, background: '#fff' }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Button Action Icon</label>
+                <select value={formData.btn_icon} onChange={e => setFormData({ ...formData, btn_icon: e.target.value })} style={selectStyle}>
                   {ICONS.map(i => <option key={i} value={i}>{i}</option>)}
                 </select>
               </div>
             </div>
 
-            <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end', gap: 12, position: 'sticky', bottom: 0, background: '#fff', paddingTop: 10 }}>
-              <button type="button" onClick={() => setModalOpen(false)} disabled={submitting} style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
-              <button type="submit" disabled={submitting} style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: '#4f46e5', color: '#fff', cursor: 'pointer', fontWeight: 600 }}>{submitting ? 'Saving...' : 'Save Shop'}</button>
+            <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+              <button type="button" onClick={() => setModalOpen(false)} disabled={submitting} style={{ flex: 1, padding: '14px', borderRadius: 12, border: '1.5px solid #e2e8f0', background: 'transparent', fontWeight: 700, color: '#475569', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 15 }}>Cancel</button>
+              <button type="submit" disabled={submitting} style={{ flex: 2, padding: '14px', borderRadius: 12, border: 'none', background: '#4f46e5', color: '#fff', cursor: 'pointer', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 15 }}>{submitting ? 'Saving...' : 'Save Shop'}</button>
             </div>
           </form>
         </div>

@@ -169,7 +169,20 @@ export default function AdminSocieties() {
     ) : <span style={{ color: '#cbd5e1' }}>-</span> },
   ]
 
-  const inputStyle = { width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', outline: 'none', boxSizing: 'border-box' }
+  const inputStyle = { 
+    width: '100%', padding: '0 16px', height: '48px', borderRadius: 12, border: '1.5px solid #e2e8f0', 
+    outline: 'none', boxSizing: 'border-box', fontFamily: "'Inter', sans-serif", 
+    fontSize: 14, color: '#1e293b', background: '#fff', transition: 'border-color 0.2s'
+  }
+
+  const selectStyle = {
+    ...inputStyle,
+    cursor: 'pointer',
+    appearance: 'none',
+    backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3Csvg width='12' height='7' viewBox='0 0 12 7' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 16px center'
+  }
 
   return (
     <>
@@ -190,12 +203,12 @@ export default function AdminSocieties() {
             
             <div style={{ display: 'flex', gap: 16 }}>
               <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Society Name *</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Society Name *</label>
                 <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} style={inputStyle} />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Category *</label>
-                <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} style={{ ...inputStyle, background: '#fff' }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Category *</label>
+                <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} style={selectStyle}>
                   {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
@@ -256,9 +269,9 @@ export default function AdminSocieties() {
               <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} rows={4} style={{ ...inputStyle, resize: 'vertical' }} />
             </div>
 
-            <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end', gap: 12, position: 'sticky', bottom: 0, background: '#fff', paddingTop: 10 }}>
-              <button type="button" onClick={() => setModalOpen(false)} disabled={submitting} style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
-              <button type="submit" disabled={submitting} style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: '#4f46e5', color: '#fff', cursor: 'pointer', fontWeight: 600 }}>{submitting ? 'Saving...' : 'Save Society'}</button>
+            <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+              <button type="button" onClick={() => setModalOpen(false)} disabled={submitting} style={{ flex: 1, padding: '14px', borderRadius: 12, border: '1.5px solid #e2e8f0', background: 'transparent', fontWeight: 700, color: '#475569', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 15 }}>Cancel</button>
+              <button type="submit" disabled={submitting} style={{ flex: 2, padding: '14px', borderRadius: 12, border: 'none', background: '#4f46e5', color: '#fff', cursor: 'pointer', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 15 }}>{submitting ? 'Saving...' : 'Save Society'}</button>
             </div>
           </form>
         </div>

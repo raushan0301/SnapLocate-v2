@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
-import { Search, Clock, CheckCircle2, XCircle, AlertCircle, ArrowRight } from 'lucide-react'
+import { Search, Clock, CheckCircle2, XCircle, AlertCircle, ArrowRight, RefreshCw } from 'lucide-react'
 
 const STATUS_FILTERS = ['all', 'pending', 'accepted', 'rejected']
 
@@ -56,9 +56,14 @@ export default function ManageRequests() {
 
   return (
     <PageLayout>
-      <div>
-        <h1 style={{ fontSize: 26, fontWeight: 700, color: '#0f172a', margin: 0 }}>Requests Overview</h1>
-        <p style={{ fontSize: 14, color: '#64748b', marginTop: 4, marginBottom: 0 }}>Monitor all student-to-faculty requests across the campus. Read-only view.</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h1 style={{ fontSize: 26, fontWeight: 700, color: '#0f172a', margin: 0 }}>Requests Overview</h1>
+          <p style={{ fontSize: 14, color: '#64748b', marginTop: 4, marginBottom: 0 }}>Monitor all student-to-faculty requests across the campus. Read-only view.</p>
+        </div>
+        <button onClick={fetchData} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+          <RefreshCw size={14} /> Refresh
+        </button>
       </div>
 
       {/* Stats */}
@@ -81,28 +86,34 @@ export default function ManageRequests() {
 
       {/* Table card */}
       <div style={{ background: '#fff', borderRadius: 20, padding: 24, border: '1px solid #f1f5f9', boxShadow: '0 4px 24px rgba(0,0,0,0.03)' }}>
-        <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-            <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+        <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ position: 'relative', width: '300px', flexShrink: 0 }}>
+            <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
             <input
               type="text" placeholder="Search by student, faculty, or type..." value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{ width: '100%', padding: '10px 16px 10px 36px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '10px 16px 10px 34px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: "'Inter', sans-serif", transition: '0.2s' }}
               onFocus={e => e.target.style.borderColor = '#4f46e5'}
               onBlur={e => e.target.style.borderColor = '#e2e8f0'}
             />
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={{
+              padding: '10px 36px 10px 16px', borderRadius: 10, border: '1.5px solid #e2e8f0',
+              fontSize: 14, fontWeight: 500, color: '#0f172a', background: '#fff',
+              outline: 'none', cursor: 'pointer', appearance: 'none', fontFamily: "'Inter', sans-serif",
+              transition: '0.2s', backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%2364748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>')`,
+              backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center',
+            }}
+            onFocus={e => e.target.style.borderColor = '#4f46e5'}
+            onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+          >
             {STATUS_FILTERS.map(s => (
-              <button key={s} onClick={() => setStatusFilter(s)} style={{
-                padding: '8px 16px', borderRadius: 10, border: '1.5px solid',
-                borderColor: statusFilter === s ? '#4f46e5' : '#e2e8f0',
-                background: statusFilter === s ? '#4f46e5' : '#fff',
-                color: statusFilter === s ? '#fff' : '#475569',
-                fontSize: 13, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize'
-              }}>{s}</button>
+              <option value={s} key={s}>{s === 'all' ? 'All Status' : s.charAt(0).toUpperCase() + s.slice(1)}</option>
             ))}
-          </div>
+          </select>
         </div>
 
         <div style={{ overflowX: 'auto' }}>
@@ -139,7 +150,7 @@ export default function ManageRequests() {
                         {st.label}
                       </span>
                     </td>
-                    <td style={{ padding: '16px', fontSize: 13, color: '#64748b', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '16px', fontSize: 13, color: '#64748b', maxWidth: 320, lineHeight: '1.5', whiteSpace: 'normal', wordBreak: 'break-word' }}>
                       {req.notes || req.detail || '—'}
                     </td>
                     <td style={{ padding: '16px', fontSize: 13, color: '#64748b' }}>{new Date(req.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>

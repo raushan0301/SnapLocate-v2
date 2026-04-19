@@ -9,7 +9,7 @@ const inter = (size, weight, color) => ({
   fontFamily: "'Inter', sans-serif", fontSize: size, fontWeight: weight, color, margin: 0
 })
 
-export default function AdminPageTemplate({ title, description, columns, data, onAdd, onEdit, onDelete, loading, hideTable, children }) {
+export default function AdminPageTemplate({ title, description, columns, data, onAdd, onEdit, onDelete, loading, hideTable, headerAction, children }) {
   const [search, setSearch] = useState('')
 
   const filteredData = data ? data.filter(item => 
@@ -26,30 +26,22 @@ export default function AdminPageTemplate({ title, description, columns, data, o
           <h1 style={{ ...pjs(26, 700, '#0f172a'), lineHeight: '34px' }}>{title}</h1>
           <p style={{ ...inter(14, 400, '#64748b'), marginTop: 4 }}>{description}</p>
         </div>
-        {!hideTable && onAdd && (
-          <button 
-            onClick={onAdd}
-            style={{
-              padding: '10px 20px', borderRadius: 12, border: 'none', background: '#4f46e5',
-              ...pjs(13, 700, '#ffffff'), cursor: 'pointer', transition: '0.2s',
-              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = '#4338ca'}
-            onMouseLeave={e => e.currentTarget.style.background = '#4f46e5'}
-          >
-            + Add New
-          </button>
+        {headerAction && (
+          <div>
+            {headerAction}
+          </div>
         )}
       </div>
 
       {hideTable ? children : (
         <>
+          {children}
           <div style={{
             background: '#ffffff', borderRadius: 20, padding: 24,
             border: '1px solid #f1f5f9', boxShadow: '0 4px 24px rgba(0,0,0,0.03)',
             minHeight: 500
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <input
                 type="text"
                 placeholder="Search..."
@@ -63,6 +55,21 @@ export default function AdminPageTemplate({ title, description, columns, data, o
                 onFocus={e => e.target.style.borderColor = '#4f46e5'}
                 onBlur={e => e.target.style.borderColor = '#e2e8f0'}
               />
+              {!hideTable && onAdd && (
+                <button 
+                  onClick={onAdd}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '10px 20px', borderRadius: 10, border: 'none', background: '#4f46e5',
+                    ...pjs(13, 700, '#ffffff'), cursor: 'pointer', transition: '0.2s',
+                    boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#4338ca'}
+                  onMouseLeave={e => e.currentTarget.style.background = '#4f46e5'}
+                >
+                  <Plus size={16} /> Add New
+                </button>
+              )}
             </div>
 
             <div style={{ overflowX: 'auto' }}>
@@ -151,7 +158,6 @@ export default function AdminPageTemplate({ title, description, columns, data, o
               </table>
             </div>
           </div>
-          {children}
         </>
       )}
     </PageLayout>

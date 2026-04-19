@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import AdminPageTemplate from '../../components/admin/AdminPageTemplate'
 import Modal from '../../components/admin/Modal'
 import api from '../../lib/api'
+import { Search, Plus, Filter, MessageSquare, BookOpen, Trash2, Edit3, X, ChevronDown } from 'lucide-react'
 
 const pjs = (size, weight, lh, color) => ({
   fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -176,7 +177,7 @@ export default function AdminSupportHub() {
     )},
     { label: 'Priority', key: 'priority', render: r => {
         const pc = PRIORITY_COLORS[r.priority] || PRIORITY_COLORS['Low']
-        return <span style={{ background: pc.bg, color: pc.color, padding: '4px 8px', borderRadius: 8, ...inter(11, 700) }}>{r.priority}</span>
+        return <span style={{ background: pc.bg, color: pc.color, padding: '4px 8px', borderRadius: 8, ...inter(12, 700) }}>{r.priority}</span>
     }},
     { label: 'Status', key: 'status', render: r => {
         const sc = STATUS_COLORS[r.status] || STATUS_COLORS['Open']
@@ -209,31 +210,82 @@ export default function AdminSupportHub() {
         hideTable={true}
       >
         
-        {/* View Toggles */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-          <div style={{ display: 'flex', gap: 4, background: '#f1f5f9', borderRadius: 12, padding: 4 }}>
-            {[{ id: 'tickets', label: 'Support Tickets' }, { id: 'faqs', label: 'Manage FAQs' }].map(t => (
+        {/* View Toggles & Search Row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 4, background: '#f1f5f9', borderRadius: 14, padding: 4 }}>
+            {[
+              { id: 'tickets', label: 'Support Tickets', icon: MessageSquare }, 
+              { id: 'faqs', label: 'Manage FAQs', icon: BookOpen }
+            ].map(t => (
               <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
-                padding: '8px 16px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 8,
                 background: activeTab === t.id ? '#fff' : 'transparent',
-                ...pjs(13, activeTab === t.id ? 700 : 500, '18px', activeTab === t.id ? '#0f172a' : '#64748b'),
+                ...pjs(14, activeTab === t.id ? 700 : 500, '18px', activeTab === t.id ? '#4f46e5' : '#64748b'),
                 boxShadow: activeTab === t.id ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
-              }}>{t.label}</button>
+                transition: 'all 0.2s'
+              }}>
+                <t.icon size={16} />
+                {t.label}
+              </button>
             ))}
           </div>
 
-          {activeTab === 'tickets' && (
-            <input
-              type="text"
-              placeholder="Search tickets by subject, ID, or user..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{
-                padding: '10px 16px', borderRadius: 10, border: '1.5px solid #e2e8f0',
-                ...inter(14, 400, '20px', '#0f172a'), width: '300px', outline: 'none',
-              }}
-            />
-          )}
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flex: 1, justifyContent: 'flex-end' }}>
+            {activeTab === 'tickets' && (
+              <div style={{ position: 'relative', width: '300px', flexShrink: 0 }}>
+                <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} />
+                <input
+                  type="text"
+                  placeholder="Search tickets by subject, ID, or user..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  style={{
+                    width: '100%', padding: '10px 16px 10px 34px', borderRadius: 10, border: '1.5px solid #e2e8f0',
+                    ...inter(14, 400, '20px', '#0f172a'), outline: 'none', appearance: 'none', transition: '0.2s'
+                  }}
+                  onFocus={e => e.target.style.borderColor = '#4f46e5'}
+                  onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                />
+              </div>
+            )}
+            
+            {activeTab === 'tickets' && (
+              <div style={{ position: 'relative' }}>
+                <select
+                  style={{
+                    padding: '10px 36px 10px 16px', borderRadius: 10, border: '1.5px solid #e2e8f0',
+                    fontSize: 14, fontWeight: 500, color: '#0f172a', background: '#fff',
+                    outline: 'none', cursor: 'pointer', appearance: 'none', fontFamily: "'Inter', sans-serif",
+                    transition: '0.2s', backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%2364748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>')`,
+                    backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center',
+                    minWidth: 140
+                  }}
+                  onFocus={e => e.target.style.borderColor = '#4f46e5'}
+                  onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                >
+                  <option value="all">All Status</option>
+                  <option value="Open">Open</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Resolved">Resolved</option>
+                  <option value="Closed">Closed</option>
+                </select>
+              </div>
+            )}
+
+            {activeTab === 'faqs' && (
+              <button 
+                onClick={handleAddFaq}
+                style={{ 
+                  padding: '10px 20px', background: '#4f46e5', color: '#fff', border: 'none', 
+                  borderRadius: 10, ...pjs(14, 700, '20px'), cursor: 'pointer', 
+                  display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
+                }}
+              >
+                <Plus size={18} /> Add FAQ
+              </button>
+            )}
+          </div>
         </div>
 
         {statusError && (
@@ -248,7 +300,7 @@ export default function AdminSupportHub() {
                 <thead>
                   <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                     {ticketColumns.map((col, i) => (
-                      <th key={i} style={{ ...pjs(12, 600, '16px', '#64748b'), textTransform: 'uppercase', letterSpacing: '0.5px', padding: '14px 16px', textAlign: 'left' }}>
+                      <th key={i} style={{ ...pjs(12, 600, '16px', '#64748b'), textTransform: 'uppercase', letterSpacing: '0.5px', padding: '14px 16px', textAlign: 'left', whiteSpace: 'nowrap' }}>
                         {col.label}
                       </th>
                     ))}
@@ -263,7 +315,7 @@ export default function AdminSupportHub() {
                     filteredTickets.map((row) => (
                       <tr key={row.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                         {ticketColumns.map((col, j) => (
-                          <td key={j} style={{ padding: '16px' }}>{col.render(row)}</td>
+                          <td key={j} style={{ padding: '16px', ...inter(14, 400, '20px', '#334155') }}>{col.render(row)}</td>
                         ))}
                       </tr>
                     ))
@@ -276,14 +328,8 @@ export default function AdminSupportHub() {
 
         {activeTab === 'faqs' && (
           <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, border: '1px solid #f1f5f9', boxShadow: '0 4px 24px rgba(0,0,0,0.03)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20, alignItems: 'center' }}>
               <h2 style={pjs(18, 700, '24px', '#0f172a')}>Knowledge Base FAQs</h2>
-              <button 
-                onClick={handleAddFaq}
-                style={{ padding: '8px 16px', background: '#4f46e5', color: '#fff', border: 'none', borderRadius: 10, ...pjs(13, 700, '18px'), cursor: 'pointer' }}
-              >
-                + Add FAQ
-              </button>
             </div>
             
             <div style={{ overflowX: 'auto' }}>
@@ -306,8 +352,14 @@ export default function AdminSupportHub() {
                         <td style={{ padding: '16px', ...inter(13, 400, '18px', '#64748b') }}>{row.category}</td>
                         <td style={{ padding: '16px', ...inter(13, 400, '18px', '#64748b') }}>{row.sort_order}</td>
                         <td style={{ padding: '16px', textAlign: 'right' }}>
-                          <button onClick={() => handleEditFaq(row)} style={{ marginRight: 8, padding: '6px 12px', background: '#f1f5f9', border: 'none', borderRadius: 8, cursor: 'pointer', ...inter(12, 600) }}>Edit</button>
-                          <button onClick={() => handleDeleteFaq(row.id)} style={{ padding: '6px 12px', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: 8, cursor: 'pointer', ...inter(12, 600) }}>Delete</button>
+                          <button onClick={() => handleEditFaq(row)} style={{ marginRight: 8, padding: '7px 14px', background: '#f1f5f9', border: 'none', borderRadius: 10, cursor: 'pointer', ...inter(13, 600), color: '#475569' }}>
+                            <Edit3 size={14} style={{ marginRight: 4 }} />
+                            Edit
+                          </button>
+                          <button onClick={() => handleDeleteFaq(row.id)} style={{ padding: '7px 14px', background: '#fff1f2', color: '#ef4444', border: 'none', borderRadius: 10, cursor: 'pointer', ...inter(13, 600) }}>
+                            <Trash2 size={14} style={{ marginRight: 4 }} />
+                            Delete
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -424,50 +476,71 @@ export default function AdminSupportHub() {
 
       {/* FAQ Modal */}
       <Modal isOpen={faqModalOpen} onClose={() => !faqSubmitting && setFaqModalOpen(false)} title={faqForm.id ? "Edit FAQ" : "Add FAQ"}>
-        <form onSubmit={handleSaveFaq} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Category</label>
-            <select 
-              value={faqForm.category} 
-              onChange={e => setFaqForm({ ...faqForm, category: e.target.value })} 
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', outline: 'none' }}
-            >
-              <option>General</option>
-              <option>Student</option>
-              <option>Faculty</option>
-            </select>
+        <form onSubmit={handleSaveFaq} style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '10px 0' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Category</label>
+              <div style={{ position: 'relative' }}>
+                <select 
+                  value={faqForm.category} 
+                  onChange={e => setFaqForm({ ...faqForm, category: e.target.value })} 
+                  style={{ 
+                    width: '100%', padding: '12px 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', 
+                    outline: 'none', appearance: 'none', background: '#fff', ...inter(14, 500, '20px', '#0f172a'),
+                    backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%2364748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>')`,
+                    backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center'
+                  }}
+                  onFocus={e => e.target.style.borderColor = '#4f46e5'}
+                  onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                >
+                  <option>General</option>
+                  <option>Student</option>
+                  <option>Faculty</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sort Order (Priority)</label>
+              <input 
+                type="number" 
+                value={faqForm.sort_order} 
+                onChange={e => setFaqForm({ ...faqForm, sort_order: parseInt(e.target.value) || 0 })} 
+                style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', outline: 'none', ...inter(14, 500, '20px', '#0f172a'), boxSizing: 'border-box' }} 
+                onFocus={e => e.target.style.borderColor = '#4f46e5'}
+                onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+              />
+            </div>
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Sort Order (Priority)</label>
-            <input 
-              type="number" 
-              value={faqForm.sort_order} 
-              onChange={e => setFaqForm({ ...faqForm, sort_order: parseInt(e.target.value) || 0 })} 
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', outline: 'none' }} 
-            />
-          </div>
-          <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Question</label>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Question</label>
             <input 
               required 
               type="text" 
+              placeholder="Enter a descriptive question..."
               value={faqForm.question} 
               onChange={e => setFaqForm({ ...faqForm, question: e.target.value })} 
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', outline: 'none' }} 
+              style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', outline: 'none', ...inter(14, 500, '20px', '#0f172a'), boxSizing: 'border-box' }} 
+              onFocus={e => e.target.style.borderColor = '#4f46e5'}
+              onBlur={e => e.target.style.borderColor = '#e2e8f0'}
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Answer</label>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Answer</label>
             <textarea 
               required 
+              placeholder="Provide a detailed answer or explanation..."
               value={faqForm.answer} 
               onChange={e => setFaqForm({ ...faqForm, answer: e.target.value })} 
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', outline: 'none', minHeight: 100, resize: 'vertical' }} 
+              style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', outline: 'none', minHeight: 120, resize: 'vertical', ...inter(14, 400, '22px', '#0f172a'), boxSizing: 'border-box' }} 
+              onFocus={e => e.target.style.borderColor = '#4f46e5'}
+              onBlur={e => e.target.style.borderColor = '#e2e8f0'}
             />
           </div>
-          <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-            <button type="button" onClick={() => setFaqModalOpen(false)} disabled={faqSubmitting} style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
-            <button type="submit" disabled={faqSubmitting} style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: '#4f46e5', color: '#fff', cursor: 'pointer', fontWeight: 600 }}>{faqSubmitting ? 'Saving...' : 'Save FAQ'}</button>
+          <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+            <button type="button" onClick={() => setFaqModalOpen(false)} disabled={faqSubmitting} style={{ padding: '12px 24px', borderRadius: 12, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', ...pjs(14, 700, '20px', '#64748b'), transition: 'all 0.2s' }}>Cancel</button>
+            <button type="submit" disabled={faqSubmitting} style={{ padding: '12px 24px', borderRadius: 12, border: 'none', background: '#4f46e5', color: '#fff', cursor: 'pointer', ...pjs(14, 700, '20px', '#fff'), boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)', transition: 'all 0.2s' }}>
+              {faqSubmitting ? 'Saving...' : (faqForm.id ? 'Save Changes' : 'Publish FAQ')}
+            </button>
           </div>
         </form>
       </Modal>

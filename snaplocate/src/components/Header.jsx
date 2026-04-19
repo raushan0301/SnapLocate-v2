@@ -93,7 +93,14 @@ export default function Header({ onMenuClick }) {
           <Menu size={24} color="#64748b" />
         </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div 
+          onClick={() => {
+            if (user?.role === 'admin') navigate('/admin/dashboard')
+            else if (user?.role === 'faculty') navigate('/faculty/dashboard')
+            else navigate('/dashboard')
+          }}
+          style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+        >
           <div style={{
             width: 38, height: 38, borderRadius: 10,
             background: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center',

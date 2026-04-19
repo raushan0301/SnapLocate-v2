@@ -360,12 +360,12 @@ export default function ManageStudents() {
       {/* Table card */}
       <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', boxShadow: '0 4px 24px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
         <div style={{ padding: '18px 24px', borderBottom: '1px solid #f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <div style={{ position: 'relative', maxWidth: 400, flex: 1 }}>
+          <div style={{ position: 'relative', width: '300px', flexShrink: 0 }}>
             <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
             <input
               type="text" value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search by name or email..."
-              style={{ width: '100%', padding: '9px 16px 9px 34px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+              style={{ width: '100%', padding: '10px 16px 10px 34px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: "'Inter', sans-serif", transition: '0.2s' }}
               onFocus={e => e.target.style.borderColor = '#4f46e5'}
               onBlur={e => e.target.style.borderColor = '#e2e8f0'}
             />
