@@ -10,19 +10,19 @@ const router = Router()
 // ─── Validation Schemas ───────────────────────────────────────
 const createUserSchema = z.object({
   full_name: z.string().min(2),
-  email:     z.string().email(),
-  dept:      z.string().min(1),
-  role:      z.enum(['faculty', 'admin']).default('faculty'),
+  email: z.string().email(),
+  dept: z.string().min(1),
+  role: z.enum(['faculty', 'admin']).default('faculty'),
 })
 
 const updateUserSchema = z.object({
-  full_name:   z.string().min(2).optional(),
-  dept:        z.string().min(1).optional(),
+  full_name: z.string().min(2).optional(),
+  dept: z.string().min(1).optional(),
   is_verified: z.boolean().optional(),
 })
 
 const verifyUserSchema = z.object({
-  userId:     z.string().uuid(),
+  userId: z.string().uuid(),
   isVerified: z.boolean(),
 })
 
@@ -231,7 +231,7 @@ router.post('/student-advisors', authenticate, requireAdmin, async (req, res) =>
   const { error } = await supabaseAdmin
     .from('student_advisors')
     .upsert({ student_id, faculty_profile_id, subject, assigned_at: new Date().toISOString() },
-             { onConflict: 'student_id' })
+      { onConflict: 'student_id' })
   if (error) throw error
 
   logAudit(req.user, 'ASSIGN_ADVISOR', 'user', student_id,
@@ -302,12 +302,12 @@ router.get('/lost-found/stats', authenticate, requireAdmin, async (req, res) => 
   res.json({
     success: true,
     data: {
-      total:          (items || []).length,
-      lost:           (items || []).filter(i => i.status === 'lost').length,
-      found:          (items || []).filter(i => i.status === 'found').length,
-      resolved:       (items || []).filter(i => i.status === 'resolved').length,
+      total: (items || []).length,
+      lost: (items || []).filter(i => i.status === 'lost').length,
+      found: (items || []).filter(i => i.status === 'found').length,
+      resolved: (items || []).filter(i => i.status === 'resolved').length,
       pending_claims: pendingClaims,
-      by_category:    byCategory,
+      by_category: byCategory,
     },
   })
 })
@@ -345,7 +345,7 @@ router.get('/lost-found', authenticate, requireAdmin, async (req, res) => {
     .order('created_at', { ascending: false })
   // Only filter by org_id if it exists (graceful fallback for single-tenant setups)
   if (req.user.org_id) query = query.eq('org_id', req.user.org_id)
-  if (status && status !== 'all')     query = query.eq('status', status)
+  if (status && status !== 'all') query = query.eq('status', status)
   if (category && category !== 'all') query = query.eq('category', category)
   if (search) query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%,location.ilike.%${search}%`)
   const { data, error } = await query
@@ -357,11 +357,11 @@ router.get('/lost-found', authenticate, requireAdmin, async (req, res) => {
   if (ids.length > 0) {
     const { data: cc } = await supabaseAdmin
       .from('lost_found_claims').select('item_id, status').in('item_id', ids)
-    ;(cc || []).forEach(c => {
-      if (!claimCounts[c.item_id]) claimCounts[c.item_id] = { total: 0, pending: 0 }
-      claimCounts[c.item_id].total++
-      if (c.status === 'pending') claimCounts[c.item_id].pending++
-    })
+      ; (cc || []).forEach(c => {
+        if (!claimCounts[c.item_id]) claimCounts[c.item_id] = { total: 0, pending: 0 }
+        claimCounts[c.item_id].total++
+        if (c.status === 'pending') claimCounts[c.item_id].pending++
+      })
   }
 
   const enriched = (data || []).map(i => ({ ...i, claim_counts: claimCounts[i.id] || { total: 0, pending: 0 } }))
@@ -371,7 +371,7 @@ router.get('/lost-found', authenticate, requireAdmin, async (req, res) => {
 // PATCH /api/admin/lost-found/:id/status — force-set status
 router.patch('/lost-found/:id/status', authenticate, requireAdmin, async (req, res) => {
   const { status } = req.body
-  if (!['lost','found','resolved'].includes(status)) {
+  if (!['lost', 'found', 'resolved'].includes(status)) {
     return res.status(400).json({ success: false, error: 'Invalid status' })
   }
 
@@ -392,7 +392,7 @@ router.patch('/lost-found/:id/status', authenticate, requireAdmin, async (req, r
 // PATCH /api/admin/lost-found/claims/:claimId — admin approve/reject any claim
 router.patch('/lost-found/claims/:claimId', authenticate, requireAdmin, async (req, res) => {
   const { action, admin_note } = req.body
-  if (!['approve','reject'].includes(action)) {
+  if (!['approve', 'reject'].includes(action)) {
     return res.status(400).json({ success: false, error: 'action must be approve or reject' })
   }
 
@@ -497,11 +497,11 @@ router.get('/audit-log', authenticate, requireAdmin, async (req, res) => {
 
 // ─── Course CRUD (Admin) ──────────────────────────────────────
 const courseSchema = z.object({
-  code:       z.string().min(1),
-  name:       z.string().min(1),
-  dept:       z.string().optional(),
-  semester:   z.coerce.number().int().positive().optional(),
-  year:       z.coerce.number().int().optional(),
+  code: z.string().min(1),
+  name: z.string().min(1),
+  dept: z.string().optional(),
+  semester: z.coerce.number().int().positive().optional(),
+  year: z.coerce.number().int().optional(),
   faculty_id: z.string().uuid().optional().nullable(),
   description: z.string().optional(),
 })
