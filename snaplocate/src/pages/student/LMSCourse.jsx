@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   BookOpen, Megaphone, ClipboardList, BarChart2, CalendarCheck,
   ChevronDown, FileText, CheckCircle, AlertCircle,
-  FolderOpen, ExternalLink, File, Link2, Users, TrendingUp,
+  FolderOpen, ExternalLink, File, Link2, Users, TrendingUp, X,
   GraduationCap, Award, Clock,
 } from 'lucide-react'
 import PageLayout from '../../components/PageLayout'
@@ -31,30 +31,30 @@ function cleanCode(raw = '') {
 
 // ─── Dept gradient map (mirrored from LMSDashboard) ──────────────
 const DEPT_GRADIENTS = {
-  CSE:     'linear-gradient(135deg, #1e1b4b 0%, #3730a3 50%, #4f46e5 100%)',
-  ECE:     'linear-gradient(135deg, #065f46 0%, #059669 50%, #10b981 100%)',
-  EEE:     'linear-gradient(135deg, #713f12 0%, #b45309 50%, #f59e0b 100%)',
-  ME:      'linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 50%, #3b82f6 100%)',
-  CIVIL:   'linear-gradient(135deg, #1a1a2e 0%, #374151 50%, #6b7280 100%)',
-  CHEM:    'linear-gradient(135deg, #4c0519 0%, #9f1239 50%, #e11d48 100%)',
-  BIO:     'linear-gradient(135deg, #064e3b 0%, #065f46 50%, #16a34a 100%)',
-  MATH:    'linear-gradient(135deg, #312e81 0%, #4338ca 50%, #6366f1 100%)',
-  PHY:     'linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0ea5e9 100%)',
-  MGMT:    'linear-gradient(135deg, #3b0764 0%, #6d28d9 50%, #8b5cf6 100%)',
+  CSE: 'linear-gradient(135deg, #1e1b4b 0%, #3730a3 50%, #4f46e5 100%)',
+  ECE: 'linear-gradient(135deg, #065f46 0%, #059669 50%, #10b981 100%)',
+  EEE: 'linear-gradient(135deg, #713f12 0%, #b45309 50%, #f59e0b 100%)',
+  ME: 'linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 50%, #3b82f6 100%)',
+  CIVIL: 'linear-gradient(135deg, #1a1a2e 0%, #374151 50%, #6b7280 100%)',
+  CHEM: 'linear-gradient(135deg, #4c0519 0%, #9f1239 50%, #e11d48 100%)',
+  BIO: 'linear-gradient(135deg, #064e3b 0%, #065f46 50%, #16a34a 100%)',
+  MATH: 'linear-gradient(135deg, #312e81 0%, #4338ca 50%, #6366f1 100%)',
+  PHY: 'linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0ea5e9 100%)',
+  MGMT: 'linear-gradient(135deg, #3b0764 0%, #6d28d9 50%, #8b5cf6 100%)',
   DEFAULT: 'linear-gradient(135deg, #0f172a 0%, #334155 50%, #475569 100%)',
 }
 function getDeptGrad(dept = '') {
   const u = dept.toUpperCase()
-  if (u.includes('COMPUTER'))    return DEPT_GRADIENTS.CSE
+  if (u.includes('COMPUTER')) return DEPT_GRADIENTS.CSE
   if (u.includes('ELECTRONICS')) return DEPT_GRADIENTS.ECE
-  if (u.includes('ELECTRICAL'))  return DEPT_GRADIENTS.EEE
-  if (u.includes('MECHANICAL'))  return DEPT_GRADIENTS.ME
-  if (u.includes('CIVIL'))       return DEPT_GRADIENTS.CIVIL
-  if (u.includes('CHEM'))        return DEPT_GRADIENTS.CHEM
-  if (u.includes('BIO'))         return DEPT_GRADIENTS.BIO
-  if (u.includes('MATH'))        return DEPT_GRADIENTS.MATH
-  if (u.includes('PHYSICS'))     return DEPT_GRADIENTS.PHY
-  if (u.includes('MANAGEMENT'))  return DEPT_GRADIENTS.MGMT
+  if (u.includes('ELECTRICAL')) return DEPT_GRADIENTS.EEE
+  if (u.includes('MECHANICAL')) return DEPT_GRADIENTS.ME
+  if (u.includes('CIVIL')) return DEPT_GRADIENTS.CIVIL
+  if (u.includes('CHEM')) return DEPT_GRADIENTS.CHEM
+  if (u.includes('BIO')) return DEPT_GRADIENTS.BIO
+  if (u.includes('MATH')) return DEPT_GRADIENTS.MATH
+  if (u.includes('PHYSICS')) return DEPT_GRADIENTS.PHY
+  if (u.includes('MANAGEMENT')) return DEPT_GRADIENTS.MGMT
   // Catch-all — always return a valid dark gradient
   return DEPT_GRADIENTS.DEFAULT
 }
@@ -65,7 +65,7 @@ function DueChip({ dueDate }) {
   const diff = new Date(dueDate).getTime() - Date.now()
   const days = Math.ceil(diff / 86400000)
   const overdue = days < 0
-  const bg    = overdue ? '#fee2e2' : days === 0 ? '#fef3c7' : '#f0fdf4'
+  const bg = overdue ? '#fee2e2' : days === 0 ? '#fef3c7' : '#f0fdf4'
   const color = overdue ? '#dc2626' : days === 0 ? '#d97706' : '#16a34a'
   const label = overdue ? 'Overdue' : days === 0 ? 'Due today' : days === 1 ? 'Due tomorrow' : `${days}d left`
   return (
@@ -79,8 +79,8 @@ function DueChip({ dueDate }) {
 function AttBadge({ status }) {
   const map = {
     present: { bg: '#f0fdf4', color: '#16a34a', label: 'Present' },
-    absent:  { bg: '#fee2e2', color: '#dc2626', label: 'Absent' },
-    late:    { bg: '#fef3c7', color: '#d97706', label: 'Late' },
+    absent: { bg: '#fee2e2', color: '#dc2626', label: 'Absent' },
+    late: { bg: '#fef3c7', color: '#d97706', label: 'Late' },
     excused: { bg: '#eff6ff', color: '#3b82f6', label: 'Excused' },
   }
   const s = map[status?.toLowerCase()] ?? map.absent
@@ -103,12 +103,12 @@ function EmptyState({ Icon, title, sub }) {
 // ─── Module icon map ─────────────────────────────────────────────
 const moduleIcon = (type) => {
   switch (type) {
-    case 'url':         return { Icon: Link2,     bg: '#f0fdf4', color: '#16a34a' }
-    case 'resource':    return { Icon: FileText,   bg: '#fef3c7', color: '#d97706' }
-    case 'page':        return { Icon: File,       bg: '#eef2ff', color: '#4f46e5' }
-    case 'folder':      return { Icon: FolderOpen, bg: '#fdf4ff', color: '#a855f7' }
-    case 'folder_file': return { Icon: FileText,   bg: '#fff7ed', color: '#ea580c' }
-    default:            return { Icon: File,       bg: '#f8fafc', color: '#64748b' }
+    case 'url': return { Icon: Link2, bg: '#f0fdf4', color: '#16a34a' }
+    case 'resource': return { Icon: FileText, bg: '#fef3c7', color: '#d97706' }
+    case 'page': return { Icon: File, bg: '#eef2ff', color: '#4f46e5' }
+    case 'folder': return { Icon: FolderOpen, bg: '#fdf4ff', color: '#a855f7' }
+    case 'folder_file': return { Icon: FileText, bg: '#fff7ed', color: '#ea580c' }
+    default: return { Icon: File, bg: '#f8fafc', color: '#64748b' }
   }
 }
 
@@ -123,21 +123,23 @@ function buildFileUrl(mat) {
   const rawUrl = mat.file_url || mat.external_url
   if (!rawUrl) return null
 
-  // External/URL module: open directly (no Moodle auth needed)
+  // External/URL module: open directly (no proxy needed)
   if (mat.module_type === 'url') return rawUrl
 
-  // Only proxy Moodle private files
-  if (!mat.file_url) return rawUrl  // external_url, open as-is
+  // Not an internal Moodle file? Open directly
+  if (!rawUrl.includes('pluginfile.php')) return rawUrl
 
   // Detect if this is a PDF by extension or MIME hint in URL
   const title = (mat.title || '').toLowerCase()
   const isPdf = title.endsWith('.pdf') || rawUrl.toLowerCase().includes('.pdf')
-  if (isPdf) return rawUrl  // browser can render PDFs natively
+  if (isPdf) return rawUrl  // Browser can render PDFs natively without proxy
 
-  // Route everything else through proxy to get a proper filename
-  const fname    = mat.title || 'download'
-  const snapTok  = localStorage.getItem('snaplocate_token') || ''
-  return `${API_BASE}/api/lms/materials/file-proxy?url=${encodeURIComponent(rawUrl)}&filename=${encodeURIComponent(fname)}&snap_token=${encodeURIComponent(snapTok)}`
+  // Route everything else through proxy to get a proper filename and handle auth
+  const fname = mat.title || 'download'
+  const snapTok = localStorage.getItem('snaplocate_token') || ''
+  const isPage = mat.module_type === 'page' || mat.module_type === 'label'
+  const inlineParam = isPage ? '&inline=1' : ''
+  return `${API_BASE}/api/lms/materials/file-proxy?url=${encodeURIComponent(rawUrl)}&filename=${encodeURIComponent(fname)}&snap_token=${encodeURIComponent(snapTok)}${inlineParam}`
 }
 
 // ─── Section accent colors ───────────────────────────────────────
@@ -152,30 +154,31 @@ const sectionColors = [
 
 // ─── Tab config ──────────────────────────────────────────────────
 const TABS = [
-  { key: 'content',       label: 'Content',       Icon: FolderOpen  },
-  { key: 'announcements', label: 'Announcements', Icon: Megaphone   },
-  { key: 'assignments',   label: 'Assignments',   Icon: ClipboardList },
-  { key: 'grades',        label: 'Grades',        Icon: BarChart2   },
-  { key: 'attendance',    label: 'Attendance',    Icon: CalendarCheck },
+  { key: 'content', label: 'Content', Icon: FolderOpen },
+  { key: 'announcements', label: 'Announcements', Icon: Megaphone },
+  { key: 'assignments', label: 'Assignments', Icon: ClipboardList },
+  { key: 'grades', label: 'Grades', Icon: BarChart2 },
+  { key: 'attendance', label: 'Attendance', Icon: CalendarCheck },
 ]
 
 // ═══════════════════════════════════════════════════════════════════
 export default function LMSCourse() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [activeTab, setActiveTab]             = useState('content')
-  const [course, setCourse]                   = useState(null)
-  const [announcements, setAnnouncements]     = useState([])
-  const [assignments, setAssignments]         = useState([])
-  const [materials, setMaterials]             = useState([])
-  const [grades, setGrades]                   = useState([])
-  const [attendance, setAttendance]           = useState([])
-  const [loadingCourse, setLoadingCourse]     = useState(true)
-  const [loadingTab, setLoadingTab]           = useState(false)
+  const [activeTab, setActiveTab] = useState('content')
+  const [course, setCourse] = useState(null)
+  const [announcements, setAnnouncements] = useState([])
+  const [assignments, setAssignments] = useState([])
+  const [materials, setMaterials] = useState([])
+  const [grades, setGrades] = useState([])
+  const [attendance, setAttendance] = useState([])
+  const [loadingCourse, setLoadingCourse] = useState(true)
+  const [loadingTab, setLoadingTab] = useState(false)
   const [collapsedSections, setCollapsedSections] = useState({})
   const [expandedFolders, setExpandedFolders] = useState({}) // track open folders
+  const [viewHtmlModal, setViewHtmlModal] = useState({ open: false, title: '', src: '', description: '' })
   // Eagerly-loaded stat counts for the stats strip (always visible regardless of active tab)
-  const [statCounts, setStatCounts]           = useState({ materials: null, announcements: null, assignments: null })
+  const [statCounts, setStatCounts] = useState({ materials: null, announcements: null, assignments: null })
 
   // Fetch course detail
   useEffect(() => {
@@ -186,7 +189,7 @@ export default function LMSCourse() {
         if (res.success) {
           const c = res.data
           setCourse(c)
-          
+
           // ── Auto-Correction for Stale/Duplicate Records ──
           // If this record has no semester, but a "better" one exists (same code + semester), 
           // we should redirect the user to the correct record.
@@ -195,8 +198,8 @@ export default function LMSCourse() {
               if (allRes.success) {
                 const better = allRes.data
                   .map(e => e.courses || e)
-                  .find(other => 
-                    other.id !== c.id && 
+                  .find(other =>
+                    other.id !== c.id &&
                     (other.code === c.code || (c.code && other.code?.startsWith(c.code))) &&
                     other.semester
                   )
@@ -239,18 +242,18 @@ export default function LMSCourse() {
   useEffect(() => {
     if (!id) return
     const fetchers = {
-      content:       null,   // pre-loaded on mount
+      content: null,   // pre-loaded on mount
       announcements: null,   // pre-loaded on mount
-      assignments:   null,   // pre-loaded on mount
-      grades:      () => api.get(`/api/lms/grades?course_id=${id}`).then(r => { if (r.success) setGrades(r.data ?? []) }),
-      attendance:  () => api.get(`/api/attendance?course_id=${id}`).then(r => {
+      assignments: null,   // pre-loaded on mount
+      grades: () => api.get(`/api/lms/grades?course_id=${id}`).then(r => { if (r.success) setGrades(r.data ?? []) }),
+      attendance: () => api.get(`/api/attendance?course_id=${id}`).then(r => {
         if (r.success) setAttendance([...(r.data ?? [])].sort((a, b) => new Date(b.date) - new Date(a.date)))
       }),
     }
     const fn = fetchers[activeTab]
     if (!fn) return   // already loaded
     setLoadingTab(true)
-    fn().catch(() => {}).finally(() => setLoadingTab(false))
+    fn().catch(() => { }).finally(() => setLoadingTab(false))
     // Scroll to top of page so hero is always visible when switching tabs
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [id, activeTab])
@@ -311,32 +314,32 @@ export default function LMSCourse() {
   })()
 
   const toggleSection = (name) => setCollapsedSections(p => ({ ...p, [name]: !p[name] }))
-  const toggleFolder  = (folderId) => setExpandedFolders(p => ({ ...p, [folderId]: !p[folderId] }))
+  const toggleFolder = (folderId) => setExpandedFolders(p => ({ ...p, [folderId]: !p[folderId] }))
 
   // Attendance summary
   const attSummary = (() => {
     if (!attendance.length) return null
-    const total   = attendance.length
+    const total = attendance.length
     const present = attendance.filter(a => a.status === 'present').length
-    const late    = attendance.filter(a => a.status === 'late').length
-    const absent  = attendance.filter(a => a.status === 'absent').length
-    const pct     = Math.round(((present + late * 0.5) / total) * 100)
+    const late = attendance.filter(a => a.status === 'late').length
+    const absent = attendance.filter(a => a.status === 'absent').length
+    const pct = Math.round(((present + late * 0.5) / total) * 100)
     return { total, present, late, absent, pct }
   })()
 
   // Derived values
-  const fp          = course?.faculty_profiles
+  const fp = course?.faculty_profiles
   const facultyName = fp?.users?.full_name
   const displayName = cleanDisplayName(course?.name || '')
   const displayCode = cleanCode(course?.code || '')
-  const grad        = getDeptGrad(course?.dept || '')
-  const progress    = course?.progress ?? 0
+  const grad = getDeptGrad(course?.dept || '')
+  const progress = course?.progress ?? 0
 
   // Tab badge counts — use pre-loaded statCounts for reliability
   const tabBadges = {
     announcements: statCounts.announcements ?? announcements.length,
-    assignments:   statCounts.assignments   ?? assignments.length,
-    grades:        grades.length,
+    assignments: statCounts.assignments ?? assignments.length,
+    grades: grades.length,
   }
 
   if (loadingCourse) return (
@@ -387,11 +390,11 @@ export default function LMSCourse() {
       </div>
 
       {/* ── Hero Header Card ─────────────────────────────────── */}
-      <div 
-        key={`hero-${id}`} 
+      <div
+        key={`hero-${id}`}
         style={{
-          borderRadius: 24, 
-          overflow: 'hidden', 
+          borderRadius: 24,
+          overflow: 'hidden',
           marginBottom: 24,
           boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
           background: '#fff', // Base background
@@ -433,7 +436,7 @@ export default function LMSCourse() {
             <h1 style={{ ...pjs(30, 800, '38px', '#fff'), margin: '0 0 8px', letterSpacing: '-0.02em' }}>
               {displayName || 'Loading...'}
             </h1>
-            
+
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <span style={{ ...pjs(14, 600, '20px', 'rgba(255,255,255,0.7)') }}>{displayCode}</span>
               {course.semester && (
@@ -456,18 +459,18 @@ export default function LMSCourse() {
 
         {/* Stats strip */}
         <div style={{
-          background: '#fff', 
+          background: '#fff',
           padding: '20px 32px',
-          display: 'grid', 
+          display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
           borderTop: '1px solid #f1f5f9',
           minHeight: 80
         }}>
           {[
-            { label: 'Progress',    value: `${progress}%`,                                                        icon: <TrendingUp  size={15} color="#4f46e5" />, color: '#4f46e5' },
-            { label: 'Assignments', value: statCounts.assignments   != null ? statCounts.assignments   : '…',     icon: <ClipboardList size={15} color="#d97706" />, color: '#d97706' },
-            { label: 'Materials',   value: statCounts.materials     != null ? statCounts.materials     : '…',     icon: <FolderOpen  size={15} color="#16a34a" />, color: '#16a34a' },
-            { label: 'Attendance',  value: attSummary ? `${attSummary.pct}%` : '—',                              icon: <CalendarCheck size={15} color="#0891b2" />, color: '#0891b2' },
+            { label: 'Progress', value: `${progress}%`, icon: <TrendingUp size={15} color="#4f46e5" />, color: '#4f46e5' },
+            { label: 'Assignments', value: statCounts.assignments != null ? statCounts.assignments : '…', icon: <ClipboardList size={15} color="#d97706" />, color: '#d97706' },
+            { label: 'Materials', value: statCounts.materials != null ? statCounts.materials : '…', icon: <FolderOpen size={15} color="#16a34a" />, color: '#16a34a' },
+            { label: 'Attendance', value: attSummary ? `${attSummary.pct}%` : '—', icon: <CalendarCheck size={15} color="#0891b2" />, color: '#0891b2' },
           ].map((s, i) => (
             <div key={i} style={{ textAlign: 'center', padding: '4px 0', borderRight: i < 3 ? '1px solid #f1f5f9' : 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, marginBottom: 4 }}>
@@ -481,10 +484,10 @@ export default function LMSCourse() {
 
         {/* ── Tabs Strip ──────────────────── */}
         <div style={{
-          background: '#f8fafc', 
+          background: '#f8fafc',
           borderTop: '1px solid #f1f5f9',
-          padding: '6px 12px', 
-          display: 'flex', 
+          padding: '6px 12px',
+          display: 'flex',
           gap: 6,
           overflowX: 'auto',
           minHeight: 52
@@ -541,9 +544,9 @@ export default function LMSCourse() {
                   const sc = sectionColors[si % sectionColors.length]
                   const isCollapsed = collapsedSections[sec.name]
                   return (
-                    <div key={sec.name} style={{ 
-                      background: '#fff', borderRadius: 16, 
-                      border: `1px solid #f1f5f9`, overflow: 'hidden', 
+                    <div key={sec.name} style={{
+                      background: '#fff', borderRadius: 16,
+                      border: `1px solid #f1f5f9`, overflow: 'hidden',
                       boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
                       transition: 'all 0.2s ease',
                     }}>
@@ -570,7 +573,7 @@ export default function LMSCourse() {
                           {sec.items.map((mat, i) => {
                             const isFolder = mat.module_type === 'folder'
                             const isFolderOpen = expandedFolders[mat.id]
-                            const mi   = moduleIcon(mat.module_type)
+                            const mi = moduleIcon(mat.module_type)
                             const link = mat.file_url || mat.external_url
 
                             // ── FOLDER with nested children ──────────────────
@@ -620,7 +623,7 @@ export default function LMSCourse() {
                                       borderBottom: i < sec.items.length - 1 ? '1px solid #f8fafc' : 'none',
                                     }}>
                                       {mat._children.map((child, ci) => {
-                                        const cmi  = moduleIcon('folder_file')
+                                        const cmi = moduleIcon('folder_file')
                                         const clink = buildFileUrl(child)
                                         return (
                                           <div key={child.id} className="lms-mat-row" style={{
@@ -659,8 +662,8 @@ export default function LMSCourse() {
                             }
 
                             // ── Regular item (resource / url / page / label) ─
-                            const mi2  = moduleIcon(mat.module_type)
-                            const lnk  = buildFileUrl(mat)
+                            const mi2 = moduleIcon(mat.module_type)
+                            const lnk = buildFileUrl(mat)
                             return (
                               <div key={mat.id} className="lms-mat-row" style={{
                                 padding: '12px 20px',
@@ -674,24 +677,44 @@ export default function LMSCourse() {
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                   <div style={{ ...pjs(13, 600, '18px', '#0f172a'), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mat.title}</div>
                                   {mat.description && (
-                                    <div style={{ ...pjs(11, 400, '16px', '#94a3b8'), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 2 }}>
-                                      {mat.description}
-                                    </div>
+                                    <div 
+                                      style={{ ...pjs(11, 400, '16px', '#94a3b8'), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 2 }}
+                                      dangerouslySetInnerHTML={{ __html: mat.description.replace(/<[^>]+>/g, ' ').slice(0, 150) }}
+                                    />
                                   )}
                                 </div>
-                                <span style={{ ...pjs(10, 600, '14px', '#94a3b8'), textTransform: 'uppercase', letterSpacing: '0.06em', flexShrink: 0 }}>
-                                  {mat.module_type === 'folder_file' ? 'FILE' : mat.module_type}
-                                </span>
-                                {lnk && (
-                                  <a href={lnk} target="_blank" rel="noopener noreferrer" style={{
-                                    display: 'inline-flex', alignItems: 'center', gap: 5,
-                                    padding: '6px 14px', borderRadius: 9, flexShrink: 0,
-                                    background: '#eef2ff', color: '#4f46e5', fontWeight: 700, fontSize: 12,
-                                    textDecoration: 'none', fontFamily: "'Plus Jakarta Sans', sans-serif",
-                                  }}>
-                                    <ExternalLink size={12} /> Open
-                                  </a>
-                                )}
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                                  <div style={{ ...pjs(10, 700, '1', '#94a3b8'), textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                    {mat.module_type}
+                                  </div>
+                                  {mat.module_type === 'page' || mat.module_type === 'label' ? (
+                                    (!lnk || lnk.includes('file-proxy')) ? (
+                                      <button onClick={() => setViewHtmlModal({ open: true, title: mat.title, src: lnk && lnk.includes('file-proxy') ? lnk : null, description: mat.description })} style={{
+                                          display: 'flex', alignItems: 'center', gap: 6,
+                                          padding: '8px 16px', background: '#eef2ff', color: '#4f46e5',
+                                          borderRadius: 10, border: 'none', cursor: 'pointer', ...pjs(13, 600, '1')
+                                        }}>
+                                        <FileText size={16} /> View
+                                      </button>
+                                    ) : (
+                                      <a href={lnk} target="_blank" rel="noreferrer" style={{
+                                        display: 'flex', alignItems: 'center', gap: 6,
+                                        padding: '8px 16px', background: '#eef2ff', color: '#4f46e5',
+                                        borderRadius: 10, textDecoration: 'none', ...pjs(13, 600, '1')
+                                      }}>
+                                        <ExternalLink size={16} /> Open
+                                      </a>
+                                    )
+                                  ) : (
+                                    <a href={lnk} target="_blank" rel="noreferrer" style={{
+                                      display: 'flex', alignItems: 'center', gap: 6,
+                                      padding: '8px 16px', background: '#eef2ff', color: '#4f46e5',
+                                      borderRadius: 10, textDecoration: 'none', ...pjs(13, 600, '1')
+                                    }}>
+                                      <ExternalLink size={16} /> Open
+                                    </a>
+                                  )}
+                                </div>
                               </div>
                             )
                           })}
@@ -809,7 +832,7 @@ export default function LMSCourse() {
                       {grades.map((g, i) => {
                         const pct = g.max_marks && g.marks != null ? Math.round((g.marks / g.max_marks) * 100) : null
                         const col = pct == null ? '#94a3b8' : pct >= 75 ? '#16a34a' : pct >= 50 ? '#d97706' : '#dc2626'
-                        const bg  = pct == null ? '#f8fafc' : pct >= 75 ? '#f0fdf4' : pct >= 50 ? '#fffbeb' : '#fee2e2'
+                        const bg = pct == null ? '#f8fafc' : pct >= 75 ? '#f0fdf4' : pct >= 50 ? '#fffbeb' : '#fee2e2'
                         return (
                           <div key={i} style={{ background: bg, borderRadius: 16, padding: '18px 20px', border: '1px solid #f1f5f9', textAlign: 'center' }}>
                             <div style={{ ...pjs(11, 700, '14px', '#94a3b8'), textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{g.exam_type}</div>
@@ -942,6 +965,69 @@ export default function LMSCourse() {
           </>
         )}
       </div>
+
+      {viewHtmlModal.open && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999,
+          background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 20, width: '100%', maxWidth: 800,
+            maxHeight: '90vh', display: 'flex', flexDirection: 'column',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)'
+          }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, ...pjs(18, 700, '24px', '#0f172a') }}>{viewHtmlModal.title}</h3>
+              <button 
+                onClick={() => setViewHtmlModal({ open: false, title: '', src: '', description: '' })} 
+                style={{ background: '#f8fafc', border: 'none', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div style={{ flex: 1, padding: 0, overflowY: 'auto', borderRadius: '0 0 20px 20px', display: 'flex', flexDirection: 'column' }}>
+              {viewHtmlModal.description && (
+                <div 
+                  className="moodle-html-content"
+                  style={{ padding: '24px', background: '#fff', borderBottom: viewHtmlModal.src ? '1px solid #f1f5f9' : 'none', ...pjs(15, 400, '1.6', '#334155') }}
+                  dangerouslySetInnerHTML={{ __html: viewHtmlModal.description }}
+                />
+              )}
+              {viewHtmlModal.src && (
+                <iframe 
+                  src={viewHtmlModal.src} 
+                  width="100%" 
+                  style={{ border: 'none', background: '#fff', minHeight: '60vh', flex: 1 }} 
+                  title={viewHtmlModal.title} 
+                  sandbox="allow-same-origin allow-scripts"
+                  onLoad={(e) => {
+                    try {
+                      const doc = e.target.contentDocument || e.target.contentWindow?.document;
+                      if (!doc) return;
+                      const style = doc.createElement('style');
+                      style.innerHTML = `
+                        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; padding: 24px !important; margin: 0 !important; color: #334155 !important; font-size: 15px !important; line-height: 1.6 !important; }
+                        * { max-width: 100% !important; word-wrap: break-word !important; white-space: normal !important; overflow-wrap: break-word !important; }
+                        table { width: 100% !important; table-layout: auto !important; }
+                        img, video { max-width: 100% !important; height: auto !important; }
+                        /* Restore list styles */
+                        ul { list-style-type: disc !important; padding-left: 1.5rem !important; margin: 0.5rem 0 !important; }
+                        ol { list-style-type: decimal !important; padding-left: 1.5rem !important; margin: 0.5rem 0 !important; }
+                      `;
+                      doc.head.appendChild(style);
+                      // Give it a brief moment to render the new styles before measuring height
+                      setTimeout(() => {
+                        e.target.style.height = (doc.documentElement.scrollHeight + 50) + 'px';
+                      }, 50);
+                    } catch(err) { }
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </PageLayout>
   )
 }

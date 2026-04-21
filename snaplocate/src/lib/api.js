@@ -16,7 +16,8 @@ async function request(path, options = {}) {
   const data = await res.json()
 
   if (!res.ok) {
-    const err = new Error(data.message || 'API error')
+    const errMsg = typeof data.error === 'string' ? data.error : (data.message || 'API error')
+    const err = new Error(errMsg)
     err.status = res.status
     err.data = data
     throw err
@@ -42,6 +43,26 @@ export const api = {
       throw new Error(`Upload failed (${res.status}): unexpected server response`)
     }
     if (!res.ok || !data.success) throw new Error(data.error || data.message || `Upload failed (${res.status})`)
+    return data
+  },
+  // Genuine view: sends X-View-Session header only on first visit per session
+  view: async (path, listingId) => {
+    const token = getToken()
+    const sessionKey = `viewed_${listingId}`
+    const alreadyViewed = sessionStorage.getItem(sessionKey)
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(!alreadyViewed ? { 'X-View-Session': listingId } : {}),
+    }
+    if (!alreadyViewed) sessionStorage.setItem(sessionKey, '1')
+    const res = await fetch(`${API_URL}${path}`, { method: 'GET', cache: 'no-store', headers })
+    const data = await res.json()
+    if (!res.ok) {
+      const err = new Error(data.message || 'API error')
+      err.status = res.status
+      throw err
+    }
     return data
   }
 }

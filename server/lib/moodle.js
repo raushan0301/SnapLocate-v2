@@ -11,7 +11,7 @@ function normalizeBaseUrl(url) {
       .replace(/\/index\.php$/i, '')
       .replace(/\/$/, '')
     u.search = ''
-    u.hash   = ''
+    u.hash = ''
     return u.toString()
   } catch {
     return url.replace(/\/$/, '')
@@ -54,20 +54,20 @@ function parseDept(fullname = '', subCategoryName = '') {
   if (subCategoryName) {
     const sub = subCategoryName.replace(/&amp;/g, '&').trim()
     const upper = sub.toUpperCase()
-    if (upper.includes('COMPUTER SCIENCE'))                       return 'COMPUTER SCIENCE & ENGINEERING'
-    if (upper.includes('ELECTRONICS') && upper.includes('COMM'))  return 'ELECTRONICS & COMMUNICATION ENGINEERING'
-    if (upper.includes('ELECTRICAL') && upper.includes('INST'))   return 'ELECTRICAL & INSTRUMENTATION ENGINEERING'
-    if (upper.includes('ELECTRICAL'))                             return 'ELECTRICAL ENGINEERING'
-    if (upper.includes('MECHANICAL'))                             return 'MECHANICAL ENGINEERING'
-    if (upper.includes('CIVIL'))                                  return 'CIVIL ENGINEERING'
-    if (upper.includes('CHEMICAL') && !upper.includes('BIO'))     return 'CHEMICAL ENGINEERING'
+    if (upper.includes('COMPUTER SCIENCE')) return 'COMPUTER SCIENCE & ENGINEERING'
+    if (upper.includes('ELECTRONICS') && upper.includes('COMM')) return 'ELECTRONICS & COMMUNICATION ENGINEERING'
+    if (upper.includes('ELECTRICAL') && upper.includes('INST')) return 'ELECTRICAL & INSTRUMENTATION ENGINEERING'
+    if (upper.includes('ELECTRICAL')) return 'ELECTRICAL ENGINEERING'
+    if (upper.includes('MECHANICAL')) return 'MECHANICAL ENGINEERING'
+    if (upper.includes('CIVIL')) return 'CIVIL ENGINEERING'
+    if (upper.includes('CHEMICAL') && !upper.includes('BIO')) return 'CHEMICAL ENGINEERING'
     if (upper.includes('CHEMISTRY') || upper.includes('BIOCHEM')) return 'CHEMISTRY & BIOCHEMISTRY'
     if (upper.includes('MATHEMATICS') || upper === 'MATHEMATICS') return 'MATHEMATICS'
     if (upper.includes('PHYSICS') || upper.includes('MATERIALS')) return 'PHYSICS & MATERIALS SCIENCE'
-    if (upper.includes('BIOTECHNOLOGY'))                          return 'BIOTECHNOLOGY'
-    if (upper.includes('ENERGY'))                                 return 'ENERGY & ENVIRONMENT'
+    if (upper.includes('BIOTECHNOLOGY')) return 'BIOTECHNOLOGY'
+    if (upper.includes('ENERGY')) return 'ENERGY & ENVIRONMENT'
     if (upper.includes('HUMANITIES') || upper.includes('SOCIAL')) return 'HUMANITIES & SOCIAL SCIENCES'
-    if (upper.includes('LIBERAL ARTS'))                           return 'LIBERAL ARTS & SCIENCES'
+    if (upper.includes('LIBERAL ARTS')) return 'LIBERAL ARTS & SCIENCES'
     if (upper.includes('MANAGEMENT') || upper.includes('THAPAR SCHOOL')) return 'MANAGEMENT'
     if (upper.includes('TRAINING') || upper.includes('DEVELOPMENT')) return 'CENTRE FOR TRAINING & DEVELOPMENT'
     return sub // preserve original sub-category as-is
@@ -172,8 +172,8 @@ async function upsertByMoodleId(table, rows, log) {
 export class MoodleClient {
   constructor(baseUrl) {
     this.baseUrl = normalizeBaseUrl(baseUrl)
-    this.token   = null
-    this.client  = axios.create({ baseURL: this.baseUrl, timeout: 30000 })
+    this.token = null
+    this.client = axios.create({ baseURL: this.baseUrl, timeout: 30000 })
   }
 
   async login(username, password) {
@@ -203,16 +203,16 @@ export class MoodleClient {
     return res.data
   }
 
-  async getSiteInfo()             { return this.call('core_webservice_get_site_info') }
-  async getMyCourses(userId)      { return this.call('core_enrol_get_users_courses', { userid: userId }) }
-  async getAllCourses()           { return this.call('core_course_get_courses') }
-  async getCourseContents(cId)   { return this.call('core_course_get_contents', { courseid: cId }) }
+  async getSiteInfo() { return this.call('core_webservice_get_site_info') }
+  async getMyCourses(userId) { return this.call('core_enrol_get_users_courses', { userid: userId }) }
+  async getAllCourses() { return this.call('core_course_get_courses') }
+  async getCourseContents(cId) { return this.call('core_course_get_contents', { courseid: cId }) }
 
   async getCategories(categoryIds = []) {
     if (categoryIds.length === 0) return []
     const params = {}
     categoryIds.forEach((id, i) => {
-      params[`criteria[${i}][key]`]   = 'id'
+      params[`criteria[${i}][key]`] = 'id'
       params[`criteria[${i}][value]`] = id
     })
     try {
@@ -281,8 +281,8 @@ export async function runStudentSync(userId) {
 
   if (!config) throw new Error('No sync config found')
 
-  const log    = []
-  let   status = 'success'
+  const log = []
+  let status = 'success'
 
   try {
     const creds = config.credentials_json || {}
@@ -308,38 +308,85 @@ export async function runStudentSync(userId) {
     }
     log.push(`Found ${moodleCourses.length} enrolled courses in Moodle`)
 
-    // ── 2. Fetch categories to get session codes ──────────────────────────────
-    // Build a two-level category map: catId → { name, parent }
-    // For Thapar: top-level cats are sessions (2526EVESEM), children are departments
-    const catIds = [...new Set(moodleCourses.map(c => c.category).filter(Boolean))]
-    const categories = await client.getCategories(catIds)
-    
-    // Build cat map with parent resolution
+    // ── 2. Build accurate category map ───────────────────────────────────────
+    // ⚠  Two Thapar Moodle API quirks confirmed via direct API inspection:
+    //   (a) core_enrol_get_users_courses does NOT return a `categoryname` field here.
+    //   (b) core_course_get_categories with multiple criteria[N]=id uses AND logic,
+    //       so querying several IDs at once returns nothing useful.
+    // Fix: load ALL root-level categories in one call (covers semester cats, CILP,
+    // UNDER GRADUATE, Administration, etc.), then fetch direct course categories
+    // individually if they are sub-categories not returned by the root call.
     const catMap = {} // catId → { name, parent }
-    for (const cat of categories) catMap[cat.id] = { name: cat.name, parent: cat.parent }
 
-    // For parent IDs we may not have yet, fetch them too
-    const parentIds = [...new Set(categories.map(c => c.parent).filter(Boolean).filter(p => !catMap[p]))]
-    if (parentIds.length > 0) {
-      const parentCats = await client.getCategories(parentIds)
-      for (const cat of parentCats) catMap[cat.id] = { name: cat.name, parent: cat.parent }
+    // Step A — single call for all root categories (parent === 0)
+    try {
+      const rootCats = await client.getAllCategories()
+      for (const cat of rootCats) catMap[cat.id] = { name: cat.name, parent: cat.parent }
+      log.push(`Loaded ${rootCats.length} root-level Moodle categories`)
+    } catch (e) { log.push(`⚠ Could not load root categories: ${e.message}`) }
+
+    // Step B — one-at-a-time fetch for direct course categories not yet in catMap
+    // (e.g. "Computer Engineering-COE" which is a child of "UNDER GRADUATE")
+    const catIds = [...new Set(moodleCourses.map(c => c.category).filter(Boolean))]
+    for (const catId of catIds.filter(id => !catMap[id])) {
+      try {
+        const res = await client.call('core_course_get_categories', {
+          'criteria[0][key]': 'id', 'criteria[0][value]': catId,
+        })
+        if (Array.isArray(res)) {
+          const cat = res.find(c => c.id === catId)
+          if (cat) catMap[cat.id] = { name: cat.name, parent: cat.parent }
+        }
+      } catch { /* stays unresolved — shortname fallback handles semester courses */ }
     }
+    log.push(`Category map built: ${Object.keys(catMap).length} categories resolved`)
 
     // ── 3. Resolve session code for each course ───────────────────────────────
-    // Thapar structure: course.category = dept sub-category ID
-    // dept sub-category.parent = session top-category ID (e.g., 2526EVESEM)
-    // We also check the shortname suffix for redundancy
-    function resolveCourse(mc) {
-      const catInfo = catMap[mc.category] || {}
-      const subCatName = catInfo.name || mc.categoryname || ''
-      const parentCatInfo = catMap[catInfo.parent] || {}
-      const parentCatName = parentCatInfo.name || ''
+    // Maps a raw Moodle category name → user-friendly session label.
+    // Thapar-specific mappings confirmed via direct API inspection of lms.thapar.edu:
+    //   "CILP"           → "Placement & Internships" (root-level placement category)
+    //   "UNDER GRADUATE" → "Experiential Learning Activities" (when fullname confirms it)
+    //   "2526EVESEM" etc.→ preserved as-is
+    //   others           → preserved as-is (Administration, Miscellaneous, etc.)
+    function resolveSessionLabel(catName, fullname) {
+      if (!catName) return null
+      const up = catName.toUpperCase().trim()
+      const fn = (fullname || '').toUpperCase()
 
-      // Session code: prefer parent category name (top-level), fall back to shortname suffix
-      let sessionCode = parseSessionCode(parentCatName)
-        || parseSessionFromShortname(mc.shortname)
-        || parseSessionCode(subCatName)  // sometimes the direct category IS the session
-        || mc.categoryname || null
+      // Placement cell
+      if (up === 'CILP' || up.includes('INDUSTRIAL LIAISON') || up.includes('PLACEMENT CELL'))
+        return 'Placement & Internships'
+
+      // Experiential Learning — courses under "UNDER GRADUATE > CSE-COE" whose fullname says EL
+      if (up === 'UNDER GRADUATE' || up === 'UNDERGRADUATE') {
+        if (fn.includes('EXPERIENTIAL LEARNING') || fn.includes('EL ACTIVIT'))
+          return 'Experiential Learning Activities'
+        // Other UG sub-categories fall through with the literal category name
+      }
+
+      // Generic catch-all parents — try to infer from fullname
+      if (up === 'MISCELLANEOUS' || up === 'ALL CATEGORIES') {
+        if (fn.includes('EXPERIENTIAL LEARNING')) return 'Experiential Learning Activities'
+        if (fn.includes('PLACEMENT') || fn.includes('INTERNSHIP')) return 'Placement & Internships'
+      }
+
+      return catName.trim() // preserve as-is
+    }
+
+    function resolveCourse(mc) {
+      const catInfo       = catMap[mc.category] || {}
+      const subCatName    = catInfo.name || ''           // direct cat (e.g. "Computer Engineering-COE", "CILP")
+      const parentCatInfo = catInfo.parent ? (catMap[catInfo.parent] || {}) : {}
+      const parentCatName = parentCatInfo.name || ''    // top-level cat (e.g. "2526EVESEM", "UNDER GRADUATE")
+
+      let sessionCode =
+        // 1. Semester code in shortname suffix — most reliable (e.g. UCS701-2526EVESEM)
+        parseSessionFromShortname(mc.shortname)
+        // 2. Friendly label derived from PARENT category (semester cats, EL, Placement, etc.)
+        || resolveSessionLabel(parentCatName, mc.fullname || '')
+        // 3. Friendly label from DIRECT category (root-level: CILP, Administration, etc.)
+        || resolveSessionLabel(subCatName, mc.fullname || '')
+        || null
 
       // Department: from sub-category (most accurate)
       const dept = parseDept(mc.fullname || '', subCatName)
@@ -441,7 +488,7 @@ export async function runStudentSync(userId) {
       const enrollRows = Object.entries(courseKeyMap)
         .map(([moodleId]) => {
           const cleanCode = courseKeyMap[moodleId].cleanCode
-          const courseId  = existMap[`mid:${moodleId}`] || existMap[cleanCode]
+          const courseId = existMap[`mid:${moodleId}`] || existMap[cleanCode]
           if (!courseId) return null
           return { org_id: orgId, student_id: userId, course_id: courseId, status: 'active' }
         })
@@ -467,7 +514,7 @@ export async function runStudentSync(userId) {
           const comp = await client.getActivitiesCompletion(mc.id, moodleUserId)
           if (comp?.statuses) {
             const total = comp.statuses.length
-            const done  = comp.statuses.filter(s => s.state === 1).length
+            const done = comp.statuses.filter(s => s.state === 1).length
             progress = total > 0 ? Math.round((done / total) * 100) : 0
           }
         } catch { /* no completion tracking */ }
@@ -573,7 +620,7 @@ export async function runStudentSync(userId) {
           if (!local) continue
           for (const section of sections || []) {
             const sectionName = section.name || `Section ${section.section}`
-            const sectionNum  = section.section ?? 0
+            const sectionNum = section.section ?? 0
 
             for (const mod of section.modules || []) {
               // Skip activity types we never display
@@ -635,7 +682,7 @@ export async function runStudentSync(userId) {
 
               matRows.push({
                 course_id: local.id, title: mod.name,
-                description: mod.description ? mod.description.replace(/<[^>]+>/g, '').trim().slice(0, 500) : null,
+                description: mod.description || null,
                 module_type: mod.modname, file_url: fileUrl, external_url: externalUrl,
                 section_name: sectionName, section_num: sectionNum,
                 synced_from: 'moodle', moodle_id: mod.id,
@@ -658,9 +705,9 @@ export async function runStudentSync(userId) {
   await supabaseAdmin
     .from('student_sync_config')
     .update({
-      last_synced_at:   new Date().toISOString(),
+      last_synced_at: new Date().toISOString(),
       last_sync_status: status,
-      last_sync_log:    log.join('\n'),
+      last_sync_log: log.join('\n'),
     })
     .eq('user_id', userId)
 
@@ -676,8 +723,8 @@ export async function runMoodleSync() {
     .eq('is_active', true)
 
   for (const config of configs || []) {
-    const log    = []
-    let   status = 'success'
+    const log = []
+    let status = 'success'
 
     try {
       const creds = config.credentials_json || {}
@@ -691,7 +738,7 @@ export async function runMoodleSync() {
       log.push('Authenticated with Moodle')
 
       const siteInfo = await client.getSiteInfo()
-      const userId   = siteInfo.userid
+      const userId = siteInfo.userid
       log.push(`Logged in as: ${siteInfo.fullname} (id: ${userId})`)
 
       // ── 1. Sync courses ─────────────────────────────────────────────────────
@@ -706,7 +753,7 @@ export async function runMoodleSync() {
 
         // Fetch ALL categories for category tree
         const categoryIds = [...new Set(moodleCourses.map(c => c.category).filter(Boolean))]
-        const categories  = await client.getCategories(categoryIds)
+        const categories = await client.getCategories(categoryIds)
         const catMap = {}
         for (const cat of categories) catMap[cat.id] = { name: cat.name, parent: cat.parent }
 
@@ -727,15 +774,15 @@ export async function runMoodleSync() {
 
         const toInsert = [], toUpdate = []
         for (const mc of moodleCourses) {
-          const catInfo    = catMap[mc.category] || {}
+          const catInfo = catMap[mc.category] || {}
           const parentInfo = catMap[catInfo.parent] || {}
           const sessionCode = parseSessionCode(parentInfo.name)
             || parseSessionFromShortname(mc.shortname)
             || parseSessionCode(catInfo.name)
             || mc.categoryname || null
-          const dept    = parseDept(mc.fullname || '', catInfo.name || '')
-          const code    = cleanShortname(mc.shortname || `MOODLE-${mc.id}`)
-          const name    = mc.fullname || mc.shortname
+          const dept = parseDept(mc.fullname || '', catInfo.name || '')
+          const code = cleanShortname(mc.shortname || `MOODLE-${mc.id}`)
+          const name = mc.fullname || mc.shortname
 
           const row = { code, name, semester: sessionCode, dept, synced_from: 'moodle', moodle_course_id: mc.id }
           if (existMap[code]) toUpdate.push({ id: existMap[code], ...row })
@@ -769,9 +816,9 @@ export async function runMoodleSync() {
     await supabaseAdmin
       .from('external_sync_config')
       .update({
-        last_synced_at:   new Date().toISOString(),
+        last_synced_at: new Date().toISOString(),
         last_sync_status: status,
-        last_sync_log:    log.join('\n'),
+        last_sync_log: log.join('\n'),
       })
       .eq('id', config.id)
   }

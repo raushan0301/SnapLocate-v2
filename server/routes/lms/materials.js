@@ -32,7 +32,7 @@ router.get('/', authenticate, async (req, res) => {
 router.get('/file-proxy', async (req, res) => {
   // Accept token from Authorization header (API calls) OR snap_token param (browser tab)
   const authHeader = req.headers.authorization
-  const rawToken   = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : req.query.snap_token
+  const rawToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : req.query.snap_token
   if (!rawToken) return res.status(401).json({ success: false, message: 'Unauthorized — no token provided' })
 
   let user
@@ -92,12 +92,30 @@ router.get('/file-proxy', async (req, res) => {
     // 2) Try to extract from Moodle's Content-Disposition header
     // 3) Fall back to 'download'
     let safeFilename = filename ? decodeURIComponent(filename) : ''
-    if (!safeFilename) {
-      const cd = response.headers['content-disposition'] || ''
-      const m  = cd.match(/filename[^;=\n]*=[\s"']*(.*?)[\s"']*(;|$)/i)
-      if (m) safeFilename = m[1].trim()
+    
+    // Attempt to extract the true filename (with extension) from Moodle's headers
+    const cd = response.headers['content-disposition'] || ''
+    const m = cd.match(/filename[^;=\n]*=[\s"']*(.*?)[\s"']*(;|$)/i)
+    let actualFilenameFromMoodle = ''
+    if (m) {
+      actualFilenameFromMoodle = m[1].trim().replace(/['"]/g, '')
     }
-    if (!safeFilename) safeFilename = 'download'
+
+    if (safeFilename && actualFilenameFromMoodle) {
+      // Extract the file extension from Moodle's actual filename (e.g. .pptx, .pdf)
+      const extMatch = actualFilenameFromMoodle.match(/\.[0-9a-z]+$/i)
+      if (extMatch) {
+         const ext = extMatch[0]
+         // If the custom safeFilename lacks this exact extension, append it!
+         if (!safeFilename.toLowerCase().endsWith(ext.toLowerCase())) {
+           safeFilename += ext
+         }
+      }
+    }
+
+    if (!safeFilename) {
+       safeFilename = actualFilenameFromMoodle || 'download'
+    }
 
     // Strip any path separators — only bare filename allowed
     safeFilename = safeFilename.split(/[/\\]/).pop()
@@ -105,19 +123,53 @@ router.get('/file-proxy', async (req, res) => {
     safeFilename = safeFilename.replace(/"/g, "'")
 
     res.setHeader('Content-Type', ct)
-    res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`)
+    const disposition = req.query.inline === '1' ? 'inline' : 'attachment'
+    if (disposition === 'inline') {
+      res.removeHeader('X-Frame-Options')
+      res.removeHeader('Content-Security-Policy')
+    }
+    res.setHeader('Content-Disposition', `${disposition}; filename="${safeFilename}"`)
     if (response.headers['content-length']) {
       res.setHeader('Content-Length', response.headers['content-length'])
     }
 
-    response.data.pipe(res)
-    response.data.on('error', (err) => { if (!res.headersSent) res.destroy(err) })
+    if (ct && ct.includes('text/html')) {
+      res.setHeader('Content-Length', '') // Remove length since we modify content
+      let html = ''
+      response.data.on('data', chunk => html += chunk.toString())
+      response.data.on('end', () => {
+         // Inject responsive CSS
+         const styleStr = `<style>
+           body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; padding: 24px !important; margin: 0 !important; color: #334155 !important; font-size: 15px !important; line-height: 1.6 !important; }
+           * { max-width: 100% !important; word-wrap: break-word !important; white-space: normal !important; overflow-wrap: break-word !important; }
+           table, td, th { width: 100% !important; table-layout: auto !important; }
+           img, video { max-width: 100% !important; height: auto !important; }
+           ul { list-style-type: disc !important; padding-left: 1.5rem !important; margin: 0.5rem 0 !important; }
+           ol { list-style-type: decimal !important; padding-left: 1.5rem !important; margin: 0.5rem 0 !important; }
+         </style>`
+         if (html.includes('</head>')) {
+           html = html.replace('</head>', styleStr + '</head>')
+         } else {
+           html = styleStr + html
+         }
+         res.send(html)
+      })
+      response.data.on('error', err => { if (!res.headersSent) res.destroy(err) })
+    } else {
+      response.data.pipe(res)
+      response.data.on('error', (err) => { if (!res.headersSent) res.destroy(err) })
+    }
 
   } catch (err) {
     if (!res.headersSent) {
-      res.status(502).json({ success: false, error: `Moodle fetch failed: ${err.message}` })
+      res.status(500).json({ success: false, message: 'Proxy failed', error: err.message })
     }
   }
+})
+
+router.get('/debug', async (req, res) => {
+  const { data } = await supabaseAdmin.from('course_materials').select('description').textSearch('title', 'Announcements').limit(1);
+  res.json({ data });
 })
 
 export default router

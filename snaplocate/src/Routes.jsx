@@ -20,7 +20,12 @@ import CampusSupportPage from './pages/student/CampusSupport'
 import SettingsPage      from './pages/student/Settings'
 import SupportPage       from './pages/student/Support'
 import ResourcesPage     from './pages/student/Resources'
-import MarketplacePage   from './pages/student/Marketplace'
+import MarketplacePage         from './pages/student/Marketplace'
+import MarketplaceListingDetail from './pages/student/MarketplaceListingDetail'
+import MarketplaceCreate        from './pages/student/MarketplaceCreate'
+import MarketplaceEdit          from './pages/student/MarketplaceEdit'
+import MarketplaceDashboard     from './pages/student/MarketplaceDashboard'
+import MarketplaceChat          from './pages/student/MarketplaceChat'
 import LostFoundPage     from './pages/student/LostFound'
 import StudentRequests   from './pages/student/Requests'
 
@@ -110,7 +115,12 @@ export default function AppRoutes() {
         <Route path="/settings"       element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><SettingsPage /></ProtectedRoute>} />
         <Route path="/support"        element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><SupportPage /></ProtectedRoute>} />
         <Route path="/resources"      element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><ResourcesPage /></ProtectedRoute>} />
-        <Route path="/marketplace"    element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><MarketplacePage /></ProtectedRoute>} />
+        <Route path="/marketplace"              element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><MarketplacePage /></ProtectedRoute>} />
+        <Route path="/marketplace/listing/:id"  element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><MarketplaceListingDetail /></ProtectedRoute>} />
+        <Route path="/marketplace/create"       element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><MarketplaceCreate /></ProtectedRoute>} />
+        <Route path="/marketplace/edit/:id"     element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><MarketplaceEdit /></ProtectedRoute>} />
+        <Route path="/marketplace/dashboard"    element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><MarketplaceDashboard /></ProtectedRoute>} />
+        <Route path="/marketplace/chat"         element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><MarketplaceChat /></ProtectedRoute>} />
         <Route path="/lost-found"     element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><LostFoundPage /></ProtectedRoute>} />
 
         {/* Faculty Routes */}

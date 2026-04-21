@@ -1,429 +1,520 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import PageLayout from '../../components/PageLayout'
 import { db } from '../../lib/firebase'
-import { collection, getDocs } from 'firebase/firestore'
+import {
+  collection, getDocs,
+  doc, updateDoc, getDoc, increment, onSnapshot,
+} from 'firebase/firestore'
 
-/* ─── Typography & Utilities ────────────────────────────────── */
+/* ─── Typography helper ─────────────────────────────────────── */
 const pjs = (size, weight, lh, color) => ({
   fontFamily: "'Plus Jakarta Sans', sans-serif",
   fontSize: size, fontWeight: weight, lineHeight: lh, color,
 })
 
-const inter = (size, weight, lh, color) => ({
-  fontFamily: "'Inter', sans-serif",
-  fontSize: size, fontWeight: weight, lineHeight: lh, color,
-})
+/* ─── Rated subjects cache (persisted in localStorage) ──────── */
+const getRated = () => JSON.parse(localStorage.getItem('ratedSubjects') || '{}')
+const setRated = map => localStorage.setItem('ratedSubjects', JSON.stringify(map))
 
-/* ─── Static Data ───────────────────────────────────────────── */
-const YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year']
-const SEMS = ['SEM 1', 'SEM 2', 'SEM 3', 'SEM 4', 'SEM 5', 'SEM 6', 'SEM 7', 'SEM 8']
-const BRANCHES = ['COE', 'CSE', 'ECE', 'ME', 'CE', 'EE', 'ENC']
+/* ─── Inline Breadcrumb Dropdown ────────────────────────────── */
+const BreadItem = ({ value, placeholder, options, onChange, disabled, isLast }) => {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
 
-/* ─── Components ────────────────────────────────────────────── */
-const Badge = ({ children, color = '#4f46e5', bg = '#f5f3ff' }) => (
-  <span style={{ 
-    padding: '4px 10px', borderRadius: 6, background: bg, color, 
-    ...pjs(11, 700, '15px', color), letterSpacing: '0.04em'
-  }}>{children}</span>
-)
+  useEffect(() => {
+    const handler = e => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
-const Card = ({ children, onClick, style = {} }) => (
-  <div 
-    onClick={onClick}
-    style={{
-      background: '#ffffff', border: '1px solid #f1f5f9', borderRadius: 16, overflow: 'hidden',
-      cursor: onClick ? 'pointer' : 'default', width: '100%',
-      boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-      transition: 'box-shadow 0.15s, transform 0.15s',
-      ...style
-    }}
-    onMouseEnter={onClick ? e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,0,0,0.1)' } : undefined}
-    onMouseLeave={onClick ? e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)' } : undefined}
-  >
-    {children}
-  </div>
-)
+  const textColor = isLast ? '#3730a3' : value ? '#4f46e5' : '#9ca3af'
 
-const DownloadBtn = ({ href, label = 'Download', iconOnly = false, secondary = false }) => (
-  <a 
-    href={href} target="_blank" rel="noopener noreferrer"
-    style={{ 
-      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, 
-      padding: iconOnly ? '8px' : '8px 16px', borderRadius: 10,
-      background: secondary ? '#ffffff' : '#f8fafc',
-      border: secondary ? '1px solid #e2e8f0' : '1px solid transparent',
-      color: secondary ? '#0f172a' : '#4f46e5', textDecoration: 'none',
-      ...pjs(13, 600, '18px', secondary ? '#0f172a' : '#4f46e5'),
-      transition: 'all 0.15s',
-    }}
-    onMouseEnter={e => { e.currentTarget.style.background = secondary ? '#f8fafc' : '#4f46e5'; e.currentTarget.style.color = secondary ? '#0f172a' : '#ffffff' }}
-    onMouseLeave={e => { e.currentTarget.style.background = secondary ? '#ffffff' : '#f8fafc'; e.currentTarget.style.color = secondary ? '#0f172a' : '#4f46e5' }}
-  >
-    {!iconOnly && <span>{label}</span>}
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-    </svg>
-  </a>
-)
-
-/* ─── Detail Views ──────────────────────────────────────────── */
-
-const NotesView = ({ resources }) => (
-  <div style={{ paddingTop: 16 }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-      <h3 style={pjs(18, 700, '26px', '#0f172a')}>Lecture Notes</h3>
-      <div style={{ display: 'flex', gap: 10 }}>
-        <button style={{ padding: '8px 16px', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', ...pjs(13, 600, '18px', '#64748b'), display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg> Filter
-        </button>
-        <button style={{ padding: '8px 16px', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', ...pjs(13, 600, '18px', '#64748b'), display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg> Sort
-        </button>
-      </div>
-    </div>
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 20 }}>
-      {resources.filter(r => r.type === 'note').map((r, i) => (
-        <Card key={i} style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#fff1f2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            </div>
-          </div>
-          <div>
-            <h4 style={{ ...pjs(15, 700, '22px', '#0f172a'), margin: '0 0 4px 0' }}>{r.title}</h4>
-            <p style={{ ...pjs(12, 500, '16px', '#94a3b8'), margin: 0 }}>Uploader: {r.uploader?.full_name || 'Academic Team'}</p>
-          </div>
-          <DownloadBtn href={r.file_url} secondary />
-        </Card>
-      ))}
-      <div style={{ border: '2px dashed #e2e8f0', borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', cursor: 'pointer', background: '#fafafa' }}>
-        <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#fff', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </div>
-        <h4 style={{ ...pjs(14, 700, '20px', '#0f172a'), margin: 0 }}>Contribute Notes</h4>
-        <p style={{ ...pjs(12, 500, '16px', '#94a3b8'), marginTop: 4 }}>Help your peers by uploading</p>
-      </div>
-    </div>
-  </div>
-)
-
-const PYQsView = ({ resources }) => {
-  const [cat, setCat] = useState('MST')
   return (
-    <div style={{ paddingTop: 16 }}>
-      <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid #f1f5f9', paddingBottom: 16, marginBottom: 24 }}>
-        {['MST (Mid Semester)', 'EST (End Semester)', 'Auxi (Auxiliary)'].map(t => {
-          const type = t.split(' ')[0]
-          return (
-            <button key={type} onClick={() => setCat(type)} style={{
-              padding: '8px 16px', background: cat === type ? '#f8fafc' : 'transparent', 
-              border: cat === type ? '1px solid #e2e8f0' : '1px solid transparent', borderRadius: 10, cursor: 'pointer',
-              ...pjs(13, cat === type ? 700 : 500, '18px', cat === type ? '#0f172a' : '#64748b'),
-              transition: 'all 0.15s'
-            }}>{t}</button>
-          )
-        })}
-      </div>
-      
-      <div>
-        <h3 style={{ ...pjs(16, 700, '24px', '#0f172a'), marginBottom: 20 }}>Academic Year 2024</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
-          {resources.filter(r => r.type === 'pyq' && r.title.includes(cat)).map((r, i) => (
-            <Card key={i} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: '#fff1f2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
-                </div>
-                <span style={pjs(12, 600, '16px', '#94a3b8')}>2.4 MB</span>
-              </div>
-              <div>
-                <h4 style={{ ...pjs(15, 700, '22px', '#0f172a'), margin: '0 0 4px 0' }}>{r.title} Paper</h4>
-                <p style={{ ...pjs(12, 500, '18px', '#94a3b8'), margin: 0 }}>Section A & B</p>
-              </div>
-              <div style={{ display: 'flex', gap: 10, marginTop: 'auto' }}>
-                <a href={r.file_url} target="_blank" rel="noreferrer" style={{ flex: 1, textAlign: 'center', padding: '10px', background: '#f5f3ff', color: '#4f46e5', borderRadius: 10, ...pjs(13, 700, '18px', '#4f46e5'), textDecoration: 'none' }}>Preview</a>
-                <DownloadBtn href={r.file_url} iconOnly />
-              </div>
-            </Card>
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+      <button
+        onClick={() => { if (!disabled) setOpen(o => !o) }}
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: 5,
+          padding: '4px 10px 4px 4px',
+          background: 'transparent', border: 'none', borderRadius: 8,
+          cursor: disabled ? 'default' : 'pointer',
+          ...pjs(13, isLast ? 700 : 600, '18px', textColor),
+          opacity: disabled ? 0.4 : 1, transition: 'opacity 0.15s',
+        }}
+      >
+        <span>{value || placeholder}</span>
+        {!disabled && (
+          <svg width="10" height="10" viewBox="0 0 10 6" fill="none"
+            style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>
+            <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.6"
+              strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        )}
+      </button>
+
+      {open && options.length > 0 && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 999,
+          background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 12,
+          boxShadow: '0 8px 24px rgba(79,70,229,0.14)',
+          minWidth: 180, maxHeight: 240, overflowY: 'auto', padding: '6px 0',
+        }}>
+          {options.map(opt => (
+            <div
+              key={opt}
+              onClick={() => { onChange(opt); setOpen(false) }}
+              style={{
+                padding: '9px 16px',
+                ...pjs(13, opt === value ? 700 : 500, '18px', opt === value ? '#4f46e5' : '#374151'),
+                cursor: 'pointer',
+                background: opt === value ? '#f5f3ff' : 'transparent',
+                transition: 'background 0.12s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#f5f3ff' }}
+              onMouseLeave={e => { e.currentTarget.style.background = opt === value ? '#f5f3ff' : 'transparent' }}
+            >
+              {opt}
+            </div>
           ))}
         </div>
-      </div>
+      )}
     </div>
   )
 }
 
-const LabView = ({ resources }) => (
-  <div style={{ paddingTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-        <h3 style={pjs(16, 700, '24px', '#0f172a')}>Lab Manuals</h3>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {resources.filter(r => r.type === 'lab').map((r, i) => (
-          <div key={i} style={{ background: '#fff', border: '1px solid #f1f5f9', borderRadius: 16, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: '#fff1f2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={pjs(14, 700, '20px', '#0f172a')}>{r.title}</div>
-              <div style={pjs(12, 500, '16px', '#94a3b8')}>PDF • 2.4 MB</div>
-            </div>
-            <a href={r.file_url} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#4f46e5', textDecoration: 'none', ...pjs(13, 700, '18px', '#4f46e5'), background: '#f5f3ff', padding: '6px 12px', borderRadius: 8 }}>
-               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/></svg> Get
-            </a>
-          </div>
-        ))}
-      </div>
-    </div>
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" strokeLinecap="round"/><path d="M9 3v18M3 9h18M3 15h18"/></svg>
-         <h3 style={pjs(16, 700, '24px', '#0f172a')}>Tutorial Sheets</h3>
-      </div>
-      <div style={{ background: '#f8fafc', border: '1px dashed #e2e8f0', borderRadius: 16, padding: '40px 20px', textAlign: 'center' }}>
-         <p style={pjs(13, 500, '20px', '#94a3b8')}>Tutorials are normally shared in your respective notes folder.</p>
-      </div>
-    </div>
-  </div>
+/* ─── Breadcrumb separator ──────────────────────────────────── */
+const Sep = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" strokeWidth="2.5">
+    <path d="M9 18l6-6-6-6"/>
+  </svg>
 )
 
-/* ─── Main Component ───────────────────────────────────────── */
+/* ─── Resource Chip ─────────────────────────────────────────── */
+const ResourceChip = ({ label, url }) => (
+  <a
+    href={url || '#'}
+    target={url ? '_blank' : undefined}
+    rel="noopener noreferrer"
+    style={{
+      display: 'inline-flex', alignItems: 'center',
+      padding: '5px 16px', border: '1.5px solid #93c5fd',
+      borderRadius: 999, background: '#ffffff', textDecoration: 'none',
+      ...pjs(13, 500, '20px', '#2563eb'),
+      transition: 'all 0.15s', cursor: url ? 'pointer' : 'default',
+    }}
+    onMouseEnter={e => { if (url) { e.currentTarget.style.background = '#eff6ff'; e.currentTarget.style.borderColor = '#3b82f6' } }}
+    onMouseLeave={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.borderColor = '#93c5fd' }}
+  >
+    {label}
+  </a>
+)
+
+/* ─── PYQ sub-filter pill — indigo theme ────────────────────── */
+const PYQPill = ({ label, active, onClick }) => (
+  <button
+    onClick={onClick}
+    style={{
+      padding: '6px 20px', borderRadius: 999, border: 'none',
+      background: active ? '#4f46e5' : '#e5e7eb',
+      ...pjs(13, 600, '20px', active ? '#ffffff' : '#6b7280'),
+      cursor: 'pointer', transition: 'all 0.2s',
+      boxShadow: active ? '0 2px 8px rgba(79,70,229,0.25)' : 'none',
+    }}
+  >
+    {label}
+  </button>
+)
+
+/* ─── Star Rating (functional) ──────────────────────────────── */
+const StarRating = ({ rating, onRate, disabled }) => {
+  const [hov, setHov] = useState(0)
+  return (
+    <span style={{ display: 'inline-flex', gap: 3 }}>
+      {[1, 2, 3, 4, 5].map(i => (
+        <span
+          key={i}
+          onMouseEnter={() => !disabled && setHov(i)}
+          onMouseLeave={() => !disabled && setHov(0)}
+          onClick={() => !disabled && onRate && onRate(i)}
+          style={{
+            fontSize: 20,
+            cursor: disabled ? 'not-allowed' : onRate ? 'pointer' : 'default',
+            color: i <= (hov || rating) ? '#f59e0b' : '#d1d5db',
+            lineHeight: 1,
+            transition: 'color 0.15s',
+            opacity: disabled ? 0.5 : 1,
+          }}
+        >
+          {i <= (hov || rating) ? '★' : '☆'}
+        </span>
+      ))}
+    </span>
+  )
+}
+
+/* ─── Tab names ─────────────────────────────────────────────── */
+const TABS = ['Syllabus', 'Notes', 'Lab Manual', 'Tutorial', 'PYQs', 'Playlist']
+
+/* ─── Main Page ─────────────────────────────────────────────── */
 export default function Resources() {
   const [loading, setLoading] = useState(true)
-  const [resources, setResources] = useState([])
-  const [selection, setSelection] = useState({ year: '2nd Year', sem: 'SEM 4', branch: 'COE' })
-  const [activeCourse, setActiveCourse] = useState(null)
-  const [activeTab, setActiveTab] = useState('Overview')
-  const [search, setSearch] = useState('')
+  const [allDocs, setAllDocs] = useState([])
 
+  // 4-step cascade
+  const [selYear,    setSelYear]    = useState('')
+  const [selSem,     setSelSem]     = useState('')
+  const [selBranch,  setSelBranch]  = useState('')
+  const [selSubject, setSelSubject] = useState('')
+
+  // Content state
+  const [tab,    setTab]    = useState('Syllabus')
+  const [pyqCat, setPyqCat] = useState('MST')
+
+  // Live rating/views from Firestore
+  const [liveRating, setLiveRating] = useState(null)
+  const [liveViews,  setLiveViews]  = useState(null)
+  const [userRating, setUserRating] = useState(0)
+  const [alreadyRated, setAlreadyRated] = useState(false)
+
+  /* ── Fetch all docs ──────────────────────────────────────── */
   useEffect(() => {
-    const fetchRes = async () => {
+    const load = async () => {
       setLoading(true)
       try {
-        const col = collection(db, "academic")
-        const snap = await getDocs(col)
-        const all = []
-        snap.forEach((doc) => {
-          const data = doc.data()
-          const docId = doc.id
-          const base = {
-            subject: data.subject || docId,
-            uploader: { full_name: data.contributor || 'Academic Team' },
-            branch: data.branch, semester: String(data.semester), year: data.year
-          }
-          const flat = (arr, type, pre = '') => {
-            if (!arr || !Array.isArray(arr)) return
-            arr.forEach((item, idx) => {
-              all.push({ id: `${docId}-${type}-${idx}`, title: `${pre}${item.name}`, file_url: item.url, type, ...base })
-            })
-          }
-          flat(data.notes, 'note')
-          flat(data.labManual, 'lab', 'Lab ')
-          flat(data.playlist, 'video', 'Video ')
-          flat(data.syllabus, 'syllabus')
-          if (data.pyq) {
-            flat(data.pyq.auxi, 'pyq', 'Auxi — ')
-            flat(data.pyq.est, 'pyq', 'EST — ')
-            flat(data.pyq.mst, 'pyq', 'MST — ')
-          }
-        })
-        setResources(all)
-      } catch (err) { console.error(err) } finally { setLoading(false) }
+        const snap = await getDocs(collection(db, 'academic'))
+        const docs = []
+        snap.forEach(d => docs.push({ id: d.id, data: d.data() }))
+        setAllDocs(docs)
+      } catch (err) { console.error('Resources:', err) }
+      finally { setLoading(false) }
     }
-    fetchRes()
+    load()
   }, [])
 
-  const filtered = useMemo(() => {
-    return resources.filter(r => {
-      const matchPath = r.year === selection.year && r.semester.includes(selection.sem.replace('SEM ', '')) && r.branch === selection.branch
-      const matchSearch = !search || r.subject.toLowerCase().includes(search.toLowerCase())
-      return matchPath && matchSearch
+  /* ── Filter options ──────────────────────────────────────── */
+  const yearOptions = useMemo(() => {
+    const s = new Set()
+    allDocs.forEach(d => { if (d.data.year != null) s.add(String(d.data.year)) })
+    return [...s].sort((a, b) => parseInt(a) - parseInt(b))
+  }, [allDocs])
+
+  const semOptions = useMemo(() => {
+    if (!selYear) return []
+    const s = new Set()
+    allDocs
+      .filter(d => String(d.data.year) === selYear)
+      .forEach(d => { if (d.data.semester != null) s.add(String(d.data.semester)) })
+    return [...s].sort((a, b) => {
+      const na = parseInt(a.replace(/\D/g, ''), 10)
+      const nb = parseInt(b.replace(/\D/g, ''), 10)
+      return (isNaN(na) || isNaN(nb)) ? a.localeCompare(b) : na - nb
     })
-  }, [resources, selection, search])
+  }, [allDocs, selYear])
 
-  const courseMap = useMemo(() => {
-    return filtered.reduce((acc, r) => {
-      if (!acc[r.subject]) acc[r.subject] = []
-      acc[r.subject].push(r)
-      return acc
-    }, {})
-  }, [filtered])
+  const branchOptions = useMemo(() => {
+    if (!selYear || !selSem) return []
+    const s = new Set()
+    allDocs
+      .filter(d => String(d.data.year) === selYear && String(d.data.semester) === selSem)
+      .forEach(d => { if (d.data.branch) s.add(d.data.branch) })
+    return [...s].sort()
+  }, [allDocs, selYear, selSem])
 
-  const subjects = Object.keys(courseMap)
+  const subjectOptions = useMemo(() => {
+    if (!selYear || !selSem || !selBranch) return []
+    return allDocs
+      .filter(d =>
+        String(d.data.year)     === selYear   &&
+        String(d.data.semester) === selSem    &&
+        d.data.branch           === selBranch
+      )
+      .map(d => d.data.subject || d.id)
+      .filter(Boolean)
+      .sort()
+  }, [allDocs, selYear, selSem, selBranch])
 
-  // ──────────────── VIEW: Detail ────────────────
-  if (activeCourse) {
-    const activeData = courseMap[activeCourse] || []
-    return (
-      <PageLayout>
-        {/* Breadcrumb */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 20 }}>
-          <button onClick={() => setActiveCourse(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#64748b', display: 'flex', alignItems: 'center' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 18l-6-6 6-6"/></svg>
-          </button>
-          <span style={pjs(13, 600, '20px', '#94a3b8')}>{selection.branch}</span>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
-          <span style={pjs(13, 600, '20px', '#94a3b8')}>{selection.sem}</span>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
-          <span style={pjs(13, 700, '20px', '#0f172a')}>{activeCourse}</span>
-        </div>
+  /* ── Active doc ──────────────────────────────────────────── */
+  const activeDoc = useMemo(() => {
+    if (!selSubject) return null
+    return allDocs.find(d =>
+      String(d.data.year)      === selYear   &&
+      String(d.data.semester)  === selSem    &&
+      d.data.branch            === selBranch &&
+      (d.data.subject || d.id) === selSubject
+    ) || null
+  }, [allDocs, selYear, selSem, selBranch, selSubject])
 
-        {/* Hero Banner aligned with Classroom's clean design */}
-        <div style={{
-          background: 'linear-gradient(120deg, #f8fafc 0%, #ffffff 100%)', 
-          borderRadius: 20, padding: 32, border: '1px solid #f1f5f9', marginBottom: 32,
-          display: 'flex', alignItems: 'center', gap: 24, boxShadow: '0 1px 4px rgba(0,0,0,0.02)'
-        }}>
-           <div style={{ width: 80, height: 80, borderRadius: 20, background: '#fff', border: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-           </div>
-           <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                <h1 style={{ ...pjs(26, 700, '34px', '#0f172a'), margin: 0 }}>{activeCourse}</h1>
-                <Badge>Core Subject</Badge>
-              </div>
-              <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                    <span style={pjs(13, 500, '20px', '#64748b')}>Code: UCS501</span>
-                 </div>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    <span style={pjs(13, 500, '20px', '#64748b')}>Lead: {activeData[0]?.uploader?.full_name || 'Academic Team'}</span>
-                 </div>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="8 12 11 15 16 10"/></svg>
-                    <span style={pjs(13, 600, '20px', '#059669')}>Resource Health: Checked</span>
-                 </div>
-              </div>
-           </div>
-        </div>
+  /* ── On subject open: increment views + live snapshot ───── */
+  useEffect(() => {
+    if (!activeDoc) {
+      setLiveRating(null); setLiveViews(null); setUserRating(0); setAlreadyRated(false)
+      return
+    }
 
-        {/* Tab Switcher */}
-        <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid #f1f5f9', paddingBottom: 16, marginBottom: 16 }}>
-          {['Overview', 'Syllabus', 'Notes', 'PYQs', 'Lab & Tutes', 'Video Playlists'].map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)} style={{
-              padding: '8px 18px', borderRadius: 24, border: activeTab === tab ? 'none' : '1.5px solid #e2e8f0',
-              background: activeTab === tab ? '#4f46e5' : '#ffffff', cursor: 'pointer', transition: 'all 0.15s',
-              ...pjs(13, activeTab === tab ? 700 : 500, '18px', activeTab === tab ? '#ffffff' : '#64748b'),
-            }}>{tab}</button>
-          ))}
-        </div>
+    const docRef = doc(db, 'academic', activeDoc.id)
 
-        {activeTab === 'Notes' && <NotesView resources={activeData} />}
-        {activeTab === 'PYQs' && <PYQsView resources={activeData} />}
-        {activeTab === 'Lab & Tutes' && <LabView resources={activeData} />}
-        {['Overview', 'Syllabus', 'Video Playlists'].includes(activeTab) && (
-          <div style={{ padding: '80px 0', textAlign: 'center' }}>
-             <h3 style={pjs(16, 600, '24px', '#64748b')}>The {activeTab} view is being synchronized.</h3>
-             <p style={pjs(14, 400, '20px', '#94a3b8')}>Check back soon.</p>
-          </div>
-        )}
-      </PageLayout>
-    )
+    // Increment view count
+    updateDoc(docRef, { views: increment(1) }).catch(console.error)
+
+    // Check if already rated
+    const rated = getRated()
+    setAlreadyRated(!!rated[activeDoc.id])
+    setUserRating(rated[activeDoc.id] ? rated[activeDoc.id] : 0)
+
+    // Live snapshot for rating + views
+    const unsub = onSnapshot(docRef, snap => {
+      const d = snap.data() || {}
+      setLiveRating(typeof d.rating === 'number' ? d.rating : null)
+      setLiveViews(d.views ?? null)
+    })
+    return () => unsub()
+  }, [activeDoc?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ── Submit star rating ──────────────────────────────────── */
+  const handleRate = async (stars) => {
+    if (!activeDoc || alreadyRated) return
+    const ok = window.confirm(`Submit your ${stars}★ rating?`)
+    if (!ok) return
+
+    try {
+      const docRef = doc(db, 'academic', activeDoc.id)
+      const snap   = await getDoc(docRef)
+      const d      = snap.data() || {}
+      const newCount  = (d.ratingCount || 0) + 1
+      const newRating = ((d.rating || 0) * (newCount - 1) + stars) / newCount
+
+      await updateDoc(docRef, { rating: newRating, ratingCount: newCount })
+
+      const rated = getRated()
+      rated[activeDoc.id] = stars
+      setRated(rated)
+      setUserRating(stars)
+      setAlreadyRated(true)
+    } catch (err) {
+      console.error('Rating error:', err)
+    }
   }
 
-  // ──────────────── VIEW: Browse ────────────────
+  /* ── Reset cascade ───────────────────────────────────────── */
+  const handleYearChange    = v => { setSelYear(v);   setSelSem('');    setSelBranch('');  setSelSubject(''); setTab('Syllabus') }
+  const handleSemChange     = v => { setSelSem(v);    setSelBranch(''); setSelSubject(''); setTab('Syllabus') }
+  const handleBranchChange  = v => { setSelBranch(v); setSelSubject(''); setTab('Syllabus') }
+  const handleSubjectChange = v => { setSelSubject(v); setTab('Syllabus') }
+
+  /* ── Derived content ─────────────────────────────────────── */
+  const docData     = activeDoc?.data || {}
+  const contributor = docData.contributor || 'Unknown'
+  const displayRating = liveRating !== null ? liveRating.toFixed(1) : (typeof docData.rating === 'number' ? docData.rating.toFixed(1) : '0.0')
+  const displayViews  = liveViews  !== null ? liveViews  : (docData.views || 0)
+
+  const arr = v => (Array.isArray(v) && v.length > 0 ? v : [])
+
+  const tabItems = useMemo(() => {
+    if (tab === 'Syllabus')   return arr(docData.syllabus)
+    if (tab === 'Notes')      return arr(docData.notes)
+    if (tab === 'Lab Manual') return arr(docData.labManual)
+    if (tab === 'Tutorial')   return arr(docData.tutorial)
+    if (tab === 'Playlist')   return arr(docData.playlist)
+    return []
+  }, [tab, docData])
+
+  const pyqItems = useMemo(() => {
+    if (!docData.pyq) return []
+    const map = { MST: docData.pyq.mst, EST: docData.pyq.est, AUXI: docData.pyq.auxi }
+    return arr(map[pyqCat])
+  }, [pyqCat, docData])
+
+  const items = tab === 'PYQs' ? pyqItems : tabItems
+
+  /* ── Render ──────────────────────────────────────────────── */
   return (
     <PageLayout>
-      {/* Header aligned exactly like Classroom.jsx */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 28 }}>
-        <div>
-          <h1 style={pjs(26, 700, '34px', '#0f172a')}>Academic Hub</h1>
-          <p  style={{ ...pjs(14, 400, '20px', '#64748b'), marginTop: 4 }}>Access your course materials securely.</p>
-        </div>
-
-        <div style={{ position: 'relative', flex: '1 1 300px', maxWidth: 400 }}>
-          <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="15" height="15" viewBox="0 0 15 15" fill="none">
-            <circle cx="6.5" cy="6.5" r="5.5" stroke="#94a3b8" strokeWidth="1.3"/>
-            <path d="M11 11l3 3" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round"/>
-          </svg>
-          <input
-            type="text" placeholder="Search resources..."
-            value={search} onChange={e => setSearch(e.target.value)}
-            style={{
-              width: '100%', padding: '12px 16px 12px 42px',
-              background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14,
-              ...pjs(14, 400, '20px', '#0f172a'), outline: 'none',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.04)', boxSizing: 'border-box',
-            }}
-          />
-        </div>
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ ...pjs(24, 700, '32px', '#0f172a'), margin: '0 0 6px 0' }}>
+          Academic Resources
+        </h1>
+        <p style={{ ...pjs(14, 400, '22px', '#64748b'), margin: 0 }}>
+          Review and rate academic content to help fellow Thapar students choose the best resources.
+        </p>
       </div>
 
-      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
-          
-          {/* Controls like Classroom.jsx filter bar */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-            <div style={{ display: 'flex', gap: 10 }}>
-              {[
-                { label: 'Year', val: selection.year, opts: YEARS, field: 'year' },
-                { label: 'Sem', val: selection.sem, opts: SEMS, field: 'sem' },
-                { label: 'Branch', val: selection.branch, opts: BRANCHES, field: 'branch' },
-              ].map(f => (
-                <div key={f.field} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={pjs(13, 400, '18px', '#64748b')}>{f.label}:</span>
-                  <select
-                    value={f.val}
-                    onChange={e => setSelection(s => ({ ...s, [f.field]: e.target.value }))}
-                    style={{
-                      ...pjs(13, 600, '18px', '#0f172a'),
-                      background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 10, padding: '7px 12px',
-                      outline: 'none', cursor: 'pointer', appearance: 'none', paddingRight: '28px',
-                      backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3Csvg width=\\\'10\\\' height=\\\'6\\\' viewBox=\\\'0 0 10 6\\\' fill=\\\'none\\\' xmlns=\\\'http://www.w3.org/2000/svg\\\'%3E%3Cpath d=\\\'M1 1L5 5L9 1\\\' stroke=\\\'%2364748b\\\' stroke-width=\\\'1.3\\\' stroke-linecap=\\\'round\\\' stroke-linejoin=\\\'round\\\'/%3E%3C/svg%3E")',
-                      backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center'
-                    }}
-                  >
-                    {f.opts.map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
-              ))}
-            </div>
-            
-            <div style={{ ...pjs(13, 500, '18px', '#64748b') }}>Showing {subjects.length} courses</div>
+      {loading ? (
+        <div style={{ padding: '60px 0', textAlign: 'center' }}>
+          <span style={pjs(14, 500, '22px', '#94a3b8')}>Synchronizing with Academic Cloud…</span>
+        </div>
+      ) : (
+        <div style={{
+          background: '#ffffff',
+          border: '1px solid #e5e7eb',
+          borderRadius: 16,
+          overflow: 'hidden',
+          boxShadow: '0 2px 16px rgba(79,70,229,0.08)',
+          width: '100%',
+        }}>
+
+          {/* ── Breadcrumb nav ── */}
+          <div style={{
+            background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 60%, #e0e7ff 100%)',
+            padding: '14px 24px',
+            display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap',
+          }}>
+            <BreadItem value={selYear}    placeholder="-- Year --"     options={yearOptions}    onChange={handleYearChange}    disabled={false}       isLast={false} />
+            <Sep />
+            <BreadItem value={selSem}     placeholder="-- Semester --" options={semOptions}     onChange={handleSemChange}     disabled={!selYear}    isLast={false} />
+            <Sep />
+            <BreadItem value={selBranch}  placeholder="-- Branch --"   options={branchOptions}  onChange={handleBranchChange}  disabled={!selSem}     isLast={false} />
+            <Sep />
+            <BreadItem value={selSubject} placeholder="-- Subject --"  options={subjectOptions} onChange={handleSubjectChange} disabled={!selBranch}  isLast={true}  />
           </div>
 
-          {/* Grid Layout matches Classroom */}
-          {loading ? (
-            <div style={{ padding: '40px 20px', textAlign: 'center', background: '#ffffff', borderRadius: 16, border: '1px solid #f1f5f9' }}>
-               <div style={pjs(14, 500, '22px', '#94a3b8')}>Synchronizing with Academic Cloud...</div>
-            </div>
-          ) : subjects.length === 0 ? (
-            <div style={{ padding: '40px 20px', textAlign: 'center', background: '#ffffff', borderRadius: 16, border: '1px solid #f1f5f9' }}>
-               <div style={pjs(14, 500, '22px', '#94a3b8')}>No courses found matching your criteria.</div>
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
-              {subjects.map(s => (
-                <Card key={s} onClick={() => setActiveCourse(s)} style={{ padding: 20 }}>
-                  <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                    <div style={{ width: 48, height: 48, borderRadius: 12, background: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                    </div>
-                    <div>
-                      <h3 style={{ ...pjs(16, 700, '22px', '#0f172a'), margin: 0 }}>{s}</h3>
-                      <p style={{ ...pjs(13, 400, '18px', '#64748b'), marginTop: 4 }}>{courseMap[s].length} Resources</p>
-                    </div>
+          {selSubject && activeDoc ? (
+            <>
+              {/* ── Hero banner ── */}
+              <div style={{
+                background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 55%, #e0e7ff 100%)',
+                padding: '20px 24px 24px',
+                display: 'flex', alignItems: 'center', gap: 20,
+                position: 'relative', overflow: 'hidden',
+                borderTop: '1px solid rgba(165,180,252,0.3)',
+              }}>
+                <div style={{
+                  position: 'absolute', right: -40, top: -40,
+                  width: 200, height: 200, borderRadius: '50%',
+                  background: 'rgba(167,139,250,0.12)', pointerEvents: 'none',
+                }} />
+                <div style={{
+                  width: 60, height: 60, borderRadius: 14, background: '#ffffff',
+                  boxShadow: '0 4px 16px rgba(79,70,229,0.12)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="1.8">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                  </svg>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+                    <h2 style={{ ...pjs(22, 700, '30px', '#1e1b4b'), margin: 0 }}>{selSubject}</h2>
+                    <span style={{
+                      padding: '3px 12px', borderRadius: 999,
+                      background: '#ede9fe', ...pjs(12, 600, '18px', '#6d28d9'),
+                    }}>Core Subject</span>
                   </div>
-                </Card>
-              ))}
+                  <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 5, ...pjs(13, 500, '18px', '#4b5563') }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                      </svg>
+                      Contributor: {contributor}
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 5, ...pjs(13, 500, '18px', '#059669') }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="8 12 11 15 16 10"/>
+                      </svg>
+                      Resource Health: Available
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Tab bar ── */}
+              <div style={{
+                display: 'flex', borderBottom: '1px solid #e5e7eb',
+                padding: '0 8px', background: '#ffffff', overflowX: 'auto',
+              }}>
+                {TABS.map(t => (
+                  <button key={t} onClick={() => setTab(t)} style={{
+                    flexShrink: 0, padding: '13px 16px', border: 'none',
+                    borderBottom: tab === t ? '2.5px solid #4f46e5' : '2.5px solid transparent',
+                    background: 'transparent',
+                    ...pjs(14, tab === t ? 700 : 400, '20px', tab === t ? '#4f46e5' : '#6b7280'),
+                    cursor: 'pointer', transition: 'color 0.15s', marginBottom: -1,
+                  }}>
+                    {t}
+                  </button>
+                ))}
+              </div>
+
+              {/* ── Content ── */}
+              <div style={{ padding: '20px 24px 4px', minHeight: 80 }}>
+                {tab === 'PYQs' && (
+                  <div style={{ marginBottom: 14, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {['MST', 'EST', 'AUXI'].map(c => (
+                      <PYQPill key={c} label={c} active={pyqCat === c} onClick={() => setPyqCat(c)} />
+                    ))}
+                  </div>
+                )}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                  {items.length === 0 ? (
+                    <p style={{ ...pjs(13, 400, '20px', '#9ca3af'), padding: '4px 0 12px' }}>
+                      No content available.
+                    </p>
+                  ) : items.map((item, i) => (
+                    <ResourceChip key={i} label={item.name} url={item.url} />
+                  ))}
+                </div>
+              </div>
+
+              {/* ── Footer: live Rating | live Views | Rate ── */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 36,
+                padding: '14px 24px 20px', marginTop: 12,
+                borderTop: '1px solid #f3f4f6',
+              }}>
+                {/* Rating */}
+                <div>
+                  <div style={{ ...pjs(11, 500, '15px', '#9ca3af'), marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Rating</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <span style={pjs(17, 700, '22px', '#111827')}>{displayRating}</span>
+                    <span style={{ fontSize: 16 }}>⭐</span>
+                  </div>
+                </div>
+
+                {/* Views */}
+                <div>
+                  <div style={{ ...pjs(11, 500, '15px', '#9ca3af'), marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Views</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    <span style={pjs(17, 700, '22px', '#111827')}>{displayViews}</span>
+                  </div>
+                </div>
+
+                {/* Rate */}
+                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={pjs(14, 700, '20px', '#111827')}>Rate:</span>
+                  <StarRating
+                    rating={userRating}
+                    onRate={alreadyRated ? null : handleRate}
+                    disabled={alreadyRated}
+                  />
+                  {alreadyRated && (
+                    <span style={{ ...pjs(12, 500, '16px', '#6b7280'), marginLeft: 4 }}>
+                      (already rated)
+                    </span>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div style={{ padding: '60px 32px', textAlign: 'center', background: '#ffffff' }}>
+              <div style={{ fontSize: 38, marginBottom: 14 }}>📚</div>
+              <p style={{ ...pjs(15, 600, '22px', '#374151'), marginBottom: 6 }}>
+                Select a subject to view resources
+              </p>
+              <p style={{ ...pjs(13, 400, '20px', '#9ca3af') }}>
+                Click the breadcrumb above: Year → Semester → Branch → Subject
+              </p>
             </div>
           )}
         </div>
-        
-        {/* Right Info Panel (Optional but adds consistency) */}
-        <div style={{ width: 300, flexShrink: 0, background: '#ffffff', border: '1px solid #f1f5f9', borderRadius: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-           <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9' }}>
-              <div style={{ ...pjs(11, 700, '15px', '#4f46e5'), letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Overview</div>
-              <div style={pjs(18, 700, '24px', '#0f172a')}>Syllabus Tracker</div>
-           </div>
-           <div style={{ padding: '24px 20px', textAlign: 'center' }}>
-              <div style={pjs(13, 400, '18px', '#94a3b8')}>Select a course on the left to securely view and download approved academic files.</div>
-           </div>
-        </div>
-      </div>
+      )}
     </PageLayout>
   )
 }

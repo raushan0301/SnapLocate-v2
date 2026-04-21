@@ -253,28 +253,126 @@ router.delete('/student-advisors/:studentId', authenticate, requireAdmin, async 
   res.json({ success: true, message: 'Advisor removed' })
 })
 
-// ─── ADMIN MODERATION ENDPOINTS ──────────────────────────────
+// ─── ADMIN MARKETPLACE MODERATION ────────────────────────────
 
-// GET /api/admin/marketplace — All listings for moderation
-router.get('/marketplace', authenticate, requireAdmin, async (req, res) => {
-  const { data, error } = await supabaseAdmin
-    .from('marketplace')
-    .select('*, seller:seller_id(full_name, avatar_url)')
+// GET /api/admin/marketplace/stats
+router.get('/marketplace/stats', authenticate, requireAdmin, async (req, res) => {
+  const org_id = req.user.org_id
+
+  const [active, sold, reserved, deleted, pendingReports, totalSaved] = await Promise.all([
+    supabaseAdmin.from('marketplace_listings').select('id', { count: 'exact', head: true }).eq('org_id', org_id).eq('status', 'Active'),
+    supabaseAdmin.from('marketplace_listings').select('id', { count: 'exact', head: true }).eq('org_id', org_id).eq('status', 'Sold'),
+    supabaseAdmin.from('marketplace_listings').select('id', { count: 'exact', head: true }).eq('org_id', org_id).eq('status', 'Reserved'),
+    supabaseAdmin.from('marketplace_listings').select('id', { count: 'exact', head: true }).eq('org_id', org_id).eq('status', 'Deleted'),
+    supabaseAdmin.from('marketplace_reports').select('id', { count: 'exact', head: true }).eq('org_id', org_id).eq('status', 'Pending'),
+    supabaseAdmin.from('marketplace_saved').select('id', { count: 'exact', head: true }).eq('org_id', org_id),
+  ])
+
+  // Category breakdown
+  const { data: byCategory } = await supabaseAdmin
+    .from('marketplace_listings')
+    .select('category')
+    .eq('org_id', org_id)
+    .neq('status', 'Deleted')
+
+  const categoryMap = (byCategory || []).reduce((acc, i) => {
+    acc[i.category] = (acc[i.category] || 0) + 1
+    return acc
+  }, {})
+
+  res.json({
+    success: true,
+    data: {
+      active: active.count || 0,
+      sold: sold.count || 0,
+      reserved: reserved.count || 0,
+      deleted: deleted.count || 0,
+      pending_reports: pendingReports.count || 0,
+      total_saved: totalSaved.count || 0,
+      by_category: categoryMap,
+    },
+  })
+})
+
+// GET /api/admin/marketplace/reports — paginated reports queue
+router.get('/marketplace/reports', authenticate, requireAdmin, async (req, res) => {
+  const { status = 'Pending', limit = 30, offset = 0 } = req.query
+
+  let q = supabaseAdmin
+    .from('marketplace_reports')
+    .select(`
+      *,
+      reporter:reporter_id(id, full_name, avatar_url),
+      listing:listing_id(id, title, images, status, seller:seller_id(full_name))
+    `, { count: 'exact' })
+    .eq('org_id', req.user.org_id)
     .order('created_at', { ascending: false })
+    .range(Number(offset), Number(offset) + Number(limit) - 1)
+
+  if (status !== 'all') q = q.eq('status', status)
+
+  const { data, error, count } = await q
+  if (error) throw error
+  res.json({ success: true, data: data || [], total: count || 0 })
+})
+
+// PATCH /api/admin/marketplace/reports/:id — resolve or dismiss
+router.patch('/marketplace/reports/:id', authenticate, requireAdmin, async (req, res) => {
+  const schema = z.object({
+    status:     z.enum(['Resolved', 'Dismissed']),
+    admin_note: z.string().max(500).optional(),
+  })
+  const parsed = schema.safeParse(req.body)
+  if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.errors })
+
+  const { data, error } = await supabaseAdmin
+    .from('marketplace_reports')
+    .update({ ...parsed.data, updated_at: new Date().toISOString() })
+    .eq('id', req.params.id)
+    .eq('org_id', req.user.org_id)
+    .select()
+    .single()
+
   if (error) throw error
   res.json({ success: true, data })
 })
 
-// DELETE /api/admin/marketplace/:id
-router.delete('/marketplace/:id', authenticate, requireAdmin, async (req, res) => {
-  const { data: target } = await supabaseAdmin
-    .from('marketplace').select('title, seller_id').eq('id', req.params.id).single()
+// GET /api/admin/marketplace/listings — all listings for admin moderation view
+router.get('/marketplace/listings', authenticate, requireAdmin, async (req, res) => {
+  const { status, search, limit = 50, offset = 0 } = req.query
 
-  const { error } = await supabaseAdmin.from('marketplace').delete().eq('id', req.params.id)
+  let q = supabaseAdmin
+    .from('marketplace_listings')
+    .select('*, seller:seller_id(id, full_name, avatar_url)', { count: 'exact' })
+    .eq('org_id', req.user.org_id)
+    .order('created_at', { ascending: false })
+    .range(Number(offset), Number(offset) + Number(limit) - 1)
+
+  if (status && status !== 'all') q = q.eq('status', status)
+  if (search) q = q.ilike('title', `%${search}%`)
+
+  const { data, error, count } = await q
   if (error) throw error
+  res.json({ success: true, data: data || [], total: count || 0 })
+})
 
-  logAudit(req.user, 'REMOVE_LISTING', 'listing', req.params.id, target?.title)
+// DELETE /api/admin/marketplace/listings/:id — admin force soft-delete
+router.delete('/marketplace/listings/:id', authenticate, requireAdmin, async (req, res) => {
+  const { data: target } = await supabaseAdmin
+    .from('marketplace_listings')
+    .select('title, seller_id')
+    .eq('id', req.params.id)
+    .eq('org_id', req.user.org_id)
+    .single()
 
+  if (!target) return res.status(404).json({ success: false, error: 'Listing not found' })
+
+  await supabaseAdmin
+    .from('marketplace_listings')
+    .update({ status: 'Deleted', updated_at: new Date().toISOString() })
+    .eq('id', req.params.id)
+
+  logAudit(req.user, 'ADMIN_REMOVE_LISTING', 'listing', req.params.id, target?.title)
   res.json({ success: true, message: 'Listing removed' })
 })
 

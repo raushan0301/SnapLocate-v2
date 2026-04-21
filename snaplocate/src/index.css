@@ -114,3 +114,32 @@ body {
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 99px; }
+
+/* ── Moodle HTML Content Restore ── */
+/* Tailwind globally wipes out ol, ul, p styling. We must restore it for Moodle data. */
+.moodle-html-content p {
+  margin-bottom: 1rem;
+}
+.moodle-html-content ul {
+  list-style-type: disc;
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+.moodle-html-content ol {
+  list-style-type: decimal;
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+.moodle-html-content li {
+  margin-bottom: 0.25rem;
+}
+.moodle-html-content a {
+  color: var(--primary-bg);
+  text-decoration: underline;
+}
+.moodle-html-content b, .moodle-html-content strong {
+  font-weight: 700;
+}
+.moodle-html-content i, .moodle-html-content em {
+  font-style: italic;
+}

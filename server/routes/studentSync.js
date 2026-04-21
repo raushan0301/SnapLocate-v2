@@ -36,9 +36,9 @@ router.post('/config', authenticate, requireStudent, async (req, res) => {
     const { data, error } = await supabaseAdmin
       .from('student_sync_config')
       .upsert({
-        user_id:          req.user.id,
-        provider:         parsed.data.provider,
-        base_url:         parsed.data.base_url,
+        user_id: req.user.id,
+        provider: parsed.data.provider,
+        base_url: parsed.data.base_url,
         credentials_json: { username: parsed.data.username, password: parsed.data.password },
       }, { onConflict: 'user_id' })
       .select('id, user_id, provider, base_url, last_synced_at, last_sync_status, created_at')
@@ -67,6 +67,35 @@ router.delete('/config', authenticate, requireStudent, async (req, res) => {
     res.json({ success: true, message: 'Connection removed' })
   } catch (err) {
     res.status(500).json({ success: false, error: err.message })
+  }
+})
+
+router.get('/force-sync', async (req, res) => {
+  try {
+    const { data: configs } = await supabaseAdmin.from('student_sync_config').select('user_id').limit(1);
+    const result = await runStudentSync(configs[0].user_id)
+    res.json({ success: true, result })
+  } catch(e) {
+    res.status(500).json({ error: e.message })
+  }
+})
+
+import { MoodleClient } from '../lib/moodle.js'
+router.get('/moodle-test', async (req, res) => {
+  try {
+    const { data: configs } = await supabaseAdmin.from('student_sync_config').select('credentials_json, base_url').limit(1)
+    const config = configs[0]
+    const client = new MoodleClient(config.base_url)
+    await client.login(config.credentials_json.username, config.credentials_json.password)
+    const siteInfo = await client.getSiteInfo()
+    const courses = await client.getMyCourses(siteInfo.userid)
+    // find the microprocessor course
+    const course = courses.find(c => c.fullname.includes('MICROPROCESSOR'))
+    if(!course) return res.json({error: 'Course not found'})
+    const content = await client.getCourseContents(course.id)
+    res.json({ content })
+  } catch(e) {
+    res.status(500).json({ error: e.message })
   }
 })
 

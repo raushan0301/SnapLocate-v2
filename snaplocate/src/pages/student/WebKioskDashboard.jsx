@@ -691,17 +691,23 @@ export default function WebKioskDashboard() {
 
   const startPoll = (prevSyncedAt) => {
     let attempts = 0
+    // Max wait: 120 polls × 3s = 6 minutes (generous for slow WebKiosk)
     pollRef.current = setInterval(async () => {
       attempts++
       const latest = await loadStatus()
-      const done = latest?.connected && latest.lastSyncStatus !== 'pending' &&
+      const inFlight = ['pending', 'running'].includes(latest?.lastSyncStatus)
+      const done = latest?.connected && !inFlight &&
         (prevSyncedAt === null || latest.lastSyncedAt !== prevSyncedAt)
-      if (done || attempts >= 60) {
+      if (done || attempts >= 120) {
         clearInterval(pollRef.current);  pollRef.current  = null
         clearInterval(timerRef.current); timerRef.current = null
         setSyncing(false); setSyncElapsed(0)
-        if (done) showToast(`Sync ${latest.lastSyncStatus === 'success' ? 'complete ✓' : `done (${latest.lastSyncStatus})`}`)
-        else showToast('Sync taking longer than expected. Please check back.')
+        if (done) {
+          const st = latest.lastSyncStatus
+          showToast(st === 'success' ? '✓ Sync complete — all data loaded!' : `Sync done (${st})`)
+        } else {
+          showToast('Sync is taking longer than usual. Data will appear when ready.')
+        }
       }
     }, 3000)
   }
@@ -728,11 +734,13 @@ export default function WebKioskDashboard() {
   }
 
   const wkData      = syncData?.data || null
-  const profile     = wkData?.profile     || null
-  const attendance  = wkData?.attendance  || []
-  const result      = wkData?.result      || null
-  const fees        = wkData?.fees        || null
+  const profile     = wkData?.profile       || null
+  const attendance  = wkData?.attendance    || []
+  const result      = wkData?.result        || null
+  const fees        = wkData?.fees          || null
   const courses     = wkData?.registeredCourses || []
+  const timetable   = wkData?.timetable     || null
+  const examSchedule= wkData?.examSchedule  || []
   const hasData     = profile || attendance.length > 0 || result || fees
 
   const avgAtt  = attendance.length
@@ -850,6 +858,38 @@ export default function WebKioskDashboard() {
               {/* Profile */}
               {(profile || result) && <ProfileCard profile={profile} result={result} />}
 
+              {/* Quick-nav links */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+                {[
+                  { to: '/webkiosk/attendance', label: 'Full Attendance',  icon: CalendarCheck, color: '#16a34a', bg: '#f0fdf4', count: attendance.length > 0 ? `${attendance.length} subjects` : null },
+                  { to: '/webkiosk/fees',        label: 'Fee Details',      icon: CreditCard,    color: '#d97706', bg: '#fffbeb', count: fees?.records?.length > 0 ? `${fees.records.length} records` : null },
+                  { to: '/webkiosk/exams',       label: 'Exam Schedule',    icon: Clock,         color: '#4f46e5', bg: '#eef2ff', count: examSchedule.length > 0 ? `${examSchedule.length} exams` : null },
+                  { to: '/webkiosk/profile',     label: 'Academic Profile', icon: User,          color: '#7c3aed', bg: '#fdf4ff', count: profile?.name ? profile.name.split(' ')[0] : null },
+                ].map((nav, i) => (
+                  <Link key={i} to={nav.to} style={{ textDecoration: 'none' }}>
+                    <div style={{
+                      background: '#fff', borderRadius: 16, padding: '16px 18px',
+                      border: '1px solid #f1f5f9', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: 14,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                      transition: 'all 0.15s',
+                    }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = nav.color + '40'; e.currentTarget.style.boxShadow = `0 4px 16px ${nav.color}15` }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = '#f1f5f9'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)' }}
+                    >
+                      <div style={{ width: 40, height: 40, borderRadius: 12, background: nav.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <nav.icon size={18} color={nav.color} />
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={pjs(13, 700, '18px', COLORS.text)}>{nav.label}</div>
+                        {nav.count && <div style={pjs(11, 500, '14px', COLORS.sub)}>{nav.count}</div>}
+                      </div>
+                      <ArrowRight size={14} color={COLORS.sub} style={{ marginLeft: 'auto', flexShrink: 0 }} />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+
               {/* Attendance */}
               <AttendanceSection attendance={attendance} />
 
@@ -858,6 +898,29 @@ export default function WebKioskDashboard() {
                 {fees && <FeesCard fees={fees} />}
                 {courses.length > 0 && <CoursesCard courses={courses} />}
               </div>
+
+              {/* Timetable preview */}
+              {timetable?.structured?.length > 0 && (
+                <div style={{ background: COLORS.surface, borderRadius: 24, border: `1px solid ${COLORS.border}`, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+                  <div style={{ padding: '20px 24px', borderBottom: `1px solid ${COLORS.border}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 38, height: 38, borderRadius: 12, background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Clock size={18} color="#ea580c" />
+                    </div>
+                    <div style={pjs(15, 700, '20px', COLORS.text)}>Timetable</div>
+                    <span style={{ ...pjs(11, 600, '14px', '#ea580c'), background: '#fff7ed', padding: '2px 8px', borderRadius: 6, marginLeft: 4 }}>
+                      {timetable.structured.length} slots
+                    </span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 1, background: COLORS.border }}>
+                    {timetable.structured.slice(0, 12).map((s, i) => (
+                      <div key={i} style={{ background: '#fff', padding: '12px 16px' }}>
+                        <div style={{ ...pjs(10, 700, '13px', COLORS.sub), marginBottom: 4 }}>{s.day} · {s.slot}</div>
+                        <div style={pjs(13, 600, '18px', COLORS.text)}>{s.subject}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </>

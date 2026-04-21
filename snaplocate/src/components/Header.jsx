@@ -19,11 +19,12 @@ export default function Header({ onMenuClick }) {
   const bellRef = useRef(null)
 
   const fetchNotifications = useCallback(async () => {
+    if (!user) return
     try {
       const res = await api.get('/api/notifications')
       if (res.success) setNotifications(res.data || [])
     } catch { /* silent */ }
-  }, [])
+  }, [user])
 
   useEffect(() => {
     fetchNotifications()

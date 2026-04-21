@@ -341,7 +341,7 @@ export default function ProfessorProfile() {
       {/* ─── Stats ─────────────────────────────────── */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:20, marginBottom: 20 }}>
         {[
-          { label:'CITATIONS',     value:prof.citations || 0,          sub:<span style={{color:'#10b981'}}>↗ +12% YoY</span> },
+          { label:'Ongoing projects', value:prof.citations || 0,          sub:'Active' },
           { label:'CONFERENCE',    value:prof.conferences || 0,        sub:'Verified'       },
           { label:'PUBLICATIONS',  value:prof.publications_count || 0, sub:'Peer Reviewed'  },
           { label:'TEACHING EXP.', value:prof.teaching_exp_years  ? `${prof.teaching_exp_years}y` : '-', sub:'Core CS Specialist' },

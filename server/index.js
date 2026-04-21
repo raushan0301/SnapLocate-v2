@@ -14,7 +14,8 @@ import studentsRoutes from './routes/students.js'
 import requestsRoutes from './routes/requests.js'
 import resourcesRoutes from './routes/resources.js'
 import societiesRoutes from './routes/societies.js'
-import marketplaceRoutes from './routes/marketplace.js'
+import marketplaceRoutes     from './routes/marketplace.js'
+import marketplaceChatRoutes from './routes/marketplaceChat.js'
 import lostFoundRoutes     from './routes/lostFound.js'
 import lostFoundChatRoutes from './routes/lostFoundChat.js'
 import shopsRoutes from './routes/shops.js'
@@ -44,12 +45,32 @@ import studentProfilesRoutes  from './routes/studentProfiles.js'
 import syncWebkioskRoutes     from './routes/sync/webkiosk.js'
 import syncMoodleRoutes       from './routes/sync/moodle.js'
 import studentSyncRoutes      from './routes/studentSync.js'
+import { supabaseAdmin }       from './lib/supabase.js'
+import { runStudentSync }      from './lib/moodle.js'
 
 // Middleware
 import { errorHandler } from './middleware/errorHandler.js'
 import { rateLimiter } from './middleware/rateLimiter.js'
 
 dotenv.config()
+
+// Boot-time Moodle sync (non-blocking — only fires if a config exists)
+setTimeout(() => {
+  supabaseAdmin
+    .from('student_sync_config')
+    .select('user_id')
+    .eq('provider', 'moodle')
+    .limit(1)
+    .then(({ data: configs }) => {
+      if (configs?.length) {
+        console.log('[Boot] Triggering Moodle sync for:', configs[0].user_id)
+        runStudentSync(configs[0].user_id)
+          .then(() => console.log('[Boot] Moodle sync done'))
+          .catch(e => console.error('[Boot] Moodle sync err:', e.message))
+      }
+    })
+    .catch(e => console.error('[Boot] Config fetch err:', e.message))
+}, 5000)
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -84,7 +105,8 @@ app.use('/api/students',    studentsRoutes)
 app.use('/api/requests',    requestsRoutes)
 app.use('/api/resources',   resourcesRoutes)
 app.use('/api/societies',   societiesRoutes)
-app.use('/api/marketplace', marketplaceRoutes)
+app.use('/api/marketplace',      marketplaceRoutes)
+app.use('/api/marketplace-chat', marketplaceChatRoutes)
 app.use('/api/lost-found',  lostFoundRoutes)
 app.use('/api/lf-chat',    lostFoundChatRoutes)
 app.use('/api/shops',       shopsRoutes)
