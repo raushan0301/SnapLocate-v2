@@ -30,21 +30,25 @@ import wifiRoutes from './routes/wifi.js'
 import announcementsRoutes from './routes/announcements.js'
 import notificationsRoutes from './routes/notifications.js'
 
-// LMS + WebKiosk routes
+// LMS routes (Moodle-synced — DO NOT MODIFY)
 import lmsCoursesRoutes       from './routes/lms/courses.js'
 import lmsAssignmentsRoutes   from './routes/lms/assignments.js'
 import lmsSubmissionsRoutes   from './routes/lms/submissions.js'
 import lmsGradesRoutes        from './routes/lms/grades.js'
 import lmsAnnouncementsRoutes from './routes/lms/announcements.js'
-import lmsMaterialsRoutes    from './routes/lms/materials.js'
-import attendanceRoutes          from './routes/attendance.js'
-import examScheduleRoutes        from './routes/examSchedule.js'
-import feesRoutes                from './routes/fees.js'
-import webkioskStudentSyncRoutes from './routes/webkioskStudentSync.js'
-import studentProfilesRoutes  from './routes/studentProfiles.js'
-import syncWebkioskRoutes     from './routes/sync/webkiosk.js'
-import syncMoodleRoutes       from './routes/sync/moodle.js'
-import studentSyncRoutes      from './routes/studentSync.js'
+import lmsMaterialsRoutes     from './routes/lms/materials.js'
+
+// Native LMS routes (in-house — separate from Moodle sync)
+import lmsNativeAdminRoutes       from './routes/lms/native/admin.js'
+import lmsNativeFacultyRoutes     from './routes/lms/native/faculty.js'
+import lmsNativeAttendanceRoutes  from './routes/lms/native/attendance.js'
+import lmsNativeMaterialsRoutes   from './routes/lms/native/materials.js'
+import lmsNativeAssignmentsRoutes from './routes/lms/native/assignments.js'
+import lmsNativeQuizzesRoutes     from './routes/lms/native/quizzes.js'
+import lmsNativeGradebookRoutes   from './routes/lms/native/gradebook.js'
+import lmsNativeBulkRoutes        from './routes/lms/native/bulk.js'
+import lmsNativePYQRoutes         from './routes/lms/native/pyq.js'
+import syncMoodleRoutes from './routes/sync/moodle.js'
 import { supabaseAdmin }       from './lib/supabase.js'
 import { runStudentSync }      from './lib/moodle.js'
 
@@ -121,23 +125,27 @@ app.use('/api/wifi',          wifiRoutes)
 app.use('/api/announcements',   announcementsRoutes)
 app.use('/api/notifications',   notificationsRoutes)
 
-// LMS routes
+// LMS routes (Moodle-synced — DO NOT MODIFY)
 app.use('/api/lms/courses',       lmsCoursesRoutes)
 app.use('/api/lms/assignments',   lmsAssignmentsRoutes)
 app.use('/api/lms/submissions',   lmsSubmissionsRoutes)
 app.use('/api/lms/grades',        lmsGradesRoutes)
 app.use('/api/lms/announcements', lmsAnnouncementsRoutes)
 app.use('/api/lms/materials',    lmsMaterialsRoutes)
-// WebKiosk routes
-app.use('/api/attendance',        attendanceRoutes)
-app.use('/api/exam-schedule',     examScheduleRoutes)
-app.use('/api/fees',              feesRoutes)
-app.use('/api/student-profiles',  studentProfilesRoutes)
-app.use('/api/webkiosk',          webkioskStudentSyncRoutes)
+
+// Native LMS routes (in-house — zero conflict with Moodle routes above)
+app.use('/api/lms/native/admin',       lmsNativeAdminRoutes)
+app.use('/api/lms/native/faculty',     lmsNativeFacultyRoutes)
+app.use('/api/lms/native/attendance',  lmsNativeAttendanceRoutes)
+app.use('/api/lms/native/materials',   lmsNativeMaterialsRoutes)
+app.use('/api/lms/native/assignments', lmsNativeAssignmentsRoutes)
+app.use('/api/lms/native/quizzes',     lmsNativeQuizzesRoutes)
+app.use('/api/lms/native/gradebook',   lmsNativeGradebookRoutes)
+app.use('/api/lms/native/bulk',        lmsNativeBulkRoutes)
+app.use('/api/lms/native/pyq',         lmsNativePYQRoutes)
+
 // External sync routes
-app.use('/api/sync/webkiosk',     syncWebkioskRoutes)
-app.use('/api/sync/moodle',       syncMoodleRoutes)
-app.use('/api/student-sync',      studentSyncRoutes)
+app.use('/api/sync/moodle', syncMoodleRoutes)
 
 // Error Handlers
 app.use((req, res) => {

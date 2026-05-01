@@ -63,25 +63,25 @@ import LMSCourse            from './pages/student/LMSCourse'
 import LMSAssignments       from './pages/student/LMSAssignments'
 import LMSAssignmentDetail  from './pages/student/LMSAssignmentDetail'
 import LMSGrades            from './pages/student/LMSGrades'
+import NativeAttendance     from './pages/student/NativeAttendance'
+import NativeAssignments    from './pages/student/NativeAssignments'
+import NativeGradebook      from './pages/student/NativeGradebook'
+import NativeQuizAttempt    from './pages/student/NativeQuizAttempt'
+import NativePYQ            from './pages/student/NativePYQ'
 
-// WebKiosk Student Pages
-import WebKioskDashboard    from './pages/student/WebKioskDashboard'
-import AttendanceView       from './pages/student/AttendanceView'
-import ExamScheduleView     from './pages/student/ExamScheduleView'
-import FeesView             from './pages/student/FeesView'
-import StudentProfileView   from './pages/student/StudentProfileView'
+// Faculty LMS + Native Attendance Pages
+import LMSCourseManagement    from './pages/faculty/LMSCourseManagement'
+import LMSCourseDetail        from './pages/faculty/LMSCourseDetail'
+import LMSAssignmentGrading   from './pages/faculty/LMSAssignmentGrading'
+import AttendanceMarking       from './pages/faculty/AttendanceMarking'
+import FacultyNativeAttendance from './pages/faculty/NativeAttendance'
+import FacultyNativeAssignments from './pages/faculty/NativeAssignments'
+import FacultyNativeQuizzes     from './pages/faculty/NativeQuizzes'
 
-// Faculty LMS + Attendance Pages
-import LMSCourseManagement     from './pages/faculty/LMSCourseManagement'
-import LMSCourseDetail         from './pages/faculty/LMSCourseDetail'
-import LMSAssignmentGrading    from './pages/faculty/LMSAssignmentGrading'
-import AttendanceMarking        from './pages/faculty/AttendanceMarking'
-
-// Admin LMS + WebKiosk Pages
-import ManageCourses        from './pages/admin/ManageCourses'
-import ManageExamSchedule   from './pages/admin/ManageExamSchedule'
-import ManageFees           from './pages/admin/ManageFees'
-import SyncConfig           from './pages/admin/SyncConfig'
+// Admin LMS Pages
+import ManageCourses  from './pages/admin/ManageCourses'
+import LMSStructure   from './pages/admin/LMSStructure'
+import LMSBulkUpload  from './pages/admin/LMSBulkUpload'
 
 // Shared Pages
 import ProfessorProfile from './pages/shared/ProfessorProfile'
@@ -132,25 +132,26 @@ export default function AppRoutes() {
         <Route path="/faculty/settings"     element={<ProtectedRoute allowedRole="faculty"><FacultySettings /></ProtectedRoute>} />
         <Route path="/faculty/office-hours" element={<ProtectedRoute allowedRole="faculty"><FacultyOfficeHours /></ProtectedRoute>} />
         <Route path="/faculty/students"     element={<ProtectedRoute allowedRole="faculty"><FacultyStudents /></ProtectedRoute>} />
-        <Route path="/faculty/lms"                          element={<ProtectedRoute allowedRole="faculty"><LMSCourseManagement /></ProtectedRoute>} />
-        <Route path="/faculty/lms/courses/:id"              element={<ProtectedRoute allowedRole="faculty"><LMSCourseDetail /></ProtectedRoute>} />
-        <Route path="/faculty/lms/assignments/:id/grade"    element={<ProtectedRoute allowedRole="faculty"><LMSAssignmentGrading /></ProtectedRoute>} />
-        <Route path="/faculty/attendance"                   element={<ProtectedRoute allowedRole="faculty"><AttendanceMarking /></ProtectedRoute>} />
+        <Route path="/faculty/lms"                         element={<ProtectedRoute allowedRole="faculty"><LMSCourseManagement /></ProtectedRoute>} />
+        <Route path="/faculty/lms/courses/:id"             element={<ProtectedRoute allowedRole="faculty"><LMSCourseDetail /></ProtectedRoute>} />
+        <Route path="/faculty/lms/assignments/:id/grade"   element={<ProtectedRoute allowedRole="faculty"><LMSAssignmentGrading /></ProtectedRoute>} />
+        <Route path="/faculty/attendance"                  element={<ProtectedRoute allowedRole="faculty"><AttendanceMarking /></ProtectedRoute>} />
+        <Route path="/faculty/lms/native/attendance"       element={<ProtectedRoute allowedRole="faculty"><FacultyNativeAttendance /></ProtectedRoute>} />
+        <Route path="/faculty/lms/native/assignments"      element={<ProtectedRoute allowedRole="faculty"><FacultyNativeAssignments /></ProtectedRoute>} />
+        <Route path="/faculty/lms/native/quizzes"          element={<ProtectedRoute allowedRole="faculty"><FacultyNativeQuizzes /></ProtectedRoute>} />
         <Route path="/faculty/resources"                   element={<ProtectedRoute allowedRole="faculty"><FacultyResources /></ProtectedRoute>} />
 
         {/* Student LMS Routes */}
-        <Route path="/lms"                  element={<ProtectedRoute allowedRole="student"><LMSDashboard /></ProtectedRoute>} />
-        <Route path="/lms/courses/:id"      element={<ProtectedRoute allowedRole="student"><LMSCourse /></ProtectedRoute>} />
-        <Route path="/lms/assignments"      element={<ProtectedRoute allowedRole="student"><LMSAssignments /></ProtectedRoute>} />
-        <Route path="/lms/assignments/:id"  element={<ProtectedRoute allowedRole="student"><LMSAssignmentDetail /></ProtectedRoute>} />
-        <Route path="/lms/grades"           element={<ProtectedRoute allowedRole="student"><LMSGrades /></ProtectedRoute>} />
-
-        {/* Student WebKiosk Routes */}
-        <Route path="/webkiosk"             element={<ProtectedRoute allowedRole="student"><WebKioskDashboard /></ProtectedRoute>} />
-        <Route path="/webkiosk/attendance"  element={<ProtectedRoute allowedRole="student"><AttendanceView /></ProtectedRoute>} />
-        <Route path="/webkiosk/exams"       element={<ProtectedRoute allowedRole="student"><ExamScheduleView /></ProtectedRoute>} />
-        <Route path="/webkiosk/fees"        element={<ProtectedRoute allowedRole="student"><FeesView /></ProtectedRoute>} />
-        <Route path="/webkiosk/profile"     element={<ProtectedRoute allowedRole="student"><StudentProfileView /></ProtectedRoute>} />
+        <Route path="/lms"                    element={<ProtectedRoute allowedRole="student"><LMSDashboard /></ProtectedRoute>} />
+        <Route path="/lms/courses/:id"        element={<ProtectedRoute allowedRole="student"><LMSCourse /></ProtectedRoute>} />
+        <Route path="/lms/assignments"        element={<ProtectedRoute allowedRole="student"><LMSAssignments /></ProtectedRoute>} />
+        <Route path="/lms/assignments/:id"    element={<ProtectedRoute allowedRole="student"><LMSAssignmentDetail /></ProtectedRoute>} />
+        <Route path="/lms/grades"             element={<ProtectedRoute allowedRole="student"><LMSGrades /></ProtectedRoute>} />
+        <Route path="/lms/native/attendance"  element={<ProtectedRoute allowedRole="student"><NativeAttendance /></ProtectedRoute>} />
+        <Route path="/lms/native/assignments" element={<ProtectedRoute allowedRole="student"><NativeAssignments /></ProtectedRoute>} />
+        <Route path="/lms/native/grades"      element={<ProtectedRoute allowedRole="student"><NativeGradebook /></ProtectedRoute>} />
+        <Route path="/lms/native/quiz/:id"    element={<ProtectedRoute allowedRole="student"><NativeQuizAttempt /></ProtectedRoute>} />
+        <Route path="/lms/native/pyq"         element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><NativePYQ /></ProtectedRoute>} />
 
         {/* Admin Routes */}
         <Route path="/admin/dashboard"   element={<ProtectedRoute allowedRole="admin"><AdminDashboard /></ProtectedRoute>} />
@@ -170,10 +171,9 @@ export default function AppRoutes() {
         <Route path="/admin/broadcast"   element={<ProtectedRoute allowedRole="admin"><Broadcast /></ProtectedRoute>} />
         <Route path="/admin/settings"    element={<ProtectedRoute allowedRole="admin"><AdminSettings /></ProtectedRoute>} />
         <Route path="/admin/audit-log"      element={<ProtectedRoute allowedRole="admin"><AuditLog /></ProtectedRoute>} />
-        <Route path="/admin/lms/courses"     element={<ProtectedRoute allowedRole="admin"><ManageCourses /></ProtectedRoute>} />
-        <Route path="/admin/exam-schedule"  element={<ProtectedRoute allowedRole="admin"><ManageExamSchedule /></ProtectedRoute>} />
-        <Route path="/admin/fees"           element={<ProtectedRoute allowedRole="admin"><ManageFees /></ProtectedRoute>} />
-        <Route path="/admin/sync"           element={<ProtectedRoute allowedRole="admin"><SyncConfig /></ProtectedRoute>} />
+        <Route path="/admin/lms/courses"   element={<ProtectedRoute allowedRole="admin"><ManageCourses /></ProtectedRoute>} />
+        <Route path="/admin/lms/structure" element={<ProtectedRoute allowedRole="admin"><LMSStructure /></ProtectedRoute>} />
+        <Route path="/admin/lms/bulk"      element={<ProtectedRoute allowedRole="admin"><LMSBulkUpload /></ProtectedRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -29,10 +29,10 @@ import {
   Clock,
   BookOpen,
   BarChart2,
-  LayoutGrid,
   CalendarCheck,
-  CreditCard,
-  RefreshCw,
+  Upload,
+  FileQuestion,
+  FolderOpen,
 } from 'lucide-react'
 
 const studentNav = [
@@ -52,17 +52,11 @@ const studentNav = [
 
   // ── My Courses ───────────────────────────────
   { section: 'My Courses' },
-  { label: 'LMS',            path: '/lms',                   icon: BookOpen },
-  { label: 'Assignments',    path: '/lms/assignments',        icon: ClipboardList },
-  { label: 'Grades',         path: '/lms/grades',             icon: BarChart2 },
-
-  // ── Academic Info ────────────────────────────
-  { section: 'Academic Info' },
-  { label: 'WebKiosk',       path: '/webkiosk',               icon: LayoutGrid },
-  { label: 'Attendance',     path: '/webkiosk/attendance',    icon: CalendarCheck },
-  { label: 'Exam Schedule',  path: '/webkiosk/exams',         icon: CalendarDays },
-  { label: 'Fee Status',     path: '/webkiosk/fees',          icon: CreditCard },
-  { label: 'My Profile',     path: '/webkiosk/profile',       icon: IdCard },
+  { label: 'LMS',              path: '/lms',                        icon: BookOpen },
+  { label: 'Assignments',      path: '/lms/native/assignments',     icon: ClipboardList },
+  { label: 'Grades',           path: '/lms/native/grades',          icon: BarChart2 },
+  { label: 'Attendance',       path: '/lms/native/attendance',      icon: CalendarCheck },
+  { label: 'PYQ Library',      path: '/lms/native/pyq',             icon: FolderOpen },
 ]
 
 const facultyNav = [
@@ -76,8 +70,11 @@ const facultyNav = [
   { label: 'Office Hours',   path: '/faculty/office-hours', icon: Clock },
   { label: 'Student Req',    path: '/faculty/requests',     icon: Inbox },
   { label: 'My Students',    path: '/faculty/students',     icon: GraduationCap },
-  { label: 'LMS Courses',    path: '/faculty/lms',          icon: BookOpen },
-  { label: 'Attendance',     path: '/faculty/attendance',   icon: CalendarCheck },
+  { label: 'LMS Courses',           path: '/faculty/lms',                      icon: BookOpen },
+  { label: 'Native Attendance',     path: '/faculty/lms/native/attendance',    icon: CalendarCheck },
+  { label: 'Native Assignments',    path: '/faculty/lms/native/assignments',   icon: ClipboardList },
+  { label: 'Native Quizzes',        path: '/faculty/lms/native/quizzes',       icon: FileQuestion },
+  { label: 'PYQ Library',           path: '/lms/native/pyq',                   icon: FolderOpen },
 
   // ── Campus ───────────────────────────────────
   { section: 'Campus' },
@@ -128,10 +125,9 @@ const adminNav = [
 
   // ── LMS & Academic ───────────────────────────
   { section: 'LMS & Academic' },
-  { label: 'Courses',          path: '/admin/lms/courses',      icon: BookOpen },
-  { label: 'Exam Schedule',    path: '/admin/exam-schedule',    icon: CalendarDays },
-  { label: 'Fees',             path: '/admin/fees',             icon: CreditCard },
-  { label: 'Sync Config',      path: '/admin/sync',             icon: RefreshCw },
+  { label: 'Courses (Moodle)', path: '/admin/lms/courses',    icon: BookOpen },
+  { label: 'LMS Structure',    path: '/admin/lms/structure',  icon: LayoutDashboard },
+  { label: 'Bulk Upload',      path: '/admin/lms/bulk',       icon: Upload },
 
   // ── System ───────────────────────────────────
   { section: 'System' },
