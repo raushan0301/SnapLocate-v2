@@ -19,7 +19,7 @@ Use this method for daily updates. It uses Git for the backend and the AWS CLI f
 ```bash
 git add .                  # Prepares all changed files for the update
 git commit -m "Update"     # Saves the changes with a label
-git push origin main       # Sends the code to GitHub
+git push origin main       # Sends the . code to GitHub
 ```
 
 ### Step 2: Update Frontend (Local Mac Terminal)
