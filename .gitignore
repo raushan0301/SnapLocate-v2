@@ -19,6 +19,16 @@
 
 
 # -----------------------------------------------
+# 🗄️ Database & Migration Scripts
+# -----------------------------------------------
+*.sql
+*.mjs
+*.db
+*.sqlite
+*.sqlite3
+
+
+# -----------------------------------------------
 # 🍎 macOS System Files
 # -----------------------------------------------
 .DS_Store
@@ -94,6 +104,7 @@ secrets.json
 service-account.json
 credentials.json
 config.json.local
+config.local.json
 
 
 # -----------------------------------------------
