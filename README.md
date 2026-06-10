@@ -81,6 +81,9 @@ The following AWS services are set up in `ap-south-1` (Asia Pacific, Mumbai) and
 | **AWS Lambda** | 🔜 Planned | Not yet configured |
 | **Amazon DynamoDB** | 🔜 Planned | Not yet configured |
 
+AWS infrastructure has been configured and prepared for future integration.
+While SnapLocate currently runs on Firebase, I have already configured and prepared AWS services including S3, CloudFront, EC2, CloudWatch, and IAM to support future scalability and migration requirements.
+
 ---
 
 ## ✨ Features
