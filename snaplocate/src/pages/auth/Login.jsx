@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
@@ -16,10 +16,21 @@ export default function Login() {
   const navigate = useNavigate()
   const { login } = useAuth()
 
-  const [form, setForm]     = useState({ email: '', password: '' })
-  const [error, setError]   = useState('')
+  const [form, setForm] = useState({ email: '', password: '' })
+  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPass, setShowPass] = useState(false)
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024)
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768)
+      setIsTablet(window.innerWidth >= 768 && window.innerWidth < 1024)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
 
@@ -41,48 +52,146 @@ export default function Login() {
     }
   }
 
+  const pageStyle = {
+    display: 'flex',
+    flexDirection: isMobile ? 'column' : 'row',
+    minHeight: '100vh',
+    fontFamily: "'Inter', sans-serif",
+    background: '#f8fafc',
+  }
+
+  const leftStyle = {
+    display: isMobile ? 'none' : 'flex',
+    flex: 1,
+    background: '#fff',
+    borderRight: '1px solid #f1f5f9',
+    alignItems: 'stretch',
+    padding: isTablet ? '40px 36px' : '48px 56px',
+    position: 'relative',
+    minWidth: 0,
+  }
+
+  const rightStyle = {
+    width: isMobile ? '100%' : isTablet ? '380px' : '440px',
+    minWidth: isMobile ? 'unset' : isTablet ? '380px' : '440px',
+    display: 'flex',
+    alignItems: isMobile ? 'flex-start' : 'center',
+    justifyContent: 'center',
+    padding: isMobile ? '32px 20px' : '40px 32px',
+    overflowY: 'auto',
+  }
+
+  const cardStyle = {
+    width: '100%',
+    maxWidth: isMobile ? '100%' : '400px',
+    background: '#fff',
+    border: '1px solid #f1f5f9',
+    borderRadius: 24,
+    padding: isMobile ? '28px 20px' : '36px 32px',
+    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+  }
+
   return (
-    <div style={styles.page}>
-      {/* Left panel — branding */}
-      <div style={styles.left}>
+    <div style={pageStyle}>
+      {/* Left panel — branding (hidden on mobile) */}
+      <div style={leftStyle}>
+
+        {/* ── Logo — pinned to top, aligned with content ── */}
+        <div style={{
+          position: 'absolute',
+          top: 20,
+          left: isTablet ? 36 : 56,
+        }}>
+          <img
+            src="/images/img_logo.svg"
+            alt="SnapLocate"
+            style={{ width: 200, height: 'auto', display: 'block' }}
+            onError={e => e.target.style.display = 'none'}
+          />
+        </div>
+
+        {/* ── Inner layout: hero + cards ── */}
         <div style={styles.leftInner}>
-          <div style={styles.logo}>
-            <img src="/images/img_logo.svg" alt="SnapLocate" style={{ width: 28, height: 28 }} onError={e => e.target.style.display='none'} />
-            <span style={pjs(20, 700, '#0f172a')}>SnapLocate</span>
-          </div>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 16 }}>
+
+          {/* ── Hero text — vertically centered ── */}
+          <div style={styles.heroSection}>
             <div style={styles.badge}>🎓 Campus OS</div>
-            <h1 style={{ ...pjs(40, 800, '#0f172a'), lineHeight: '48px' }}>
+            <h1 style={{ ...pjs(isTablet ? 32 : 40, 800, '#0f172a'), lineHeight: isTablet ? '40px' : '48px' }}>
               Your entire campus<br />
               <span style={{ color: '#4f46e5' }}>in one place.</span>
             </h1>
-            <p style={{ ...inter(16, 400, '#64748b'), lineHeight: '24px', maxWidth: 340 }}>
-              Professors, resources, societies, marketplace, lost & found — all connected for you.
+            <p style={{ ...inter(16, 400, '#64748b'), lineHeight: '26px', maxWidth: 360 }}>
+              Professors, resources, societies, marketplace, lost &amp; found — all connected for you.
             </p>
           </div>
-          {/* Floating cards */}
-          <div style={styles.floatCard}>
-            <span style={{ fontSize: 20 }}>📚</span>
-            <div>
-              <div style={pjs(13, 700, '#0f172a')}>Resources</div>
-              <div style={inter(12, 400, '#64748b')}>Notes, Labs, PYQs</div>
+
+          {/* ── Feature cards — 2×3 grid (6 cards) ── */}
+          <div style={styles.cardsGrid}>
+            <div style={styles.floatCard}>
+              <span style={{ fontSize: 20 }}>📚</span>
+              <div>
+                <div style={pjs(13, 700, '#0f172a')}>Resources</div>
+                <div style={inter(12, 400, '#64748b')}>Notes, Labs, PYQs</div>
+              </div>
+            </div>
+            <div style={styles.floatCard}>
+              <span style={{ fontSize: 20 }}>🧑‍🏫</span>
+              <div>
+                <div style={pjs(13, 700, '#0f172a')}>Professors</div>
+                <div style={inter(12, 400, '#64748b')}>Office hours &amp; more</div>
+              </div>
+            </div>
+            <div style={styles.floatCard}>
+              <span style={{ fontSize: 20 }}>🏛️</span>
+              <div>
+                <div style={pjs(13, 700, '#0f172a')}>Societies</div>
+                <div style={inter(12, 400, '#64748b')}>Clubs &amp; events</div>
+              </div>
+            </div>
+            <div style={styles.floatCard}>
+              <span style={{ fontSize: 20 }}>🔍</span>
+              <div>
+                <div style={pjs(13, 700, '#0f172a')}>Lost &amp; Found</div>
+                <div style={inter(12, 400, '#64748b')}>Report &amp; recover</div>
+              </div>
+            </div>
+            <div style={styles.floatCard}>
+              <span style={{ fontSize: 20 }}>🛒</span>
+              <div>
+                <div style={pjs(13, 700, '#0f172a')}>Marketplace</div>
+                <div style={inter(12, 400, '#64748b')}>Buy &amp; sell items</div>
+              </div>
+            </div>
+            <div style={styles.floatCard}>
+              <span style={{ fontSize: 20 }}>🖥️</span>
+              <div>
+                <div style={pjs(13, 700, '#0f172a')}>Workspace</div>
+                <div style={inter(12, 400, '#64748b')}>Study &amp; collaborate</div>
+              </div>
             </div>
           </div>
-          <div style={{ ...styles.floatCard, bottom: 80, right: -20 }}>
-            <span style={{ fontSize: 20 }}>🧑‍🏫</span>
-            <div>
-              <div style={pjs(13, 700, '#0f172a')}>Find Professors</div>
-              <div style={inter(12, 400, '#64748b')}>Office hours & more</div>
-            </div>
-          </div>
+
         </div>
       </div>
 
       {/* Right panel — form */}
-      <div style={styles.right}>
-        <div style={styles.card}>
+      <div style={rightStyle}>
+        <div style={cardStyle}>
+          {/* Logo on mobile */}
+          {isMobile && (
+            <div style={{ ...styles.logo, marginBottom: 24, justifyContent: 'center' }}>
+              <img
+                src="/images/img_logo.svg"
+                alt="SnapLocate"
+                style={{ width: 28, height: 28 }}
+                onError={e => e.target.style.display = 'none'}
+              />
+              <span style={pjs(20, 700, '#0f172a')}>SnapLocate</span>
+            </div>
+          )}
+
           <div style={{ marginBottom: 28 }}>
-            <h2 style={{ ...pjs(28, 700, '#0f172a'), marginBottom: 6 }}>Welcome back 👋</h2>
+            <h2 style={{ ...pjs(isMobile ? 24 : 28, 700, '#0f172a'), marginBottom: 6 }}>Welcome back 👋</h2>
             <p style={inter(15, 400, '#64748b')}>Sign in to your SnapLocate account</p>
           </div>
 
@@ -106,7 +215,7 @@ export default function Login() {
                 onChange={set('email')}
                 style={styles.input}
                 onFocus={e => e.target.style.borderColor = '#4f46e5'}
-                onBlur={e  => e.target.style.borderColor = '#e2e8f0'}
+                onBlur={e => e.target.style.borderColor = '#e2e8f0'}
               />
             </div>
 
@@ -128,7 +237,7 @@ export default function Login() {
                   onChange={set('password')}
                   style={styles.input}
                   onFocus={e => e.target.style.borderColor = '#4f46e5'}
-                  onBlur={e  => e.target.style.borderColor = '#e2e8f0'}
+                  onBlur={e => e.target.style.borderColor = '#e2e8f0'}
                 />
               </div>
             </div>
@@ -159,23 +268,23 @@ export default function Login() {
 
 /* ── styles ─────────────────────────────────────────────────── */
 const styles = {
-  page: {
-    display: 'flex', minHeight: '100vh',
-    fontFamily: "'Inter', sans-serif",
-    background: '#f8fafc',
-  },
-  left: {
-    flex: 1, background: '#fff',
-    borderRight: '1px solid #f1f5f9',
-    display: 'flex', alignItems: 'stretch',
-    padding: '48px 56px',
-    position: 'relative', overflow: 'hidden',
-  },
   leftInner: {
-    display: 'flex', flexDirection: 'column', width: '100%', position: 'relative',
+    display: 'flex', flexDirection: 'column',
+    width: '100%', height: '100%',
+    justifyContent: 'space-between',
+    paddingTop: 0,
   },
-  logo: {
-    display: 'flex', alignItems: 'center', gap: 10, marginBottom: 48,
+
+  heroSection: {
+    display: 'flex', flexDirection: 'column', gap: 16,
+    alignItems: 'flex-start',
+    flex: 1, justifyContent: 'center',
+  },
+  cardsGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: 10,
+    width: '100%',
   },
   badge: {
     display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -188,17 +297,7 @@ const styles = {
     background: '#fff', border: '1px solid #f1f5f9',
     borderRadius: 16, padding: '12px 16px',
     boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-    width: 'fit-content', marginBottom: 12,
-    position: 'relative',
-  },
-  right: {
-    width: 440, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 32px',
-  },
-  card: {
-    width: '100%', background: '#fff',
-    border: '1px solid #f1f5f9',
-    borderRadius: 24, padding: '36px 32px',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+    minWidth: 0,
   },
   errorBox: {
     display: 'flex', alignItems: 'center', gap: 8,

@@ -107,7 +107,7 @@ body {
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow: hidden; /* prevent double scrollbars; main area scrolls internally */
+  /* overflow managed per-page to allow auth pages to scroll on small screens */
 }
 
 /* Scrollbar */
