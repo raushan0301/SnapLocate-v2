@@ -48,7 +48,7 @@ export default function Register() {
       <div style={styles.left}>
         <div style={styles.leftInner}>
           <div style={styles.logo}>
-            <img src="/images/img_logo.svg" alt="SnapLocate" style={{ width: 28, height: 28 }} onError={e => e.target.style.display='none'} />
+            <img src="/images/img_logo_icon.svg" alt="SnapLocate" style={{ width: 28, height: 28 }} onError={e => e.target.style.display='none'} />
             <span style={pjs(20, 700, '#0f172a')}>SnapLocate</span>
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 16 }}>

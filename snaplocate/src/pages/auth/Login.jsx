@@ -115,7 +115,7 @@ export default function Login() {
 
           {/* ── Hero text — vertically centered ── */}
           <div style={styles.heroSection}>
-            <div style={styles.badge}>🎓 Campus OS</div>
+            {/* <div style={styles.badge}>🎓 Campus OS</div> */}
             <h1 style={{ ...pjs(isTablet ? 32 : 40, 800, '#0f172a'), lineHeight: isTablet ? '40px' : '48px' }}>
               Your entire campus<br />
               <span style={{ color: '#4f46e5' }}>in one place.</span>
@@ -179,14 +179,13 @@ export default function Login() {
         <div style={cardStyle}>
           {/* Logo on mobile */}
           {isMobile && (
-            <div style={{ ...styles.logo, marginBottom: 24, justifyContent: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
               <img
                 src="/images/img_logo.svg"
                 alt="SnapLocate"
-                style={{ width: 28, height: 28 }}
+                style={{ width: 200, height: 'auto', display: 'block' }}
                 onError={e => e.target.style.display = 'none'}
               />
-              <span style={pjs(20, 700, '#0f172a')}>SnapLocate</span>
             </div>
           )}
 
