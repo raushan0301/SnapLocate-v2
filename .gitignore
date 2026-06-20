@@ -17,6 +17,7 @@
 *.md
 !README.md
 prep/
+Screenshot*.png
 
 # -----------------------------------------------
 # 🗄️ Database & Migration Scripts

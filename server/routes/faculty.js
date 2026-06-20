@@ -1,40 +1,134 @@
 import { Router } from 'express'
 import { supabaseAdmin } from '../lib/supabase.js'
 import { authenticate, requireFaculty } from '../middleware/auth.js'
+import { getFirestoreCollection } from '../lib/firestore.js'
 
 const router = Router()
+
+// Helper to parse cabin No into building and room number
+function parseCabinNo(cabinNo) {
+  if (!cabinNo || cabinNo.toUpperCase() === 'NA' || cabinNo.toUpperCase() === 'N/A') {
+    return { cabin_building: '', cabin_room: cabinNo || '' };
+  }
+  
+  const match = cabinNo.match(/^([a-zA-Z]+)\s*-?\s*(.+)$/);
+  if (match) {
+    const building = match[1].toUpperCase();
+    const room = match[2].trim();
+    return { cabin_building: building, cabin_room: room };
+  }
+  
+  return { cabin_building: '', cabin_room: cabinNo };
+}
+
+// Helper to infer floor from cabin room
+function getFloorName(room) {
+  if (!room) return '';
+  const match = room.match(/^\d/);
+  if (!match) return '';
+  const digit = parseInt(match[0], 10);
+  if (digit === 0) return 'GROUND';
+  if (digit === 1) return '1st';
+  if (digit === 2) return '2nd';
+  if (digit === 3) return '3rd';
+  return `${digit}th`;
+}
 
 // GET /api/faculty
 router.get('/', async (req, res) => {
   const { dept, search } = req.query
 
-  let query = supabaseAdmin
-    .from('faculty_profiles')
-    .select(`
-      id, designation, dept, teacher_code, bio, cabin_room, cabin_building,
-      accepting_students, citations, research_interests,
-      users!inner(id, full_name, email, avatar_url, is_verified)
-    `)
+  let supabaseFaculty = []
+  try {
+    let query = supabaseAdmin
+      .from('faculty_profiles')
+      .select(`
+        id, designation, dept, teacher_code, bio, cabin_room, cabin_building,
+        accepting_students, citations, research_interests,
+        users!inner(id, full_name, email, avatar_url, is_verified)
+      `)
 
-  if (dept) query = query.eq('dept', dept)
-  if (search) {
-    query = query.or(`users.full_name.ilike.%${search}%,dept.ilike.%${search}%,designation.ilike.%${search}%`)
+    if (dept) query = query.eq('dept', dept)
+    if (search) {
+      query = query.or(`users.full_name.ilike.%${search}%,dept.ilike.%${search}%,designation.ilike.%${search}%`)
+    }
+
+    const { data, error } = await query
+    if (!error && data) {
+      supabaseFaculty = data.map(f => ({
+        ...f,
+        user_id:     f.users?.id,
+        full_name:   f.users?.full_name,
+        email:       f.users?.email,
+        avatar_url:  f.users?.avatar_url,
+        is_verified: f.users?.is_verified,
+        users:       undefined,
+      }))
+    }
+  } catch (err) {
+    console.warn('Supabase faculty fetch failed:', err.message)
   }
 
-  const { data, error } = await query
-  if (error) throw error
+  let firestoreProfs = []
+  try {
+    const rawFirestore = await getFirestoreCollection('professors')
+    firestoreProfs = rawFirestore.map(p => {
+      const cabinInfo = parseCabinNo(p.cabinNo)
+      return {
+        id: p.id,
+        designation: p.designation || p.Designation || 'Faculty',
+        dept: p.department || '',
+        teacher_code: p.teacher_code || '',
+        bio: p.specialization || '',
+        cabin_room: cabinInfo.cabin_room,
+        cabin_building: cabinInfo.cabin_building,
+        accepting_students: true,
+        citations: 0,
+        research_interests: p.specialization ? [p.specialization] : [],
+        user_id: null,
+        full_name: p.name || 'Faculty',
+        email: p.email || p.contact || '',
+        avatar_url: null,
+        is_verified: false,
+        is_legacy: true
+      }
+    })
 
-  const flat = (data || []).map(f => ({
-    ...f,
-    user_id:     f.users?.id,
-    full_name:   f.users?.full_name,
-    email:       f.users?.email,
-    avatar_url:  f.users?.avatar_url,
-    is_verified: f.users?.is_verified,
-    users:       undefined,
-  }))
+    if (dept) {
+      const deptLower = dept.toLowerCase().trim()
+      firestoreProfs = firestoreProfs.filter(p => p.dept.toLowerCase().includes(deptLower))
+    }
+    if (search) {
+      const searchLower = search.toLowerCase().trim()
+      firestoreProfs = firestoreProfs.filter(p => 
+        p.full_name.toLowerCase().includes(searchLower) ||
+        p.dept.toLowerCase().includes(searchLower) ||
+        p.designation.toLowerCase().includes(searchLower)
+      )
+    }
+  } catch (err) {
+    console.warn('Firestore professors fetch failed:', err.message)
+  }
 
-  res.json({ success: true, data: flat })
+  const mergedMap = new Map()
+
+  firestoreProfs.forEach(p => {
+    const emailLower = p.email ? p.email.toLowerCase().trim() : ''
+    const hasValidEmail = emailLower && emailLower !== 'na' && emailLower !== 'n/a'
+    const key = hasValidEmail ? emailLower : `name:${p.full_name.toLowerCase().trim()}`
+    mergedMap.set(key, p)
+  })
+
+  supabaseFaculty.forEach(p => {
+    const emailLower = p.email ? p.email.toLowerCase().trim() : ''
+    const hasValidEmail = emailLower && emailLower !== 'na' && emailLower !== 'n/a'
+    const key = hasValidEmail ? emailLower : `name:${p.full_name.toLowerCase().trim()}`
+    mergedMap.set(key, p)
+  })
+
+  const mergedList = Array.from(mergedMap.values())
+
+  res.json({ success: true, data: mergedList })
 })
 
 // ─── Named routes MUST come before /:id ──────────────────────
@@ -293,26 +387,95 @@ router.get('/dashboard/stats', authenticate, requireFaculty, async (req, res) =>
 router.get('/:id', async (req, res) => {
   const { id } = req.params
 
-  const { data: profile, error } = await supabaseAdmin
-    .from('faculty_profiles')
-    .select(`
-      *,
-      users!inner(id, full_name, email, avatar_url, is_verified),
-      qualifications(*),
-      publications(*),
-      awards(*),
-      timetable(*),
-      office_hours(*),
-      courses(*)
-    `)
-    .eq('id', id)
-    .single()
+  try {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+    if (isUuid) {
+      const { data: profile, error } = await supabaseAdmin
+        .from('faculty_profiles')
+        .select(`
+          *,
+          users!inner(id, full_name, email, avatar_url, is_verified),
+          qualifications(*),
+          publications(*),
+          awards(*),
+          timetable(*),
+          office_hours(*),
+          courses(*)
+        `)
+        .eq('id', id)
+        .single()
 
-  if (error || !profile) {
-    return res.status(404).json({ success: false, message: 'Faculty not found' })
+      if (!error && profile) {
+        const flatProfile = {
+          ...profile,
+          email: profile.users?.email || '',
+          full_name: profile.users?.full_name || '',
+          avatar_url: profile.users?.avatar_url || null,
+          is_verified: profile.users?.is_verified || false
+        }
+        return res.json({ success: true, data: flatProfile })
+      }
+    }
+  } catch (err) {
+    console.warn('Supabase single faculty fetch failed:', err.message)
   }
 
-  res.json({ success: true, data: profile })
+  try {
+    const rawFirestore = await getFirestoreCollection('professors')
+    const legacyProf = rawFirestore.find(p => p.id === id)
+
+    if (legacyProf) {
+      const cabinInfo = parseCabinNo(legacyProf.cabinNo)
+      const floorName = getFloorName(cabinInfo.cabin_room)
+      const mappedProfile = {
+        id: legacyProf.id,
+        user_id: null,
+        designation: legacyProf.designation || legacyProf.Designation || 'Faculty',
+        dept: legacyProf.department || '',
+        teacher_code: legacyProf.teacher_code || '',
+        phone: '',
+        dept_website: '',
+        linkedin: '',
+        bio: legacyProf.specialization || '',
+        cabin_room: cabinInfo.cabin_room,
+        cabin_building: cabinInfo.cabin_building,
+        cabin_floor: floorName || 'GROUND',
+        campus_section: '',
+        research_interests: legacyProf.specialization ? [legacyProf.specialization] : [],
+        lab_name: '',
+        lab_website: '',
+        academic_links: [],
+        accepting_students: true,
+        citations: 0,
+        publications_count: 0,
+        conferences: 0,
+        teaching_exp_years: 0,
+        email: legacyProf.email || legacyProf.contact || '',
+        full_name: legacyProf.name || 'Faculty',
+        avatar_url: null,
+        is_verified: false,
+        users: {
+          id: legacyProf.id,
+          full_name: legacyProf.name || 'Faculty',
+          email: legacyProf.email || legacyProf.contact || '',
+          avatar_url: null,
+          is_verified: false
+        },
+        qualifications: [],
+        publications: [],
+        awards: [],
+        timetable: [],
+        office_hours: [],
+        courses: [],
+        is_legacy: true
+      }
+      return res.json({ success: true, data: mappedProfile })
+    }
+  } catch (err) {
+    console.warn('Firestore fallback fetch failed:', err.message)
+  }
+
+  return res.status(404).json({ success: false, message: 'Faculty not found' })
 })
 
 export default router

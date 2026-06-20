@@ -11,7 +11,7 @@ const inter = (size, weight, lh, color) => ({
   fontSize: size, fontWeight: weight, lineHeight: lh, color,
 })
 
-const categories = ['All Units', 'Block A', 'Block B', 'Block TAN', 'CSED', 'Lab', 'Lecture Hall']
+const categories = ['All Units', 'Block B', 'Block TAN', 'CSED', 'Lab', 'Lecture Hall']
 
 function RoomCard({ room, selected, onClick }) {
   return (
@@ -31,7 +31,7 @@ function RoomCard({ room, selected, onClick }) {
     >
       {/* Image */}
       <div style={{ position: 'relative', height: 180, overflow: 'hidden' }}>
-        <img src={room.img} alt={room.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <img src={room.img} alt={room.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(3px)', transform: 'scale(1.05)' }} />
         {/* Status badge */}
         <div style={{
           position: 'absolute', top: 12, left: 12,
@@ -62,9 +62,14 @@ function RoomCard({ room, selected, onClick }) {
           <span style={pjs(12, 400, '16px', '#94a3b8')}>{room.subtitle}</span>
         </div>
 
-        {/* Block / Floor / Capacity */}
+        {/* Block / Floor / Capacity / Code */}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 14, paddingTop: 12, borderTop: '1px solid #f1f5f9' }}>
-          {[['BLOCK', room.block], ['FLOOR', room.floor], ['CAPACITY', room.capacity]].map(([label, val]) => (
+          {[
+            ['BLOCK', room.block],
+            ['FLOOR', room.floor],
+            ['CAPACITY', room.capacity],
+            ['CODE', room.classcode || room.classCode]
+          ].filter(([_, val]) => val).map(([label, val]) => (
             <div key={label}>
               <div style={{ ...pjs(10, 600, '14px', '#94a3b8'), letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>{label}</div>
               <div style={pjs(13, 700, '18px', '#0f172a')}>{val}</div>
@@ -74,6 +79,28 @@ function RoomCard({ room, selected, onClick }) {
       </div>
     </button>
   )
+}
+
+const getSearchRelevance = (room, query) => {
+  if (!query) return 0
+  const q = query.toLowerCase().trim()
+  const code = (room.classcode || room.classCode || '').toLowerCase().trim()
+  const name = (room.name || '').toLowerCase().trim()
+  const subtitle = (room.subtitle || '').toLowerCase().trim()
+  
+  const isExactWord = (str, sub) => {
+    if (str === sub) return true
+    return str.startsWith(sub + ' ') || str.startsWith(sub + '-') || str.startsWith(sub + '_')
+  }
+  
+  if (code === q) return 6
+  if (isExactWord(code, q)) return 5
+  if (code.startsWith(q)) return 4
+  if (code.includes(q)) return 3
+  if (isExactWord(name, q)) return 2.5
+  if (name.startsWith(q)) return 2
+  if (name.includes(q) || subtitle.includes(q) || (room.block || '').toLowerCase().includes(q)) return 1
+  return 0
 }
 
 export default function ClassroomPage() {
@@ -93,9 +120,6 @@ export default function ClassroomPage() {
         const res = await api.get('/api/classrooms')
         if (res.success) {
           setRooms(res.data)
-          if (res.data.length > 0) {
-            setSelectedRoom(res.data[0]) // Select first room automatically
-          }
         }
       } catch (err) {
         console.error('Failed to load classrooms:', err)
@@ -142,16 +166,25 @@ export default function ClassroomPage() {
       // 2. Search Filter
       if (searchTerm) {
         const q = searchTerm.toLowerCase().trim()
+        const code = (room.classcode || room.classCode || '').toLowerCase().trim()
         const match = 
           room.name?.toLowerCase().includes(q) || 
           room.subtitle?.toLowerCase().includes(q) ||
           room.block?.toLowerCase().includes(q) ||
-          room.type?.toLowerCase().includes(q)
+          room.type?.toLowerCase().includes(q) ||
+          code.includes(q)
         if (!match) return false
       }
       return true
     })
     .sort((a, b) => {
+      if (searchTerm) {
+        const scoreA = getSearchRelevance(a, searchTerm)
+        const scoreB = getSearchRelevance(b, searchTerm)
+        if (scoreA !== scoreB) {
+          return scoreB - scoreA
+        }
+      }
       if (sort === 'A-Z') return (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
       if (sort === 'Z-A') return (b.name || '').localeCompare(a.name || '', undefined, { sensitivity: 'base' })
       if (sort === 'Capacity') return (parseInt(b.capacity) || 0) - (parseInt(a.capacity) || 0)
@@ -235,13 +268,13 @@ export default function ClassroomPage() {
             </div>
           </div>
 
-          {/* Rooms grid — 2 columns */}
+          {/* Rooms grid */}
           {filteredRooms.length === 0 ? (
             <div style={{ padding: '40px 20px', textAlign: 'center', background: '#ffffff', borderRadius: 16, border: '1px solid #f1f5f9' }}>
               <div style={pjs(15, 600, '22px', '#94a3b8')}>No classrooms found matching your criteria.</div>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: selectedRoom ? '1fr 1fr' : '1fr 1fr 1fr', gap: 16 }}>
               {filteredRooms.map(room => (
                 <RoomCard
                   key={room.id}
@@ -255,131 +288,138 @@ export default function ClassroomPage() {
         </div>
 
         {/* ── RIGHT: detail panel ─────────────────────────── */}
-        <div style={{
-          width: 300, flexShrink: 0,
-          background: '#ffffff', border: '1px solid #f1f5f9', borderRadius: 20,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-          overflow: 'hidden', display: 'flex', flexDirection: 'column',
-        }}>
+        {selectedRoom && (
+          <div style={{
+            width: 300, flexShrink: 0,
+            background: '#ffffff', border: '1px solid #f1f5f9', borderRadius: 20,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+            overflow: 'hidden', display: 'flex', flexDirection: 'column',
+          }}>
 
-          {/* Panel header */}
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <div style={{ ...pjs(11, 700, '15px', '#4f46e5'), letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Selected Venue</div>
-              <div style={pjs(18, 700, '24px', '#0f172a')}>{selectedRoom?.name}</div>
-              <div style={{ ...pjs(12, 400, '16px', '#64748b'), marginTop: 4 }}>Computer Science &amp; Engineering Department</div>
-            </div>
-            <button style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, color: '#94a3b8' }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M2 2l12 12M14 2L2 14" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-            </button>
-          </div>
-
-          <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-            {/* Live Metrics */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <rect x="1" y="1" width="12" height="12" rx="2" stroke="#4f46e5" strokeWidth="1.3"/>
-                  <path d="M4 9l2-3 2 2 2-4" stroke="#4f46e5" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span style={pjs(13, 700, '18px', '#0f172a')}>Live Metrics</span>
-              </div>
+            {/* Panel header */}
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <div style={{ ...inter(10, 600, '14px', '#94a3b8'), letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Occupancy</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 8 }}>
-                  <span style={pjs(22, 700, '28px', '#0f172a')}>—</span>
-                  <span style={pjs(13, 400, '18px', '#94a3b8')}>/ {selectedRoom?.capacity || 0}</span>
-                </div>
-                <div style={{ height: 6, background: '#f1f5f9', borderRadius: 3 }}>
-                  <div style={{ width: `0%`, height: '100%', background: '#4f46e5', borderRadius: 3 }} />
-                </div>
-              </div>
-            </div>
-
-            {/* Today's Timetable */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <rect x="1" y="2" width="12" height="11" rx="1.5" stroke="#4f46e5" strokeWidth="1.3"/>
-                    <path d="M4 1v2M10 1v2M1 5h12" stroke="#4f46e5" strokeWidth="1.3" strokeLinecap="round"/>
-                  </svg>
-                  <span style={pjs(13, 700, '18px', '#0f172a')}>Today's Timetable</span>
-                </div>
-                <span style={inter(10, 500, '14px', '#94a3b8')}>{new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</span>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {timetable.length === 0 ? (
-                  <div style={{ padding: '10px 0', ...pjs(12, 400, '18px', '#94a3b8') }}>No classes today.</div>
-                ) : timetable.map((t, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, marginTop: 6,
-                      background: t.active ? '#4f46e5' : '#cbd5e1' }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                        <span style={pjs(12, t.active ? 700 : 500, '16px', t.active ? '#4f46e5' : '#0f172a')}>{t.label}</span>
-                        <span style={inter(10, 400, '14px', '#94a3b8')}>{t.time}</span>
-                      </div>
-                      <div style={{ ...pjs(11, 400, '15px', '#64748b'), marginTop: 2 }}>{t.sub}</div>
-                      {t.ongoing && (
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 4,
-                          background: '#eef2ff', borderRadius: 6, padding: '2px 8px' }}>
-                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4f46e5' }} />
-                          <span style={pjs(10, 600, '14px', '#4f46e5')}>Ongoing</span>
-                        </div>
-                      )}
-                    </div>
+                <div style={{ ...pjs(11, 700, '15px', '#4f46e5'), letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Selected Venue</div>
+                <div style={pjs(18, 700, '24px', '#0f172a')}>{selectedRoom.name}</div>
+                <div style={{ ...pjs(12, 400, '16px', '#64748b'), marginTop: 4 }}>Computer Science &amp; Engineering Department</div>
+                {(selectedRoom.classcode || selectedRoom.classCode) && (
+                  <div style={{ ...pjs(12, 700, '16px', '#4f46e5'), marginTop: 6, background: '#eef2ff', padding: '2px 8px', borderRadius: 6, display: 'inline-block' }}>
+                    Lab Code: {selectedRoom.classcode || selectedRoom.classCode}
                   </div>
-                ))}
+                )}
               </div>
+              <button onClick={() => setSelectedRoom(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, color: '#94a3b8' }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 2l12 12M14 2L2 14" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </button>
             </div>
 
-            {/* Lab Inventory */}
-            {selectedRoom?.type === 'LAB' && (
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+              {/* Live Metrics */}
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <rect x="1" y="3" width="12" height="9" rx="1.5" stroke="#4f46e5" strokeWidth="1.3"/>
-                    <path d="M4 3V2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" stroke="#4f46e5" strokeWidth="1.3"/>
+                    <rect x="1" y="1" width="12" height="12" rx="2" stroke="#4f46e5" strokeWidth="1.3"/>
+                    <path d="M4 9l2-3 2 2 2-4" stroke="#4f46e5" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                  <span style={pjs(13, 700, '18px', '#0f172a')}>Lab Inventory</span>
+                  <span style={pjs(13, 700, '18px', '#0f172a')}>Live Metrics (Demo Data)</span>
                 </div>
-                {[{ label: 'Workstations', val: '—', valC: '#0f172a' }, { label: '4K Projector', val: 'Check with Staff', valC: '#64748b' }].map((item, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    padding: '10px 0', borderTop: i === 0 ? 'none' : '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <rect x="1" y="1" width="12" height="9" rx="1.5" stroke="#64748b" strokeWidth="1.2"/>
-                        <path d="M4 13h6M7 10v3" stroke="#64748b" strokeWidth="1.2" strokeLinecap="round"/>
-                      </svg>
-                      <span style={pjs(12, 500, '16px', '#0f172a')}>{item.label}</span>
-                    </div>
-                    <span style={pjs(12, 700, '16px', item.valC)}>{item.val}</span>
+                <div>
+                  <div style={{ ...inter(10, 600, '14px', '#94a3b8'), letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Occupancy</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 8 }}>
+                    <span style={pjs(22, 700, '28px', '#0f172a')}>—</span>
+                    <span style={pjs(13, 400, '18px', '#94a3b8')}>/ {selectedRoom.capacity || 0}</span>
                   </div>
-                ))}
+                  <div style={{ height: 6, background: '#f1f5f9', borderRadius: 3 }}>
+                    <div style={{ width: `0%`, height: '100%', background: '#4f46e5', borderRadius: 3 }} />
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
 
-          {/* Book button */}
-          <div style={{ padding: '16px 20px', borderTop: '1px solid #f1f5f9' }}>
-            <button style={{
-              width: '100%', padding: '14px 0',
-              background: '#4f46e5', borderRadius: 14, border: 'none',
-              cursor: 'pointer', ...pjs(14, 700, '18px', '#ffffff'),
-              transition: 'background 0.2s',
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = '#4338ca'}
-            onMouseLeave={e => e.currentTarget.style.background = '#4f46e5'}
-            >
-              Book Slot for Tomorrow
-            </button>
+              {/* Today's Timetable */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <rect x="1" y="2" width="12" height="11" rx="1.5" stroke="#4f46e5" strokeWidth="1.3"/>
+                      <path d="M4 1v2M10 1v2M1 5h12" stroke="#4f46e5" strokeWidth="1.3" strokeLinecap="round"/>
+                    </svg>
+                    <span style={pjs(13, 700, '18px', '#0f172a')}>Today's Timetable (Demo Data)</span>
+                  </div>
+                  <span style={inter(10, 500, '14px', '#94a3b8')}>{new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {timetable.length === 0 ? (
+                    <div style={{ padding: '10px 0', ...pjs(12, 400, '18px', '#94a3b8') }}>No classes today.</div>
+                  ) : timetable.map((t, i) => (
+                    <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, marginTop: 6,
+                        background: t.active ? '#4f46e5' : '#cbd5e1' }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                          <span style={pjs(12, t.active ? 700 : 500, '16px', t.active ? '#4f46e5' : '#0f172a')}>{t.label}</span>
+                          <span style={inter(10, 400, '14px', '#94a3b8')}>{t.time}</span>
+                        </div>
+                        <div style={{ ...pjs(11, 400, '15px', '#64748b'), marginTop: 2 }}>{t.sub}</div>
+                        {t.ongoing && (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 4,
+                            background: '#eef2ff', borderRadius: 6, padding: '2px 8px' }}>
+                            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4f46e5' }} />
+                            <span style={pjs(10, 600, '14px', '#4f46e5')}>Ongoing</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Lab Inventory */}
+              {selectedRoom.type === 'LAB' && (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <rect x="1" y="3" width="12" height="9" rx="1.5" stroke="#4f46e5" strokeWidth="1.3"/>
+                      <path d="M4 3V2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" stroke="#4f46e5" strokeWidth="1.3"/>
+                    </svg>
+                    <span style={pjs(13, 700, '18px', '#0f172a')}>Lab Inventory</span>
+                  </div>
+                  {[{ label: 'Workstations', val: '—', valC: '#0f172a' }, { label: '4K Projector', val: 'Check with Staff', valC: '#64748b' }].map((item, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      padding: '10px 0', borderTop: i === 0 ? 'none' : '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                          <rect x="1" y="1" width="12" height="9" rx="1.5" stroke="#64748b" strokeWidth="1.2"/>
+                          <path d="M4 13h6M7 10v3" stroke="#64748b" strokeWidth="1.2" strokeLinecap="round"/>
+                        </svg>
+                        <span style={pjs(12, 500, '16px', '#0f172a')}>{item.label}</span>
+                      </div>
+                      <span style={pjs(12, 700, '16px', item.valC)}>{item.val}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Book button */}
+            <div style={{ padding: '16px 20px', borderTop: '1px solid #f1f5f9' }}>
+              <button style={{
+                width: '100%', padding: '14px 0',
+                background: '#4f46e5', borderRadius: 14, border: 'none',
+                cursor: 'pointer', ...pjs(14, 700, '18px', '#ffffff'),
+                transition: 'background 0.2s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = '#4338ca'}
+              onMouseLeave={e => e.currentTarget.style.background = '#4f46e5'}
+              >
+                Book Slot for Tomorrow
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </PageLayout>
   )

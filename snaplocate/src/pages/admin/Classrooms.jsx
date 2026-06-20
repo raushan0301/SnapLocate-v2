@@ -225,6 +225,15 @@ export default function ManageClassrooms() {
       )
     },
     { key: 'block', label: 'Block' },
+    { 
+      key: 'classcode', 
+      label: 'Code',
+      render: (row) => (
+        <span style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>
+          {row.classcode || row.classCode || '—'}
+        </span>
+      )
+    },
     { key: 'capacity', label: 'Capacity' },
     { 
       key: 'type', 
