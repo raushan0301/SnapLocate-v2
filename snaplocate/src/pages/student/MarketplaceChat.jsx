@@ -291,7 +291,7 @@ export default function MarketplaceChat() {
   return (
     <PageLayout>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        .mc-input { font-family: 'Plus Jakarta Sans', sans-serif; }
         @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
       `}</style>

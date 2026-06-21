@@ -221,7 +221,7 @@ export default function CreateListing() {
   return (
     <PageLayout>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        .mc-input { font-family: 'Plus Jakarta Sans', sans-serif; }
         @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
         .cl-input:focus { border-color: #6366f1 !important; }
       `}</style>

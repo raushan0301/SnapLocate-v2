@@ -12,7 +12,7 @@ const inter = (size, weight, lh, color) => ({
 })
 
 /* ─── Category tabs ──────────────────────────────────────────── */
-const TABS = ['All Societies', 'Technical', 'Non-Technical', 'Academic', 'Cultural', 'Sports']
+/* Removed */
 
 /* ─── Society data ───────────────────────────────────────────── */
 
@@ -123,9 +123,7 @@ function SocietyCard({ s }) {
    Society Page
 ═══════════════════════════════════════════════════════════════ */
 export default function SocietyPage() {
-  const [activeTab, setActiveTab] = useState('All Societies')
   const [searchQuery, setSearchQuery] = useState('')
-  const [page, setPage] = useState(1)
   const [dbSocieties, setDbSocieties] = useState(null)
   const [loading, setLoading] = useState(true)
   const [collapsedSections, setCollapsedSections] = useState({})
@@ -188,14 +186,7 @@ export default function SocietyPage() {
     }))
   }
 
-  // Filter displayGroups based on activeTab
-  if (activeTab !== 'All Societies') {
-    displayGroups = displayGroups.filter(g => {
-      if (g.section === activeTab) return true;
-      if (activeTab === 'Technical' && g.section.includes('Non-Technical')) return false;
-      return g.section.includes(activeTab);
-    })
-  }
+  // Category filtering removed in favor of accordion headers
 
   // Filter based on searchQuery
   if (searchQuery.trim()) {
@@ -214,37 +205,7 @@ export default function SocietyPage() {
     }).filter(g => g.societies.length > 0)
   }
 
-  // Handle Pagination
-  const ITEMS_PER_PAGE = 5;
-  let allFilteredSocieties = [];
-  displayGroups.forEach(g => {
-    g.societies.forEach(s => {
-      allFilteredSocieties.push({
-        ...s,
-        _groupData: { section: g.section, icon: g.icon, iconColor: g.iconColor }
-      })
-    })
-  });
-
-  const totalItems = allFilteredSocieties.length;
-  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
-  const currentPage = Math.min(page, totalPages);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedItems = allFilteredSocieties.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
-  const paginatedGroupsMap = {};
-  paginatedItems.forEach(s => {
-    const sec = s._groupData.section;
-    if (!paginatedGroupsMap[sec]) {
-      paginatedGroupsMap[sec] = { ...s._groupData, societies: [] }
-    }
-    paginatedGroupsMap[sec].societies.push(s);
-  });
-
-  const finalDisplayGroups = Object.values(paginatedGroupsMap).map(g => ({
-    ...g,
-    count: `${g.societies.length} on this page`
-  }));
+  const finalDisplayGroups = displayGroups;
 
   return (
     <PageLayout>
@@ -274,24 +235,7 @@ export default function SocietyPage() {
         </div>
       </div>
 
-      {/* ── Category tabs ──────────────────────────────────── */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-        {TABS.map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{
-              padding: '8px 18px', borderRadius: 24, cursor: 'pointer',
-              border: activeTab === tab ? 'none' : '1.5px solid #e2e8f0',
-              background: activeTab === tab ? '#4f46e5' : '#ffffff',
-              ...pjs(13, activeTab === tab ? 700 : 500, '18px', activeTab === tab ? '#ffffff' : '#64748b'),
-              transition: 'all 0.15s',
-            }}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+
 
       {/* ── Society sections ───────────────────────────────── */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 28, opacity: loading ? 0.6 : 1, transition: 'opacity .2s' }}>
@@ -346,46 +290,7 @@ export default function SocietyPage() {
         )}
       </div>
 
-      {/* ── Pagination ─────────────────────────────────────── */}
-      {totalItems > 0 && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 4 }}>
-          <span style={pjs(13, 400, '18px', '#64748b')}>
-            Showing {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, totalItems)} of {totalItems} Societies
-          </span>
-          {totalPages > 1 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid #e2e8f0', background: '#ffffff', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', opacity: currentPage === 1 ? 0.5 : 1, ...pjs(12, 600, '16px', '#64748b') }}
-              >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="#64748b" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                Previous
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
-                <button
-                  key={n}
-                  onClick={() => setPage(n)}
-                  style={{
-                    width: 36, height: 36, borderRadius: 10, cursor: 'pointer',
-                    background: currentPage === n ? '#4f46e5' : '#ffffff',
-                    ...pjs(13, 700, '18px', currentPage === n ? '#ffffff' : '#64748b'),
-                    border: currentPage === n ? 'none' : '1px solid #e2e8f0',
-                  }}
-                >{n}</button>
-              ))}
-              <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid #e2e8f0', background: '#ffffff', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', opacity: currentPage === totalPages ? 0.5 : 1, ...pjs(12, 600, '16px', '#64748b') }}
-              >
-                Next
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="#64748b" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+
 
     </PageLayout>
   )

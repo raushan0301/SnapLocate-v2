@@ -131,7 +131,7 @@ export default function EditListing() {
 
   return (
     <PageLayout>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap'); @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}`}</style>
+      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}`}</style>
       <div style={{ width: '100%', maxWidth: '100%', padding: '0 24px', margin: '0 auto', fontFamily: FONT, boxSizing: 'border-box' }}>
         <button onClick={() => navigate(-1)} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT, fontWeight: 600, fontSize: 14, color: '#6366f1', marginBottom: 28, padding: 0 }}>
           <ArrowLeft size={18} /> Back

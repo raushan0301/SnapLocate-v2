@@ -288,7 +288,7 @@ export default function MarketplacePage() {
   return (
     <PageLayout>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        .mkt-cat-btn:hover { transform: translateY(-2px) !important; }
         .mkt-cat-btn:hover { transform: translateY(-2px) !important; }
         .mkt-sort-select { appearance: none; }
         @keyframes mkt-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
@@ -297,67 +297,66 @@ export default function MarketplacePage() {
 
       <div style={{ width: '100%', maxWidth: '100%', padding: '0 24px', boxSizing: 'border-box', fontFamily: FONT }}>
 
-        {/* ─── Hero header ─── */}
+        {/* ─── Premium header ─── */}
         <div style={{
-          background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%)',
-          borderRadius: 28, padding: '36px 40px', marginBottom: 36,
-          position: 'relative', overflow: 'hidden',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+          padding: '20px 28px', borderRadius: 24,
+          boxShadow: '0 10px 30px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9',
+          gap: 24, flexWrap: 'wrap', marginBottom: 20
         }}>
-          <div style={{ position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
-          <div style={{ position: 'absolute', bottom: -60, left: -20, width: 280, height: 280, borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
-
-          <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20 }}>
-            <div>
-              <h1 style={{ fontFamily: FONT, fontWeight: 800, fontSize: 30, color: '#fff', margin: 0, letterSpacing: '-0.5px' }}>
-                Campus Marketplace
-              </h1>
-              <p style={{ fontFamily: FONT, fontSize: 15, color: 'rgba(255,255,255,0.75)', margin: '6px 0 0' }}>
-                Buy & sell within your university — {total} active listings
-              </p>
-            </div>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button onClick={() => navigate('/marketplace/chat')} style={{
-                padding: '10px 20px', borderRadius: 14, background: 'rgba(255,255,255,0.15)',
-                border: '1px solid rgba(255,255,255,0.25)', color: '#fff', fontFamily: FONT,
-                fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-                backdropFilter: 'blur(4px)',
-              }}>
-                <MessageCircle size={16} /> My Chats
-              </button>
-              <button onClick={() => navigate('/marketplace/dashboard')} style={{
-                padding: '10px 20px', borderRadius: 14, background: 'rgba(255,255,255,0.15)',
-                border: '1px solid rgba(255,255,255,0.25)', color: '#fff', fontFamily: FONT,
-                fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-              }}>
-                <Bookmark size={16} /> My Listings
-              </button>
-              <button onClick={() => navigate('/marketplace/create')} style={{
-                padding: '10px 22px', borderRadius: 14, background: '#fff',
-                border: 'none', color: '#6366f1', fontFamily: FONT,
-                fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-                boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
-              }}>
-                <Plus size={16} /> Sell Item
-              </button>
-            </div>
+          <div>
+            <h1 style={{ fontFamily: FONT, fontWeight: 800, fontSize: 30, color: '#0f172a', margin: 0, letterSpacing: '-0.5px' }}>
+              Campus Marketplace
+            </h1>
+            <p style={{ fontFamily: FONT, fontSize: 15, color: '#64748b', margin: '6px 0 0' }}>
+              Buy & sell within your university — {total} active listings
+            </p>
           </div>
-
-          {/* Search bar */}
-          <div style={{ position: 'relative', marginTop: 24, maxWidth: 560 }}>
-            <Search size={18} color="rgba(255,255,255,0.7)"
-              style={{ position: 'absolute', left: 18, top: '50%', transform: 'translateY(-50%)' }} />
-            <input
-              type="text" placeholder="Search for textbooks, electronics, bikes..."
-              value={search} onChange={e => setSearch(e.target.value)}
-              style={{
-                width: '100%', padding: '14px 16px 14px 50px', borderRadius: 16,
-                border: '1.5px solid rgba(255,255,255,0.3)', outline: 'none',
-                background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)',
-                fontFamily: FONT, fontSize: 15, color: '#fff',
-                boxSizing: 'border-box',
-              }}
-            />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button onClick={() => navigate('/marketplace/chat')} style={{
+              padding: '10px 20px', borderRadius: 14, background: '#fff',
+              border: '1px solid #e2e8f0', color: '#0f172a', fontFamily: FONT,
+              fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+            }}>
+              <MessageCircle size={16} /> My Chats
+            </button>
+            <button onClick={() => navigate('/marketplace/dashboard')} style={{
+              padding: '10px 20px', borderRadius: 14, background: '#fff',
+              border: '1px solid #e2e8f0', color: '#0f172a', fontFamily: FONT,
+              fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+            }}>
+              <Bookmark size={16} /> My Listings
+            </button>
+            <button onClick={() => navigate('/marketplace/create')} style={{
+              padding: '10px 22px', borderRadius: 14, background: '#4f46e5',
+              border: 'none', color: '#fff', fontFamily: FONT,
+              fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+              boxShadow: '0 8px 20px rgba(79, 70, 229, 0.25)',
+            }}>
+              <Plus size={16} /> Sell Item
+            </button>
           </div>
+        </div>
+
+        {/* Search bar */}
+        <div style={{ position: 'relative', marginBottom: 24, maxWidth: 400 }}>
+          <Search size={15} color="#94a3b8"
+            style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} />
+          <input
+            type="text" placeholder="Search for textbooks, electronics, bikes..."
+            value={search} onChange={e => setSearch(e.target.value)}
+            style={{
+              width: '100%', padding: '12px 16px 12px 42px', borderRadius: 14,
+              border: '1px solid #e2e8f0', outline: 'none',
+              background: '#ffffff',
+              fontFamily: FONT, fontSize: 14, color: '#0f172a', lineHeight: '20px',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+              boxSizing: 'border-box',
+            }}
+          />
         </div>
 
         {/* ─── Category filter bar ─── */}
