@@ -180,73 +180,105 @@ export default function ProfessorsPage() {
 
   return (
     <PageLayout>
-      {/* Page title */}
-      <div style={{ marginBottom:4 }}>
-        <h1 style={pjs(26, 700, '34px', '#0f172a')}>Faculty Directory</h1>
-        <p style={{ ...pjs(14, 400, '20px', '#64748b'), marginTop:4 }}>Discover and connect with your professors</p>
+      {/* Page title & Search */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 28 }}>
+        <div>
+          <h1 style={pjs(26, 700, '34px', '#0f172a')}>Faculty Directory</h1>
+          <p style={{ ...pjs(14, 400, '20px', '#64748b'), marginTop: 4 }}>Discover and connect with your professors</p>
+        </div>
+
+        <div style={{ position: 'relative', flex: '1 1 300px', maxWidth: 400 }}>
+          <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <circle cx="6.5" cy="6.5" r="5.5" stroke="#94a3b8" strokeWidth="1.3"/>
+            <path d="M11 11l3 3" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round"/>
+          </svg>
+          <input
+            placeholder="Search by name or teacher code..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{
+              width: '100%', padding: '12px 16px 12px 42px',
+              background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14,
+              ...pjs(14, 400, '20px', '#0f172a'), outline: 'none',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+              boxSizing: 'border-box',
+            }}
+          />
+        </div>
       </div>
 
-      {/* Search + filters */}
-      <div style={{ background:'#fff', border:'1px solid #f1f5f9', borderRadius:16, padding:'18px 20px', display:'flex', gap:14, alignItems:'center', boxShadow:'0 1px 4px rgba(0,0,0,0.04)' }}>
-        <div style={{ flex:1 }}>
-          <div style={{ ...pjs(10, 600, '14px', '#94a3b8'), letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:6 }}>Search Faculty</div>
-          <div style={{ position:'relative' }}>
-            <svg style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)' }} width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <circle cx="6" cy="6" r="5" stroke="#94a3b8" strokeWidth="1.3"/>
-              <path d="M10 10l2.5 2.5" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round"/>
-            </svg>
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search by name or teacher code..."
-              style={{ width:'100%', padding:'10px 14px 10px 34px', background:'#f8fafc', border:'1px solid #f1f5f9', borderRadius:12, ...pjs(13, 400, '18px', '#0f172a'), outline:'none', boxSizing:'border-box' }}
-            />
+      {/* Main Content Area matching Classroom gaps */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {/* Filter Bar */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* Department buttons instead of dropdown to match Classroom */}
+            {depts.slice(0, 5).map(d => (
+              <button
+                key={d}
+                onClick={() => setDept(d)}
+                style={{
+                  padding: '8px 18px', borderRadius: 24,
+                  border: dept === d ? 'none' : '1.5px solid #e2e8f0',
+                  background: dept === d ? '#4f46e5' : '#ffffff',
+                  ...pjs(13, dept === d ? 700 : 500, '18px', dept === d ? '#ffffff' : '#64748b'),
+                  cursor: 'pointer', transition: 'all 0.15s',
+                }}
+              >
+                {d === 'All Departments' ? 'All Depts' : d}
+              </button>
+            ))}
+            {/* Add a dropdown for the rest if there are more than 5 to save space, or just use a small dropdown for department if preferred.
+                Since Classroom used buttons, let's keep the most popular ones as buttons. */}
+            {depts.length > 5 && (
+              <div style={{ position: 'relative' }}>
+                <select
+                  value={dept}
+                  onChange={e => setDept(e.target.value)}
+                  style={{
+                    ...pjs(13, 500, '18px', '#64748b'),
+                    background: '#ffffff', border: '1.5px solid #e2e8f0',
+                    borderRadius: 24, padding: '8px 32px 8px 16px',
+                    outline: 'none', cursor: 'pointer',
+                    appearance: 'none',
+                    backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3Csvg width=\\\'10\\\' height=\\\'6\\\' viewBox=\\\'0 0 10 6\\\' fill=\\\'none\\\' xmlns=\\\'http://www.w3.org/2000/svg\\\'%3E%3Cpath d=\\\'M1 1L5 5L9 1\\\' stroke=\\\'%2364748b\\\' stroke-width=\\\'1.3\\\' stroke-linecap=\\\'round\\\' stroke-linejoin=\\\'round\\\'/%3E%3C/svg%3E")',
+                    backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center'
+                  }}
+                >
+                  {depts.slice(5).map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <span style={pjs(13, 400, '18px', '#64748b')}>Sort:</span>
+            <select
+              value={sort}
+              onChange={e => setSort(e.target.value)}
+              style={{
+                ...pjs(13, 600, '18px', '#0f172a'),
+                background: '#ffffff', border: '1px solid #e2e8f0',
+                borderRadius: 10, padding: '7px 12px',
+                outline: 'none', cursor: 'pointer',
+                appearance: 'none', paddingRight: '28px',
+                backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3Csvg width=\\\'10\\\' height=\\\'6\\\' viewBox=\\\'0 0 10 6\\\' fill=\\\'none\\\' xmlns=\\\'http://www.w3.org/2000/svg\\\'%3E%3Cpath d=\\\'M1 1L5 5L9 1\\\' stroke=\\\'%2364748b\\\' stroke-width=\\\'1.3\\\' stroke-linecap=\\\'round\\\' stroke-linejoin=\\\'round\\\'/%3E%3C/svg%3E")',
+                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center'
+              }}>
+              {sortOps.map(op => <option key={op} value={op}>{op}</option>)}
+            </select>
           </div>
         </div>
 
-        <div style={{ width:180 }}>
-          <div style={{ ...pjs(10, 600, '14px', '#94a3b8'), letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:6 }}>Department</div>
-          <Dropdown options={depts} value={dept} onChange={setDept} />
-        </div>
+        {/* Error state */}
+        {error && (
+          <div style={{ background:'#fef2f2', border:'1px solid #fca5a5', borderRadius:12, padding:'16px 20px', ...pjs(14, 500, '20px', '#991b1b') }}>
+            ⚠️ Could not load faculty: {error}
+          </div>
+        )}
 
-        <div style={{ paddingTop:20 }}>
-          <button
-            style={{ width:44, height:44, borderRadius:12, background:'#4f46e5', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}
-            onMouseEnter={e => e.currentTarget.style.background='#4338ca'}
-            onMouseLeave={e => e.currentTarget.style.background='#4f46e5'}
-            onClick={() => { setSearch(''); setDept(depts[0]) }}
-            title="Reset filters"
-          >
-            <svg width="18" height="14" viewBox="0 0 18 14" fill="none">
-              <path d="M1 1h16M3 7h12M6 13h6" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {/* Results header */}
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <span style={pjs(16, 700, '22px', '#0f172a')}>All Professors</span>
-          <span style={{ ...pjs(13, 500, '18px', '#64748b'), background:'#f1f5f9', borderRadius:8, padding:'2px 10px' }}>
-            {loading ? '…' : `${filtered.length} Found`}
-          </span>
-        </div>
-        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <span style={pjs(13, 400, '18px', '#64748b')}>Sort by:</span>
-          <Dropdown options={sortOps} value={sort} onChange={setSort} />
-        </div>
-      </div>
-
-      {/* Error state */}
-      {error && (
-        <div style={{ background:'#fef2f2', border:'1px solid #fca5a5', borderRadius:12, padding:'16px 20px', ...pjs(14, 500, '20px', '#991b1b') }}>
-          ⚠️ Could not load faculty: {error}
-        </div>
-      )}
-
-      {/* Grid */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:16 }}>
+        {/* Grid */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:16 }}>
         {loading
           ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
           : filtered.length === 0
@@ -269,6 +301,7 @@ export default function ProfessorsPage() {
             />
           ))
         }
+      </div>
       </div>
 
       {/* CSS for skeleton animation */}

@@ -33,17 +33,38 @@ export const api = {
   put:  (path, body) => request(path, { method: 'PUT',   body: JSON.stringify(body) }),
   patch:(path, body) => request(path, { method: 'PATCH', body: JSON.stringify(body) }),
   delete:(path)      => request(path, { method: 'DELETE' }),
-  upload: async (path, formData) => {
-    const token = getToken()
-    const headers = { ...(token ? { Authorization: `Bearer ${token}` } : {}) }
-    const res = await fetch(`${API_URL}${path}`, { method: 'POST', headers, body: formData })
-    const text = await res.text()
-    let data
-    try { data = JSON.parse(text) } catch {
-      throw new Error(`Upload failed (${res.status}): unexpected server response`)
-    }
-    if (!res.ok || !data.success) throw new Error(data.error || data.message || `Upload failed (${res.status})`)
-    return data
+  upload: (path, formData, onProgress) => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      xhr.open('POST', `${API_URL}${path}`)
+      
+      const token = getToken()
+      if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+
+      if (onProgress && xhr.upload) {
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 100)
+            onProgress(percent)
+          }
+        })
+      }
+
+      xhr.onload = () => {
+        let data
+        try { data = JSON.parse(xhr.responseText) } catch {
+          return reject(new Error(`Upload failed (${xhr.status}): unexpected server response`))
+        }
+        if (xhr.status >= 200 && xhr.status < 300 && data.success) {
+          resolve(data)
+        } else {
+          reject(new Error(data.error || data.message || `Upload failed (${xhr.status})`))
+        }
+      }
+
+      xhr.onerror = () => reject(new Error('Network error during upload'))
+      xhr.send(formData)
+    })
   },
   // Genuine view: sends X-View-Session header only on first visit per session
   view: async (path, listingId) => {

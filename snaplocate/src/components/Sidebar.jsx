@@ -36,102 +36,102 @@ import {
 } from 'lucide-react'
 
 const studentNav = [
-  { label: 'Dashboard',      path: '/dashboard',      icon: LayoutDashboard },
-  { label: 'Professor',      path: '/professors',     icon: Users },
-  { label: 'My Requests',    path: '/requests',       icon: ClipboardList },
-  { label: 'Classroom',      path: '/classroom',      icon: DoorOpen },
-  { label: 'Resources',      path: '/resources',      icon: FileStack },
-  { label: 'Work-Space',     path: '/workspace',      icon: Briefcase },
-  { label: 'Calendar',       path: '/calendar',       icon: CalendarDays },
-  { label: 'Market-Place',   path: '/marketplace',    icon: ShoppingCart },
-  { label: 'Lost & Found',   path: '/lost-found',     icon: Search },
-  { label: 'Society',        path: '/society',        icon: Users2 },
-  { label: 'Shops',          path: '/shops',          icon: Store },
-  { label: 'Wi-Fi',          path: '/wifi',           icon: Wifi },
+  { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { label: 'Professor', path: '/professors', icon: Users },
+  { label: 'My Requests', path: '/requests', icon: ClipboardList },
+  { label: 'Classroom', path: '/classroom', icon: DoorOpen },
+  { label: 'Resources', path: '/resources', icon: FileStack },
+  { label: 'Work-Space', path: '/workspace', icon: Briefcase },
+  { label: 'Calendar', path: '/calendar', icon: CalendarDays },
+  { label: 'Market-Place', path: '/marketplace', icon: ShoppingCart },
+  { label: 'Lost & Found', path: '/lost-found', icon: Search },
+  { label: 'Society', path: '/society', icon: Users2 },
+  { label: 'Shops', path: '/shops', icon: Store },
+  { label: 'Wi-Fi', path: '/wifi', icon: Wifi },
   { label: 'Campus-Support', path: '/campus-support', icon: LifeBuoy },
 
   // ── My Courses ───────────────────────────────
-  { section: 'My Courses' },
-  { label: 'LMS',              path: '/lms',                        icon: BookOpen },
-  { label: 'Assignments',      path: '/lms/native/assignments',     icon: ClipboardList },
-  { label: 'Grades',           path: '/lms/native/grades',          icon: BarChart2 },
-  { label: 'Attendance',       path: '/lms/native/attendance',      icon: CalendarCheck },
-  { label: 'PYQ Library',      path: '/lms/native/pyq',             icon: FolderOpen },
+  //{ section: 'My Courses' },
+  //{ label: 'LMS',              path: '/lms',                        icon: BookOpen },
+  //{ label: 'Assignments',      path: '/lms/native/assignments',     icon: ClipboardList },
+  //{ label: 'Grades',           path: '/lms/native/grades',          icon: BarChart2 },
+  //{ label: 'Attendance',       path: '/lms/native/attendance',      icon: CalendarCheck },
+  //{ label: 'PYQ Library',      path: '/lms/native/pyq',             icon: FolderOpen },
 ]
 
 const facultyNav = [
   // ── Overview ─────────────────────────────────
   { section: 'Overview' },
-  { label: 'Dashboard',      path: '/faculty/dashboard',    icon: LayoutDashboard },
+  { label: 'Dashboard', path: '/faculty/dashboard', icon: LayoutDashboard },
 
   // ── Teaching ─────────────────────────────────
   { section: 'Teaching' },
-  { label: 'My Profile',     path: '/faculty/profile',      icon: IdCard },
-  { label: 'Office Hours',   path: '/faculty/office-hours', icon: Clock },
-  { label: 'Student Req',    path: '/faculty/requests',     icon: Inbox },
-  { label: 'My Students',    path: '/faculty/students',     icon: GraduationCap },
-  { label: 'LMS Courses',           path: '/faculty/lms',                      icon: BookOpen },
-  { label: 'Native Attendance',     path: '/faculty/lms/native/attendance',    icon: CalendarCheck },
-  { label: 'Native Assignments',    path: '/faculty/lms/native/assignments',   icon: ClipboardList },
-  { label: 'Native Quizzes',        path: '/faculty/lms/native/quizzes',       icon: FileQuestion },
-  { label: 'PYQ Library',           path: '/lms/native/pyq',                   icon: FolderOpen },
+  { label: 'My Profile', path: '/faculty/profile', icon: IdCard },
+  { label: 'Office Hours', path: '/faculty/office-hours', icon: Clock },
+  { label: 'Student Req', path: '/faculty/requests', icon: Inbox },
+  // { label: 'My Students',    path: '/faculty/students',     icon: GraduationCap },
+  //{ label: 'LMS Courses',           path: '/faculty/lms',                      icon: BookOpen },
+  //{ label: 'Native Attendance',     path: '/faculty/lms/native/attendance',    icon: CalendarCheck },
+  //{ label: 'Native Assignments',    path: '/faculty/lms/native/assignments',   icon: ClipboardList },
+  //{ label: 'Native Quizzes',        path: '/faculty/lms/native/quizzes',       icon: FileQuestion },
+  //{ label: 'PYQ Library',           path: '/lms/native/pyq',                   icon: FolderOpen },
 
   // ── Campus ───────────────────────────────────
   { section: 'Campus' },
-  { label: 'Professors',     path: '/professors',           icon: Users },
-  { label: 'Classroom',      path: '/classroom',            icon: DoorOpen },
-  { label: 'Resources',      path: '/resources',            icon: FileStack },
-  { label: 'My Workspace',   path: '/faculty/workspace',    icon: Briefcase },
-  { label: 'Calendar',       path: '/faculty/calendar',     icon: CalendarDays },
-  { label: 'Market-Place',   path: '/marketplace',          icon: ShoppingCart },
-  { label: 'Lost & Found',   path: '/lost-found',           icon: Search },
-  { label: 'Society',        path: '/society',              icon: Users2 },
-  { label: 'Shops',          path: '/shops',                icon: Store },
-  { label: 'Wi-Fi',          path: '/wifi',                 icon: Wifi },
-  { label: 'Campus-Support', path: '/campus-support',       icon: LifeBuoy },
+  { label: 'Professors', path: '/professors', icon: Users },
+  { label: 'Classroom', path: '/classroom', icon: DoorOpen },
+  { label: 'Resources', path: '/resources', icon: FileStack },
+  { label: 'My Workspace', path: '/faculty/workspace', icon: Briefcase },
+  { label: 'Calendar', path: '/faculty/calendar', icon: CalendarDays },
+  { label: 'Market-Place', path: '/marketplace', icon: ShoppingCart },
+  { label: 'Lost & Found', path: '/lost-found', icon: Search },
+  { label: 'Society', path: '/society', icon: Users2 },
+  { label: 'Shops', path: '/shops', icon: Store },
+  { label: 'Wi-Fi', path: '/wifi', icon: Wifi },
+  { label: 'Campus-Support', path: '/campus-support', icon: LifeBuoy },
 
 ]
 
 const adminNav = [
   // ── Overview ─────────────────────────────────
   { section: 'Overview' },
-  { label: 'Admin Dashboard',  path: '/admin/dashboard',        icon: ShieldCheck },
+  { label: 'Admin Dashboard', path: '/admin/dashboard', icon: ShieldCheck },
 
   // ── People ───────────────────────────────────
   { section: 'People' },
-  { label: 'Manage Faculty',   path: '/admin/faculty',          icon: Users },
-  { label: 'Manage Students',  path: '/admin/students',         icon: GraduationCap },
+  { label: 'Manage Faculty', path: '/admin/faculty', icon: Users },
+  { label: 'Manage Students', path: '/admin/students', icon: GraduationCap },
 
   // ── Campus ───────────────────────────────────
   { section: 'Campus' },
-  { label: 'Classrooms',       path: '/admin/classrooms',       icon: Map },
-  { label: 'Calendar',         path: '/admin/calendar',         icon: CalendarDays },
-  { label: 'Shops',            path: '/admin/shops',            icon: Store },
-  { label: 'Societies',        path: '/admin/societies',        icon: Users2 },
-  { label: 'Wi-Fi Hub',        path: '/admin/wifi',             icon: Router },
+  { label: 'Classrooms', path: '/admin/classrooms', icon: Map },
+  { label: 'Calendar', path: '/admin/calendar', icon: CalendarDays },
+  { label: 'Shops', path: '/admin/shops', icon: Store },
+  { label: 'Societies', path: '/admin/societies', icon: Users2 },
+  { label: 'Wi-Fi Hub', path: '/admin/wifi', icon: Router },
 
   // ── Moderation ───────────────────────────────
   { section: 'Moderation' },
-  { label: 'Marketplace',      path: '/admin/marketplace',      icon: ShoppingBag },
-  { label: 'Lost & Found',     path: '/admin/lost-found',       icon: PackageSearch },
-  { label: 'Resources',        path: '/admin/resources',        icon: FileStack },
-  { label: 'Requests',         path: '/admin/requests',         icon: ClipboardList },
+  { label: 'Marketplace', path: '/admin/marketplace', icon: ShoppingBag },
+  { label: 'Lost & Found', path: '/admin/lost-found', icon: PackageSearch },
+  { label: 'Resources', path: '/admin/resources', icon: FileStack },
+  { label: 'Requests', path: '/admin/requests', icon: ClipboardList },
 
   // ── Support ──────────────────────────────────
   { section: 'Support' },
-  { label: 'Support Tickets',  path: '/admin/support',          icon: MessageSquare },
+  { label: 'Support Tickets', path: '/admin/support', icon: MessageSquare },
   { label: 'Support Contacts', path: '/admin/support-contacts', icon: Contact },
-  { label: 'Broadcast',        path: '/admin/broadcast',        icon: Megaphone },
+  { label: 'Broadcast', path: '/admin/broadcast', icon: Megaphone },
 
   // ── LMS & Academic ───────────────────────────
   { section: 'LMS & Academic' },
-  { label: 'Courses (Moodle)', path: '/admin/lms/courses',    icon: BookOpen },
-  { label: 'LMS Structure',    path: '/admin/lms/structure',  icon: LayoutDashboard },
-  { label: 'Bulk Upload',      path: '/admin/lms/bulk',       icon: Upload },
+  { label: 'Courses (Moodle)', path: '/admin/lms/courses', icon: BookOpen },
+  { label: 'LMS Structure', path: '/admin/lms/structure', icon: LayoutDashboard },
+  { label: 'Bulk Upload', path: '/admin/lms/bulk', icon: Upload },
 
   // ── System ───────────────────────────────────
   { section: 'System' },
-  { label: 'Audit Log',        path: '/admin/audit-log',        icon: ScrollText },
+  { label: 'Audit Log', path: '/admin/audit-log', icon: ScrollText },
 ]
 
 
@@ -149,8 +149,8 @@ function NavRow({ label, path, icon: Icon }) {
           onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#f1f5f9' }}
           onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
         >
-          <span style={{ 
-            width: 20, height: 20, 
+          <span style={{
+            width: 20, height: 20,
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
             color: isActive ? '#4f46e5' : '#64748b'
           }}>
@@ -170,7 +170,7 @@ function NavRow({ label, path, icon: Icon }) {
 }
 
 export default function Sidebar({ isOpen, onClose }) {
-  const navigate   = useNavigate()
+  const navigate = useNavigate()
   const { user, logout } = useAuth()
 
   const handleLogout = () => {
@@ -182,7 +182,7 @@ export default function Sidebar({ isOpen, onClose }) {
     <>
       {/* Mobile Overlay */}
       {isOpen && (
-        <div 
+        <div
           className="mobile-overlay"
           onClick={onClose}
           style={{
@@ -193,7 +193,7 @@ export default function Sidebar({ isOpen, onClose }) {
         />
       )}
 
-      <aside 
+      <aside
         className={`sidebar ${isOpen ? 'open' : ''}`}
         style={{
           width: 240,

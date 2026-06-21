@@ -33,27 +33,27 @@
   --accent-indigo: #4f46e5;
 
   /* Sidebar / Header */
-  --sidebar-bg: rgba(255,255,255,0.75);
-  --sidebar-border: rgba(255,255,255,0.5);
-  --header-bg: rgba(255,255,255,0.75);
-  --header-border: rgba(255,255,255,0.5);
+  --sidebar-bg: rgba(255, 255, 255, 0.75);
+  --sidebar-border: rgba(255, 255, 255, 0.5);
+  --header-bg: rgba(255, 255, 255, 0.75);
+  --header-border: rgba(255, 255, 255, 0.5);
 
   /* Typography */
-  --font-xs:   12px;
-  --font-sm:   14px;
+  --font-xs: 12px;
+  --font-sm: 14px;
   --font-base: 16px;
-  --font-lg:   17px;
-  --font-xl:   18px;
-  --font-2xl:  20px;
-  --font-3xl:  24px;
-  --font-4xl:  30px;
-  --font-5xl:  48px;
+  --font-lg: 17px;
+  --font-xl: 18px;
+  --font-2xl: 20px;
+  --font-3xl: 24px;
+  --font-4xl: 30px;
+  --font-5xl: 48px;
 
-  --lh-xs:  15px;
-  --lh-sm:  16px;
-  --lh-md:  17px;
-  --lh-lg:  18px;
-  --lh-xl:  20px;
+  --lh-xs: 15px;
+  --lh-sm: 16px;
+  --lh-md: 17px;
+  --lh-lg: 18px;
+  --lh-xl: 20px;
   --lh-2xl: 21px;
   --lh-3xl: 23px;
   --lh-4xl: 26px;
@@ -62,28 +62,28 @@
   --lh-7xl: 61px;
 
   /* Spacing */
-  --sp-xs:    4px;
-  --sp-sm:    6px;
-  --sp-md:    8px;
-  --sp-lg:   10px;
-  --sp-xl:   12px;
-  --sp-2xl:  14px;
-  --sp-3xl:  16px;
-  --sp-4xl:  18px;
-  --sp-5xl:  20px;
-  --sp-6xl:  22px;
-  --sp-7xl:  24px;
-  --sp-8xl:  26px;
-  --sp-9xl:  28px;
+  --sp-xs: 4px;
+  --sp-sm: 6px;
+  --sp-md: 8px;
+  --sp-lg: 10px;
+  --sp-xl: 12px;
+  --sp-2xl: 14px;
+  --sp-3xl: 16px;
+  --sp-4xl: 18px;
+  --sp-5xl: 20px;
+  --sp-6xl: 22px;
+  --sp-7xl: 24px;
+  --sp-8xl: 26px;
+  --sp-9xl: 28px;
   --sp-10xl: 32px;
   --sp-13xl: 64px;
 
   /* Radius */
-  --r-xs:  3px;
-  --r-sm:  4px;
-  --r-md:  6px;
-  --r-lg:  8px;
-  --r-xl:  12px;
+  --r-xs: 3px;
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --r-xl: 12px;
   --r-2xl: 16px;
   --r-3xl: 18px;
   --r-4xl: 20px;
@@ -94,9 +94,44 @@
   --content-w: 78%;
 }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+[data-theme='dark'] {
+  /* Backgrounds */
+  --bg-main: #0f172a;
+  --bg-card: #1e293b;
+  --bg-muted: #334155;
+  --bg-light: #312e81;
+  /* primary-dark-ish */
+  --bg-subtle: rgba(255, 255, 255, 0.05);
 
-html, body, #root {
+  /* Text */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #cbd5e1;
+  --text-accent: #818cf8;
+
+  /* Borders */
+  --border-primary: #334155;
+  --border-light: #1e293b;
+  --border-accent: #4f46e5;
+
+  /* Sidebar / Header */
+  --sidebar-bg: rgba(30, 41, 59, 0.75);
+  --sidebar-border: rgba(30, 41, 59, 0.5);
+  --header-bg: rgba(30, 41, 59, 0.75);
+  --header-border: rgba(30, 41, 59, 0.5);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
   height: 100%;
   width: 100%;
 }
@@ -111,35 +146,53 @@ body {
 }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 99px; }
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 99px;
+}
 
 /* ── Moodle HTML Content Restore ── */
 /* Tailwind globally wipes out ol, ul, p styling. We must restore it for Moodle data. */
 .moodle-html-content p {
   margin-bottom: 1rem;
 }
+
 .moodle-html-content ul {
   list-style-type: disc;
   margin-left: 1.5rem;
   margin-bottom: 1rem;
 }
+
 .moodle-html-content ol {
   list-style-type: decimal;
   margin-left: 1.5rem;
   margin-bottom: 1rem;
 }
+
 .moodle-html-content li {
   margin-bottom: 0.25rem;
 }
+
 .moodle-html-content a {
   color: var(--primary-bg);
   text-decoration: underline;
 }
-.moodle-html-content b, .moodle-html-content strong {
+
+.moodle-html-content b,
+.moodle-html-content strong {
   font-weight: 700;
 }
-.moodle-html-content i, .moodle-html-content em {
+
+.moodle-html-content i,
+.moodle-html-content em {
   font-style: italic;
 }

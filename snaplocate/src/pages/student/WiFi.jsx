@@ -80,10 +80,10 @@ export default function WiFiPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 28, width: '100%', paddingBottom: 60 }}>
 
         {/* ── Page header ──────────────────────────────────── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-          <div style={{ flex: '1 1 300px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 28 }}>
+          <div>
             <h1 style={pjs(26, 700, '34px', '#0f172a')}>Wi-Fi Access Hub</h1>
-            <p style={{ ...pjs(14, 400, '22px', '#64748b'), marginTop: 4 }}>
+            <p style={{ ...pjs(14, 400, '20px', '#64748b'), marginTop: 4 }}>
               Secure connectivity for all campus areas.
             </p>
           </div>

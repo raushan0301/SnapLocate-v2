@@ -56,6 +56,19 @@ router.post('/image', authenticate, (req, res) => {
 router.post('/workspace', authenticate, uploadAny.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' })
 
+  // Check 20MB total storage limit per user
+  const MAX_LIMIT_BYTES = 20 * 1024 * 1024; // 20 MB
+  const tableName = req.user.role === 'faculty' ? 'faculty_files' : 'student_files'
+  const userIdCol = req.user.role === 'faculty' ? 'faculty_id' : 'student_id'
+
+  const { data, error } = await supabaseAdmin.from(tableName).select('size_bytes').eq(userIdCol, req.user.id)
+  if (!error && data) {
+    const totalUsed = data.reduce((acc, f) => acc + (f.size_bytes || 0), 0)
+    if (totalUsed + req.file.size > MAX_LIMIT_BYTES) {
+      return res.status(400).json({ success: false, message: 'Storage limit of 20 MB exceeded. Please delete some files.' })
+    }
+  }
+
   const isImage = req.file.mimetype.startsWith('image/')
   const cleanName = req.file.originalname.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9.\-_]/g, '_')
   const publicId = `${Date.now()}_${cleanName}`

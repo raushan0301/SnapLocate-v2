@@ -389,7 +389,7 @@ export default function Workspace({ role = 'student' }) {
               </div>
               <span style={pjs(18, 700, '24px', '#0f172a')}>Notes</span>
             </div>
-            <button 
+            <button
               onClick={() => setNoteModal(true)}
               style={{ background: '#eef2ff', color: '#4f46e5', border: 'none', borderRadius: 6, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: 20 }}
             >
@@ -422,7 +422,7 @@ export default function Workspace({ role = 'student' }) {
               <span style={pjs(18, 700, '24px', '#0f172a')}>My Tasks</span>
             </div>
             {!showTaskForm && (
-              <button 
+              <button
                 onClick={() => setShowTaskForm(true)}
                 style={{ background: '#eef2ff', color: '#4f46e5', border: 'none', borderRadius: 6, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: 20 }}
               >
@@ -430,29 +430,29 @@ export default function Workspace({ role = 'student' }) {
               </button>
             )}
           </div>
-          
+
           {showTaskForm && (
             <form onSubmit={saveTask} style={{ display: 'flex', gap: 12, border: '1px solid #f1f5f9', padding: 16, borderRadius: 16, background: '#f8fafc' }}>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <input 
-                  value={taskInput} onChange={e => setTaskInput(e.target.value)} 
+                <input
+                  value={taskInput} onChange={e => setTaskInput(e.target.value)}
                   placeholder="Task title" required autoFocus
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e2e8f0', outline: 'none', ...pjs(14, 500, '20px', '#0f172a'), boxSizing: 'border-box' }} 
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e2e8f0', outline: 'none', ...pjs(14, 500, '20px', '#0f172a'), boxSizing: 'border-box' }}
                 />
-                <input 
-                  value={taskSubInput} onChange={e => setTaskSubInput(e.target.value)} 
-                  placeholder="Extra info" 
-                  style={{ width: '100%', padding: '8px 14px', borderRadius: 10, border: '1px solid #e2e8f0', outline: 'none', ...pjs(12, 400, '18px', '#64748b'), boxSizing: 'border-box' }} 
+                <input
+                  value={taskSubInput} onChange={e => setTaskSubInput(e.target.value)}
+                  placeholder="Extra info"
+                  style={{ width: '100%', padding: '8px 14px', borderRadius: 10, border: '1px solid #e2e8f0', outline: 'none', ...pjs(12, 400, '18px', '#64748b'), boxSizing: 'border-box' }}
                 />
                 <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                  <button 
-                    type="submit" disabled={saving || !taskInput.trim()} 
+                  <button
+                    type="submit" disabled={saving || !taskInput.trim()}
                     style={{ flex: 1, padding: '8px', background: taskInput.trim() ? '#4f46e5' : '#e2e8f0', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: taskInput.trim() ? 'pointer' : 'default', fontSize: 13 }}
                   >
                     Add Task
                   </button>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => setShowTaskForm(false)}
                     style={{ padding: '8px 16px', background: '#fff', color: '#64748b', border: '1px solid #e2e8f0', borderRadius: 8, fontWeight: 600, cursor: 'pointer', fontSize: 13 }}
                   >
@@ -472,12 +472,12 @@ export default function Workspace({ role = 'student' }) {
             ) : tasks.map((t, i) => (
               <div key={t.id} style={{ transition: 'all 0.2s' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 4px' }}>
-                  <div 
-                    onClick={() => toggleTask(t.id, t.is_done)} 
-                    style={{ 
-                      width: 20, height: 20, borderRadius: 7, flexShrink: 0, 
-                      border: t.is_done ? 'none' : '2px solid #e2e8f0', 
-                      background: t.is_done ? '#4f46e5' : 'transparent', 
+                  <div
+                    onClick={() => toggleTask(t.id, t.is_done)}
+                    style={{
+                      width: 20, height: 20, borderRadius: 7, flexShrink: 0,
+                      border: t.is_done ? 'none' : '2px solid #e2e8f0',
+                      background: t.is_done ? '#4f46e5' : 'transparent',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
                       transition: 'all 0.2s'
                     }}
@@ -507,8 +507,8 @@ export default function Workspace({ role = 'student' }) {
                 </div>
                 <span style={pjs(18, 700, '24px', '#0f172a')}>Links</span>
               </div>
-              <button 
-                onClick={() => setLinkModal(true)} 
+              <button
+                onClick={() => setLinkModal(true)}
                 style={{ background: '#eef2ff', color: '#4f46e5', border: 'none', borderRadius: 6, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: 20 }}
               >
                 +
@@ -537,9 +537,9 @@ export default function Workspace({ role = 'student' }) {
                 <span style={pjs(18, 700, '24px', '#0f172a')}>Files</span>
               </div>
               <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileUpload} />
-              <button 
-                onClick={() => fileInputRef.current.click()} 
-                disabled={uploadingFile} 
+              <button
+                onClick={() => fileInputRef.current.click()}
+                disabled={uploadingFile}
                 style={{ background: '#eef2ff', color: '#4f46e5', border: 'none', borderRadius: 6, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: 20 }}
               >
                 {uploadingFile ? '...' : '+'}

@@ -195,36 +195,26 @@ export default function CampusSupportPage() {
       <div style={{ paddingBottom: 60 }}>
 
         {/* Modern Header Row */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 40, gap: 24, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 28 }}>
           <div>
-            <h1 style={pjs(30, 800, '38px', '#0f172a')}>Campus Support Hub</h1>
-            <p style={{ ...pjs(16, 400, '24px', '#64748b'), marginTop: 4 }}>Find professional assistance across various university departments.</p>
+            <h1 style={pjs(26, 700, '34px', '#0f172a')}>Campus Support Hub</h1>
+            <p style={{ ...pjs(14, 400, '20px', '#64748b'), marginTop: 4 }}>Find professional assistance across various university departments.</p>
           </div>
-          <div style={{ position: 'relative', flex: '1 1 340px', maxWidth: 460 }}>
-            <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', opacity: 0.6 }} width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="8" cy="8" r="6" stroke="#0f172a" strokeWidth="1.5" /><path d="M12.5 12.5L16 16" stroke="#0f172a" strokeWidth="1.5" strokeLinecap="round" /></svg>
+          <div style={{ position: 'relative', flex: '1 1 300px', maxWidth: 400 }}>
+            <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="15" height="15" viewBox="0 0 15 15" fill="none">
+              <circle cx="6.5" cy="6.5" r="5.5" stroke="#94a3b8" strokeWidth="1.3" />
+              <path d="M11 11l3 3" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round" />
+            </svg>
             <input
               placeholder="Search by department, role, or contact..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               style={{
-                width: '100%',
-                padding: '14px 16px 14px 48px',
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
-                borderRadius: 16,
-                ...pjs(15, 400, '20px', '#0f172a'),
-                outline: 'none',
+                width: '100%', padding: '12px 16px 12px 42px',
+                background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14,
+                ...pjs(14, 400, '20px', '#0f172a'), outline: 'none',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
                 boxSizing: 'border-box',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-                transition: 'all 0.2s ease'
-              }}
-              onFocus={e => {
-                e.target.style.borderColor = '#4f46e5';
-                e.target.style.boxShadow = '0 8px 20px rgba(79,70,229,0.08)';
-              }}
-              onBlur={e => {
-                e.target.style.borderColor = '#e2e8f0';
-                e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.03)';
               }}
             />
           </div>
