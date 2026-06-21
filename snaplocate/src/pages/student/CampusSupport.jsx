@@ -342,53 +342,11 @@ export default function CampusSupportPage() {
           )}
         </div>
 
-        {/* Premium Bottom Feature */}
-        <div style={{
-          marginTop: 64,
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-          borderRadius: 32,
-          padding: '48px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: 40,
-          flexWrap: 'wrap',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          <div style={{ position: 'absolute', top: -100, right: -100, width: 300, height: 300, background: 'rgba(79,70,229,0.1)', borderRadius: '50%', filter: 'blur(60px)' }}></div>
-
-          <div style={{ position: 'relative', zIndex: 1, flex: '1 1 400px' }}>
-            <h2 style={pjs(26, 800, '34px', '#ffffff')}>Still need more information?</h2>
-            <p style={{ ...pjs(16, 400, '24px', '#94a3b8'), marginTop: 12, maxWidth: 540 }}>
-              Our central support team is available 24/7. Whether you need technical guidance or hostel assistance, we're here to help you navigate campus life.
-            </p>
-          </div>
-
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <button style={{
-              ...pjs(15, 700, '20px', '#ffffff'),
-              padding: '16px 36px',
-              background: '#4f46e5',
-              border: 'none',
-              borderRadius: 16,
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 10px 25px rgba(79,70,229,0.3)'
-            }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = '#4338ca';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 15px 30px rgba(79,70,229,0.4)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = '#4f46e5';
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 10px 25px rgba(79,70,229,0.3)';
-              }}>
-              Central Support Desk
-            </button>
-          </div>
+        {/* ── Help footer ───────────────────────────────────── */}
+        <div style={{ textAlign: 'center', padding: '10px 0 20px 0', marginTop: 40 }}>
+          <span style={pjs(13, 400, '18px', '#94a3b8')}>
+            Having trouble connecting? Visit the <span onClick={() => window.location.href='/support'} style={{ color: '#4f46e5', fontWeight: 600, cursor: 'pointer' }}>IT Support Desk</span>
+          </span>
         </div>
       </div>
     </PageLayout>

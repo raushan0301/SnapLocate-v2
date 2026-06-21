@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
+import { Wifi, Eye, EyeOff, Copy, Check } from 'lucide-react'
+
 
 const pjs = (size, weight, lh, color) => ({
   fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -108,84 +110,76 @@ export default function WiFiPage() {
           </div>
         </div>
 
-        {/* ── Network cards ────────────────────────────────── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, transition: 'opacity 0.2s' }}>
+        {/* ── Network list ────────────────────────────────── */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: 16,
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+          overflow: 'hidden'
+        }}>
           {loading ? (
             // Loading skeleton
             [1, 2, 3].map(i => (
-              <div key={i} style={{ background: '#f8fafc', borderRadius: 16, padding: '24px', height: 80, animation: 'pulse 1.5s ease-in-out infinite' }}>
-                <div style={{ height: 16, background: '#e2e8f0', borderRadius: 8, width: '40%', marginBottom: 10 }} />
-                <div style={{ height: 12, background: '#e2e8f0', borderRadius: 8, width: '25%' }} />
+              <div key={i} style={{ padding: '20px 24px', borderBottom: i < 3 ? '1px solid #f1f5f9' : 'none', animation: 'pulse 1.5s ease-in-out infinite', display: 'flex', gap: 16 }}>
+                <div style={{ width: 24, height: 24, background: '#e2e8f0', borderRadius: 6 }} />
+                <div style={{ flex: 1, height: 24, background: '#e2e8f0', borderRadius: 6 }} />
               </div>
             ))
           ) : filtered.length > 0 ? filtered.map((n, i) => (
             <div key={n.id || i} style={{
-              background: '#ffffff',
-              border: `1.5px solid ${n.is_primary ? '#e0e7ff' : '#f1f5f9'}`,
-              borderRadius: 16,
-              padding: '24px',
+              padding: '16px 24px',
               display: 'flex', alignItems: 'center', gap: 24,
               flexWrap: 'wrap',
-              boxShadow: n.is_primary ? '0 4px 20px rgba(79,70,229,0.08)' : '0 1px 4px rgba(0,0,0,0.04)',
+              borderBottom: i < filtered.length - 1 ? '1px solid #f1f5f9' : 'none',
+              background: n.is_primary ? '#f8fafc' : 'transparent',
             }}>
               {/* Wi-Fi Icon + Info */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 20, flex: '2 1 280px' }}>
-                <div style={{
-                  width: 48, height: 48, borderRadius: 12, flexShrink: 0,
-                  background: n.is_primary ? '#eef2ff' : '#f8fafc',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <svg width="24" height="20" viewBox="0 0 24 20" fill="none">
-                    <path d="M1 6.5C5 2.5 19 2.5 23 6.5" stroke={n.is_primary ? '#4f46e5' : '#94a3b8'} strokeWidth="1.8" strokeLinecap="round" />
-                    <path d="M4.5 10C7.5 7 16.5 7 19.5 10" stroke={n.is_primary ? '#4f46e5' : '#94a3b8'} strokeWidth="1.8" strokeLinecap="round" />
-                    <path d="M8 13.5C9.5 12 14.5 12 16 13.5" stroke={n.is_primary ? '#4f46e5' : '#94a3b8'} strokeWidth="1.8" strokeLinecap="round" />
-                    <circle cx="12" cy="17.5" r="1.5" fill={n.is_primary ? '#4f46e5' : '#94a3b8'} />
-                  </svg>
-                </div>
-                <div>
-                  <div style={{ ...inter(10, 700, '14px', '#7c3aed'), letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 2 }}>{n.zone}</div>
-                  <div style={pjs(18, 700, '24px', '#0f172a')}>{n.name}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: '1 1 200px' }}>
+                <Wifi size={22} color={n.is_primary ? '#4f46e5' : '#94a3b8'} />
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={pjs(16, 600, '22px', '#0f172a')}>{n.name}</div>
+                    {n.is_primary && (
+                      <span style={{ padding: '2px 8px', background: '#e0e7ff', color: '#4f46e5', borderRadius: 12, ...pjs(10, 700, '14px', '') }}>
+                        PRIMARY
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ ...pjs(13, 500, '18px', '#64748b') }}>{n.zone}</div>
                 </div>
               </div>
 
               {/* Password field */}
-              <div style={{ flex: '2 1 200px', minWidth: 200 }}>
-                <div style={{ ...inter(10, 600, '14px', '#94a3b8'), letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Network Password</div>
+              <div style={{ flex: '1 1 180px', minWidth: 180 }}>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                   <div style={{
-                    background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10,
-                    padding: '9px 40px 9px 14px', width: '100%',
+                    background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 8,
+                    padding: '8px 36px 8px 12px', width: '100%',
                     ...pjs(14, 500, '18px', '#0f172a'),
-                    letterSpacing: shown[i] ? '0.02em' : '0.1em',
+                    letterSpacing: shown[i] ? 'normal' : '0.2em',
                     boxSizing: 'border-box'
-                  }}>{shown[i] ? n.password : '•'.repeat(n.password.length)}</div>
-                  <button onClick={() => toggleShow(i)} style={{ position: 'absolute', right: 10, background: 'transparent', border: 'none', cursor: 'pointer', padding: 2 }}>
-                    {shown[i]
-                      ? <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5Z" stroke="#64748b" strokeWidth="1.2" /><circle cx="8" cy="8" r="2" stroke="#64748b" strokeWidth="1.2" /><path d="M2 2l12 12" stroke="#64748b" strokeWidth="1.2" strokeLinecap="round" /></svg>
-                      : <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5Z" stroke="#64748b" strokeWidth="1.2" /><circle cx="8" cy="8" r="2" stroke="#64748b" strokeWidth="1.2" /></svg>}
+                  }}>{shown[i] ? n.password : '••••••••'}</div>
+                  <button onClick={() => toggleShow(i)} style={{ position: 'absolute', right: 10, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}>
+                    {shown[i] ? <EyeOff size={16} color="#64748b" /> : <Eye size={16} color="#64748b" />}
                   </button>
                 </div>
               </div>
 
               {/* Copy button */}
-              <div style={{ flex: '1 1 120px', display: 'flex', justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <button
                   onClick={() => handleCopy(i, n.password)}
                   style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    padding: '11px 20px', borderRadius: 12, cursor: 'pointer',
-                    border: n.is_primary ? 'none' : '1.5px solid #e2e8f0',
-                    background: n.is_primary ? '#4f46e5' : '#ffffff',
-                    ...pjs(13, 700, '18px', n.is_primary ? '#ffffff' : '#0f172a'),
-                    whiteSpace: 'nowrap', transition: 'all 0.15s',
-                    width: '100%', maxWidth: 200
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '8px', borderRadius: 8, cursor: 'pointer',
+                    border: '1px solid #e2e8f0',
+                    background: '#ffffff',
+                    transition: 'all 0.15s',
                   }}
+                  title="Copy Password"
                 >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <rect x="4" y="4" width="8" height="9" rx="1.5" stroke={n.is_primary ? 'white' : '#64748b'} strokeWidth="1.2" />
-                    <path d="M2 10V2.5A1.5 1.5 0 013.5 1H9" stroke={n.is_primary ? 'white' : '#64748b'} strokeWidth="1.2" strokeLinecap="round" />
-                  </svg>
-                  {copied === i ? 'Copied!' : 'Copy Password'}
+                  {copied === i ? <Check size={18} color="#10b981" /> : <Copy size={18} color="#64748b" />}
                 </button>
               </div>
             </div>
@@ -228,7 +222,7 @@ export default function WiFiPage() {
         {/* ── Help footer ───────────────────────────────────── */}
         <div style={{ textAlign: 'center', padding: '10px 0 20px 0' }}>
           <span style={pjs(13, 400, '18px', '#94a3b8')}>
-            Having trouble connecting? Visit the <span style={{ color: '#4f46e5', fontWeight: 600, cursor: 'pointer' }}>IT Support Desk</span>
+            Having trouble connecting? Visit the <span onClick={() => window.location.href='/support'} style={{ color: '#4f46e5', fontWeight: 600, cursor: 'pointer' }}>IT Support Desk</span>
           </span>
         </div>
       </div>
