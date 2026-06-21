@@ -21,17 +21,17 @@ const inter = (size, weight, lh, color) => ({
 
 
 const CATEGORIES = [
-  { value: 'all',         label: 'All',         icon: LayoutGrid, color: '#4f46e5', bg: '#eef2ff' },
+  { value: 'all', label: 'All', icon: LayoutGrid, color: '#4f46e5', bg: '#eef2ff' },
   { value: 'electronics', label: 'Electronics', icon: MonitorSmartphone, color: '#4f46e5', bg: '#eef2ff' },
-  { value: 'keys',        label: 'Keys',        icon: Key, color: '#d97706', bg: '#fffbeb' },
-  { value: 'id_card',     label: 'ID Card',     icon: Contact, color: '#2563eb', bg: '#eff6ff' },
-  { value: 'clothing',    label: 'Clothing',    icon: Shirt, color: '#db2777', bg: '#fdf2f8' },
-  { value: 'books',       label: 'Books',       icon: Book, color: '#16a34a', bg: '#f0fdf4' },
-  { value: 'bag',         label: 'Bag',         icon: Backpack, color: '#ea580c', bg: '#fff7ed' },
-  { value: 'wallet',      label: 'Wallet',      icon: Wallet, color: '#ca8a04', bg: '#fefce8' },
-  { value: 'jewellery',   label: 'Jewellery',   icon: Activity, color: '#9333ea', bg: '#faf5ff' },
-  { value: 'sports',      label: 'Sports',      icon: Activity, color: '#0d9488', bg: '#f0fdfa' },
-  { value: 'other',       label: 'Other',       icon: Box, color: '#64748b', bg: '#f8fafc' },
+  { value: 'keys', label: 'Keys', icon: Key, color: '#d97706', bg: '#fffbeb' },
+  { value: 'id_card', label: 'ID Card', icon: Contact, color: '#2563eb', bg: '#eff6ff' },
+  { value: 'clothing', label: 'Clothing', icon: Shirt, color: '#db2777', bg: '#fdf2f8' },
+  { value: 'books', label: 'Books', icon: Book, color: '#16a34a', bg: '#f0fdf4' },
+  { value: 'bag', label: 'Bag', icon: Backpack, color: '#ea580c', bg: '#fff7ed' },
+  { value: 'wallet', label: 'Wallet', icon: Wallet, color: '#ca8a04', bg: '#fefce8' },
+  { value: 'jewellery', label: 'Jewellery', icon: Activity, color: '#9333ea', bg: '#faf5ff' },
+  { value: 'sports', label: 'Sports', icon: Activity, color: '#0d9488', bg: '#f0fdfa' },
+  { value: 'other', label: 'Other', icon: Box, color: '#64748b', bg: '#f8fafc' },
 ]
 const catInfo = (v) => CATEGORIES.find(c => c.value === v) || CATEGORIES[CATEGORIES.length - 1]
 
@@ -61,11 +61,11 @@ function CatBadge({ category }) {
   const c = catInfo(category)
   const Icon = c.icon
   return (
-    <span style={{ 
-      background: c.bg, color: c.color, 
-      padding: '2px 8px', borderRadius: 6, 
-      fontSize: 11, fontWeight: 600, 
-      display: 'inline-flex', alignItems: 'center', gap: 5 
+    <span style={{
+      background: c.bg, color: c.color,
+      padding: '2px 8px', borderRadius: 6,
+      fontSize: 11, fontWeight: 600,
+      display: 'inline-flex', alignItems: 'center', gap: 5
     }}>
       <Icon size={12} strokeWidth={2.5} /> {c.label}
     </span>
@@ -77,7 +77,7 @@ function CustomConfirmModal({ open, title, message, onConfirm, onCancel, confirm
   if (!open) return null
   const isDanger = type === 'danger'
   const isSuccess = type === 'success'
-  
+
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.4)', backdropFilter: 'blur(8px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ background: '#fff', borderRadius: 28, padding: '32px 32px 24px', width: '100%', maxWidth: 400, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', border: '1px solid #f1f5f9', textAlign: 'center' }}>
@@ -88,11 +88,11 @@ function CustomConfirmModal({ open, title, message, onConfirm, onCancel, confirm
         <p style={{ margin: '0 0 28px', ...pjs(14, 400, '22px', '#64748b') }}>{message}</p>
         <div style={{ display: 'flex', gap: 12 }}>
           <button onClick={onCancel} style={{ flex: 1, padding: '14px', borderRadius: 16, border: '1.5px solid #e2e8f0', background: '#fff', ...pjs(14, 700, '20px', '#475569'), cursor: 'pointer' }}>Cancel</button>
-          <button onClick={onConfirm} style={{ 
-            flex: 1, padding: '14px', borderRadius: 16, border: 'none', 
-            background: isDanger ? '#dc2626' : '#4f46e5', color: '#fff', 
+          <button onClick={onConfirm} style={{
+            flex: 1, padding: '14px', borderRadius: 16, border: 'none',
+            background: isDanger ? '#dc2626' : '#4f46e5', color: '#fff',
             ...pjs(14, 700, '20px', '#fff'), cursor: 'pointer',
-            boxShadow: isDanger ? '0 8px 20px rgba(220, 38, 38, 0.25)' : '0 8px 20px rgba(79, 70, 229, 0.25)' 
+            boxShadow: isDanger ? '0 8px 20px rgba(220, 38, 38, 0.25)' : '0 8px 20px rgba(79, 70, 229, 0.25)'
           }}>{confirmText}</button>
         </div>
       </div>
@@ -135,7 +135,7 @@ function ItemCard({ item, currentUserId, onClaim, onChat }) {
       onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
       <div style={{ height: 260, position: 'relative', background: fallbackBg, cursor: item.image_url ? 'zoom-in' : 'default' }} onClick={() => item.image_url && onClaim(item, 'view')}>
         {item.image_url ?
-          <img src={item.image_url} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' } } /> :
+          <img src={item.image_url} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> :
           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <ci.icon size={64} color="rgba(255,255,255,0.2)" />
           </div>
@@ -222,6 +222,7 @@ function ItemCard({ item, currentUserId, onClaim, onChat }) {
               <button
                 onClick={() => shareOnWhatsApp(item)}
                 style={{ width: 44, height: 44, borderRadius: 14, background: '#dcfce7', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                title="Share on WhatsApp"
               >
                 <svg viewBox="0 0 24 24" width="20" height="20" stroke="#16a34a" strokeWidth="2.5" fill="none"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
               </button>
@@ -440,12 +441,12 @@ function ReportModal({ initial, onClose, onSaved }) {
                 const isSel = form.category === c.value
                 const Icon = c.icon
                 return (
-                  <button key={c.value} type="button" onClick={() => set('category', c.value)} 
-                    style={{ 
+                  <button key={c.value} type="button" onClick={() => set('category', c.value)}
+                    style={{
                       display: 'flex', alignItems: 'center', gap: 6,
-                      padding: '8px 14px', borderRadius: 10, border: '1.5px solid', 
-                      borderColor: isSel ? c.color : '#e2e8f0', 
-                      background: isSel ? c.bg : '#fff', color: isSel ? c.color : '#64748b', 
+                      padding: '8px 14px', borderRadius: 10, border: '1.5px solid',
+                      borderColor: isSel ? c.color : '#e2e8f0',
+                      background: isSel ? c.bg : '#fff', color: isSel ? c.color : '#64748b',
                       fontSize: 12, fontWeight: 700, cursor: 'pointer',
                       transition: 'all 0.2s'
                     }}>
@@ -461,7 +462,7 @@ function ReportModal({ initial, onClose, onSaved }) {
             {preview ? (
               <div style={{ position: 'relative', height: 180, borderRadius: 16, overflow: 'hidden', border: '1.5px solid #e2e8f0' }}>
                 <img src={preview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                <div style={{ position: 'absolute', inset: 0, background: 'rgba(15,23,42,0.4)', opacity: 0, transition: 'opacity 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'default' }} 
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(15,23,42,0.4)', opacity: 0, transition: 'opacity 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'default' }}
                   onMouseEnter={e => e.currentTarget.style.opacity = 1}
                   onMouseLeave={e => e.currentTarget.style.opacity = 0}>
                   <button type="button" onClick={() => fileRef.current?.click()} style={{ padding: '8px 16px', borderRadius: 12, border: 'none', background: '#fff', color: '#0f172a', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -481,7 +482,7 @@ function ReportModal({ initial, onClose, onSaved }) {
             ) : (
               <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
                 style={{ width: '100%', padding: '24px', borderRadius: 16, border: '2px dashed #e2e8f0', background: '#f8fafc', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, transition: 'all 0.2s' }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = '#4f46e5'; e.currentTarget.style.background = '#f0f7ff' }} 
+                onMouseEnter={e => { e.currentTarget.style.borderColor = '#4f46e5'; e.currentTarget.style.background = '#f0f7ff' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#f8fafc' }}>
                 <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
                   <Camera size={22} color={uploading ? '#cbd5e1' : '#64748b'} />
@@ -687,8 +688,8 @@ export default function LostFoundPage() {
     const isResolving = currentStatus !== 'resolved'
     setConfirmConfig({
       title: isResolving ? 'Mark as Resolved?' : 'Mark as Unresolved?',
-      message: isResolving 
-        ? 'This will hide the item from public browse and stop new claims.' 
+      message: isResolving
+        ? 'This will hide the item from public browse and stop new claims.'
         : 'This will make the item public again for browsing and claims.',
       confirmText: isResolving ? 'Confirm Resolve' : 'Make Public',
       type: isResolving ? 'success' : 'primary',
@@ -719,8 +720,8 @@ export default function LostFoundPage() {
     const isApprove = action === 'approve'
     setConfirmConfig({
       title: isApprove ? 'Approve Claim?' : 'Reject Claim?',
-      message: isApprove 
-        ? 'This will verify the owner. You can still chat with them after approving.' 
+      message: isApprove
+        ? 'This will verify the owner. You can still chat with them after approving.'
         : 'This will remove the claim. The user can submit a new one if needed.',
       confirmText: isApprove ? 'Yes, Approve' : 'Yes, Reject',
       type: isApprove ? 'success' : 'danger',
@@ -766,10 +767,10 @@ export default function LostFoundPage() {
         />
       )}
       {reportTarget !== null && <ReportModal initial={reportTarget?.id ? reportTarget : null} onClose={() => setReportTarget(null)} onSaved={handleSaved} />}
-      
+
       <ImageModal url={viewImageUrl} onClose={() => setViewImageUrl(null)} />
-      
-      <CustomConfirmModal 
+
+      <CustomConfirmModal
         open={!!confirmConfig}
         {...confirmConfig}
         onCancel={() => setConfirmConfig(null)}
@@ -846,8 +847,8 @@ export default function LostFoundPage() {
               {/* Search */}
               <div style={{ position: 'relative', flex: '1 1 300px', maxWidth: 400 }}>
                 <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="15" height="15" viewBox="0 0 15 15" fill="none">
-                  <circle cx="6.5" cy="6.5" r="5.5" stroke="#94a3b8" strokeWidth="1.3"/>
-                  <path d="M11 11l3 3" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round"/>
+                  <circle cx="6.5" cy="6.5" r="5.5" stroke="#94a3b8" strokeWidth="1.3" />
+                  <path d="M11 11l3 3" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round" />
                 </svg>
                 <input
                   placeholder="Search items, areas, descriptions..."
@@ -981,14 +982,14 @@ export default function LostFoundPage() {
                         <ci.icon size={32} color={ci.color} strokeWidth={2.5} />
                       )}
                     </div>
-                    
+
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
                         <span style={{ fontWeight: 800, fontSize: 17, color: '#0f172a' }}>{item.title}</span>
                         <StatusBadge status={item.status} />
                         <span style={{ background: cs.bg, color: cs.color, border: `1.5px solid ${cs.border}`, padding: '3px 12px', borderRadius: 20, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{cs.label}</span>
                       </div>
-                      
+
                       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 16 }}>
                         {item.location && <span style={{ fontSize: 13, color: '#64748b', display: 'flex', alignItems: 'center', gap: 6 }}><MapPin size={14} />{item.location}</span>}
                         {item.date && <span style={{ fontSize: 13, color: '#64748b', display: 'flex', alignItems: 'center', gap: 6 }}><Calendar size={14} />{new Date(item.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>}
@@ -1021,7 +1022,7 @@ export default function LostFoundPage() {
                           )}
                         </div>
 
-                          {/* Reporter Profile Info */}
+                        {/* Reporter Profile Info */}
                         {item.reporter && (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 14px', background: '#f1f5f9', borderRadius: 14 }}>
                             <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b' }}>Reporter:</span>

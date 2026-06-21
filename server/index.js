@@ -29,6 +29,8 @@ import settingsRoutes from './routes/settings.js'
 import wifiRoutes from './routes/wifi.js'
 import announcementsRoutes from './routes/announcements.js'
 import notificationsRoutes from './routes/notifications.js'
+import gmailAuthRoutes    from './routes/gmailAuth.js'
+import { startEmailPoller } from './lib/emailPoller.js'
 
 // LMS routes (Moodle-synced — DO NOT MODIFY)
 import lmsCoursesRoutes       from './routes/lms/courses.js'
@@ -124,6 +126,7 @@ app.use('/api/settings',    settingsRoutes)
 app.use('/api/wifi',          wifiRoutes)
 app.use('/api/announcements',   announcementsRoutes)
 app.use('/api/notifications',   notificationsRoutes)
+app.use('/api/gmail-auth',      gmailAuthRoutes)
 
 // LMS routes (Moodle-synced — DO NOT MODIFY)
 app.use('/api/lms/courses',       lmsCoursesRoutes)
@@ -160,6 +163,9 @@ app.listen(PORT, () => {
   console.log(`\n🚀 SnapLocate API running on http://localhost:${PORT}`)
   console.log(`📋 Health check: http://localhost:${PORT}/health`)
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}\n`)
+
+  // Start Gmail poller (gracefully skips if GMAIL_REFRESH_TOKEN not set)
+  startEmailPoller()
 })
 
 export default app

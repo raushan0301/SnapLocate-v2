@@ -56,6 +56,11 @@ export default function ManageLostFound() {
   const [loading, setLoading] = useState(true)
   const [claimsLoad, setClaimsLoad] = useState(false)
 
+  // Email Sync tab state
+  const [gmailStatus, setGmailStatus]   = useState(null)
+  const [emailLogs,   setEmailLogs]     = useState([])
+  const [logsLoading, setLogsLoading]   = useState(false)
+  const [logFilter,   setLogFilter]     = useState('all')
   // Filters — applied client-side on items
   const [statusF, setStatusF] = useState('all')
   const [catF, setCatF] = useState('all')
@@ -93,8 +98,21 @@ export default function ManageLostFound() {
     } catch { } finally { setClaimsLoad(false) }
   }, [claimF])
 
+  const loadEmailLogs = useCallback(async () => {
+    setLogsLoading(true)
+    try {
+      const [statusRes, logsRes] = await Promise.all([
+        api.get('/api/admin/gmail-status'),
+        api.get(`/api/admin/email-logs?limit=100${logFilter !== 'all' ? `&status=${logFilter}` : ''}`),
+      ])
+      if (statusRes.success) setGmailStatus(statusRes.data)
+      if (logsRes.success)   setEmailLogs(logsRes.data || [])
+    } catch { } finally { setLogsLoading(false) }
+  }, [logFilter])
+
   useEffect(() => { loadItems(); loadStats() }, [loadItems, loadStats])
-  useEffect(() => { if (tab === 'claims') loadClaims() }, [tab, loadClaims])
+  useEffect(() => { if (tab === 'claims')    loadClaims()    }, [tab, loadClaims])
+  useEffect(() => { if (tab === 'emailSync') loadEmailLogs() }, [tab, loadEmailLogs])
 
   // ── Client-side filtering ─────────────────────────────────
   const filtered = useMemo(() => {
@@ -168,8 +186,9 @@ export default function ManageLostFound() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid #f1f5f9' }}>
         {[
-          { id: 'items', label: `All Items (${filtered.length}${filtered.length !== allItems.length ? `/${allItems.length}` : ''})` },
-          { id: 'claims', label: 'Claims' },
+          { id: 'items',     label: `All Items (${filtered.length}${filtered.length !== allItems.length ? `/${allItems.length}` : ''})` },
+          { id: 'claims',    label: 'Claims' },
+          { id: 'emailSync', label: '📧 Email Sync' },
         ].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
             padding: '11px 22px', background: 'none', border: 'none', cursor: 'pointer',
@@ -181,6 +200,9 @@ export default function ManageLostFound() {
             {t.label}
             {t.id === 'claims' && pendingCount > 0 && (
               <span style={{ background: '#f59e0b', color: '#fff', borderRadius: 10, padding: '1px 7px', fontSize: 11, fontWeight: 700 }}>{pendingCount}</span>
+            )}
+            {t.id === 'emailSync' && gmailStatus && !gmailStatus.configured && (
+              <span style={{ background: '#fee2e2', color: '#dc2626', borderRadius: 10, padding: '1px 7px', fontSize: 10, fontWeight: 700 }}>Setup needed</span>
             )}
           </button>
         ))}
@@ -450,6 +472,145 @@ export default function ManageLostFound() {
               })}
             </div>
           )}
+        </>
+      )}
+      {/* ══ EMAIL SYNC TAB ══════════════════════════════════ */}
+      {tab === 'emailSync' && (
+        <>
+          {/* Connection Status Banner */}
+          {gmailStatus ? (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
+              padding: '16px 20px', borderRadius: 16,
+              background: gmailStatus.configured ? '#f0fdf4' : '#fef2f2',
+              border: `1px solid ${gmailStatus.configured ? '#bbf7d0' : '#fecaca'}`,
+            }}>
+              <div style={{ fontSize: 24 }}>{gmailStatus.configured ? '✅' : '⚠️'}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: gmailStatus.configured ? '#15803d' : '#dc2626', marginBottom: 3 }}>
+                  {gmailStatus.configured ? 'Gmail Connected' : 'Gmail Not Configured'}
+                </div>
+                {gmailStatus.configured ? (
+                  <div style={{ fontSize: 12, color: '#64748b' }}>
+                    Monitoring: <strong>{gmailStatus.whitelist?.join(', ')}</strong>
+                    {gmailStatus.last_polled_at && (
+                      <> · Last poll: <strong>{new Date(gmailStatus.last_polled_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</strong></>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 12, color: '#64748b' }}>
+                    Follow the setup guide in <code style={{ background: '#fee2e2', padding: '1px 6px', borderRadius: 4, fontSize: 11 }}>server/.env</code> to connect Gmail.
+                    Then visit <code style={{ background: '#fee2e2', padding: '1px 6px', borderRadius: 4, fontSize: 11 }}>http://65.1.111.102:3001/api/gmail-auth/setup?secret=snaplocate_gmail_setup_2026</code>
+                  </div>
+                )}
+              </div>
+              <button onClick={loadEmailLogs}
+                style={{ padding: '8px 16px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#475569', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <RefreshCw size={13} /> Refresh
+              </button>
+            </div>
+          ) : (
+            <div style={{ padding: '20px', background: '#f8fafc', borderRadius: 14, border: '1px solid #f1f5f9', fontSize: 14, color: '#94a3b8' }}>Loading Gmail status...</div>
+          )}
+
+          {/* Log Filter Chips */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {[
+              { v: 'all',       label: 'All',       color: '#4f46e5', bg: '#eef2ff', border: '#e0e7ff' },
+              { v: 'success',   label: '✅ Success',   color: '#15803d', bg: '#f0fdf4', border: '#bbf7d0' },
+              { v: 'failed',    label: '❌ Failed',    color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
+              { v: 'duplicate', label: '🟡 Duplicate', color: '#92400e', bg: '#fffbeb', border: '#fde68a' },
+              { v: 'skipped',   label: '⚫ Skipped',  color: '#64748b', bg: '#f8fafc', border: '#e2e8f0' },
+            ].map(s => (
+              <button key={s.v} onClick={() => setLogFilter(s.v)} style={{
+                padding: '7px 14px', borderRadius: 10, cursor: 'pointer',
+                border: `1.5px solid ${logFilter === s.v ? s.border : '#e2e8f0'}`,
+                background: logFilter === s.v ? s.bg : '#fff',
+                color: logFilter === s.v ? s.color : '#475569',
+                fontSize: 12, fontWeight: logFilter === s.v ? 700 : 500,
+              }}>{s.label}</button>
+            ))}
+          </div>
+
+          {/* Logs Table */}
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', overflow: 'hidden' }}>
+            {logsLoading ? (
+              <div style={{ padding: '56px 0', textAlign: 'center', color: '#94a3b8', fontSize: 14 }}>Loading logs...</div>
+            ) : emailLogs.length === 0 ? (
+              <div style={{ padding: '56px 0', textAlign: 'center' }}>
+                <div style={{ fontSize: 36, marginBottom: 12 }}>📭</div>
+                <p style={{ fontSize: 14, color: '#64748b', fontWeight: 600, margin: 0 }}>No email logs yet</p>
+                <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>
+                  {gmailStatus?.configured
+                    ? 'Waiting for the first email from adminofficer@thapar.edu'
+                    : 'Complete Gmail setup first'}
+                </p>
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+                  <thead>
+                    <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                      {['Time', 'From', 'Subject', 'Status', 'Item Created'].map(h => (
+                        <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {emailLogs.map(log => {
+                      const STATUS_STYLES = {
+                        success:   { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0', label: '✅ Success'   },
+                        failed:    { bg: '#fef2f2', color: '#dc2626', border: '#fecaca', label: '❌ Failed'    },
+                        duplicate: { bg: '#fffbeb', color: '#92400e', border: '#fde68a', label: '🟡 Duplicate' },
+                        skipped:   { bg: '#f8fafc', color: '#64748b', border: '#e2e8f0', label: '⚫ Skipped'  },
+                      }
+                      const ss = STATUS_STYLES[log.status] || STATUS_STYLES.skipped
+                      return (
+                        <tr key={log.id} style={{ borderBottom: '1px solid #f8fafc' }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#fafafa'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+
+                          <td style={{ padding: '12px 14px', fontSize: 12, color: '#64748b', whiteSpace: 'nowrap' }}>
+                            {new Date(log.processed_at).toLocaleString('en-IN', {
+                              timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short',
+                              hour: '2-digit', minute: '2-digit'
+                            })}
+                          </td>
+
+                          <td style={{ padding: '12px 14px', fontSize: 12, color: '#475569', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {log.sender_email}
+                          </td>
+
+                          <td style={{ padding: '12px 14px', maxWidth: 260 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {log.subject || '—'}
+                            </div>
+                            {log.error_message && (
+                              <div style={{ fontSize: 11, color: '#dc2626', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {log.error_message}
+                              </div>
+                            )}
+                          </td>
+
+                          <td style={{ padding: '12px 14px' }}>
+                            <span style={{ background: ss.bg, color: ss.color, border: `1px solid ${ss.border}`, padding: '2px 9px', borderRadius: 20, fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                              {ss.label}
+                            </span>
+                          </td>
+
+                          <td style={{ padding: '12px 14px', fontSize: 12, color: '#475569' }}>
+                            {log.item?.title ? (
+                              <span style={{ fontWeight: 600, color: '#4f46e5' }}>{log.item.title}</span>
+                            ) : '—'}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </>
       )}
     </PageLayout>

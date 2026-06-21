@@ -13,9 +13,35 @@ const inter = (size, weight, lh, color) => ({
 
 const defaultNetworks = []
 
+function EmptyNetworksState() {
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      padding: '60px 24px', textAlign: 'center',
+      background: '#fff', border: '1.5px dashed #e2e8f0', borderRadius: 20
+    }}>
+      <div style={{ width: 72, height: 72, borderRadius: 20, background: '#f0f4ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+        <svg width="36" height="30" viewBox="0 0 24 20" fill="none">
+          <path d="M1 6.5C5 2.5 19 2.5 23 6.5" stroke="#c7d2fe" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M4.5 10C7.5 7 16.5 7 19.5 10" stroke="#a5b4fc" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M8 13.5C9.5 12 14.5 12 16 13.5" stroke="#818cf8" strokeWidth="1.8" strokeLinecap="round" />
+          <circle cx="12" cy="17.5" r="1.5" fill="#4f46e5" />
+        </svg>
+      </div>
+      <div style={pjs(18, 700, '26px', '#0f172a')}>No Networks Added Yet</div>
+      <div style={{ ...pjs(14, 400, '22px', '#64748b'), marginTop: 8, maxWidth: 360 }}>
+        Campus Wi-Fi networks will appear here once added by the admin. Contact IT support for current credentials.
+      </div>
+      <div style={{ marginTop: 28, padding: '12px 24px', background: '#eef2ff', borderRadius: 12, ...pjs(13, 600, '18px', '#4f46e5') }}>
+        📍 IT Support Desk — Building C, Mon–Fri, 9 AM – 5 PM
+      </div>
+    </div>
+  )
+}
+
 export default function WiFiPage() {
   const [copied, setCopied] = useState(null)
-  const [shown,  setShown]  = useState({})
+  const [shown, setShown] = useState({})
   const [networks, setNetworks] = useState(defaultNetworks)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -37,22 +63,22 @@ export default function WiFiPage() {
   }, [])
 
   const handleCopy = (idx, pw) => {
-    navigator.clipboard?.writeText(pw).catch(() => {})
+    navigator.clipboard?.writeText(pw).catch(() => { })
     setCopied(idx)
     setTimeout(() => setCopied(null), 2000)
   }
 
   const toggleShow = idx => setShown(s => ({ ...s, [idx]: !s[idx] }))
 
-  const filtered = networks.filter(n => 
-    n.name.toLowerCase().includes(search.toLowerCase()) || 
+  const filtered = networks.filter(n =>
+    n.name.toLowerCase().includes(search.toLowerCase()) ||
     n.zone.toLowerCase().includes(search.toLowerCase())
   )
 
   return (
     <PageLayout>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 28, width: '100%', paddingBottom: 60 }}>
-        
+
         {/* ── Page header ──────────────────────────────────── */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
           <div style={{ flex: '1 1 300px' }}>
@@ -64,8 +90,8 @@ export default function WiFiPage() {
 
           <div style={{ position: 'relative', flex: '1 1 300px', maxWidth: 400 }}>
             <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="15" height="15" viewBox="0 0 15 15" fill="none">
-              <circle cx="6.5" cy="6.5" r="5.5" stroke="#94a3b8" strokeWidth="1.3"/>
-              <path d="M11 11l3 3" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round"/>
+              <circle cx="6.5" cy="6.5" r="5.5" stroke="#94a3b8" strokeWidth="1.3" />
+              <path d="M11 11l3 3" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round" />
             </svg>
             <input
               placeholder="Search zones or networks..."
@@ -83,8 +109,16 @@ export default function WiFiPage() {
         </div>
 
         {/* ── Network cards ────────────────────────────────── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s' }}>
-          {filtered.length > 0 ? filtered.map((n, i) => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, transition: 'opacity 0.2s' }}>
+          {loading ? (
+            // Loading skeleton
+            [1, 2, 3].map(i => (
+              <div key={i} style={{ background: '#f8fafc', borderRadius: 16, padding: '24px', height: 80, animation: 'pulse 1.5s ease-in-out infinite' }}>
+                <div style={{ height: 16, background: '#e2e8f0', borderRadius: 8, width: '40%', marginBottom: 10 }} />
+                <div style={{ height: 12, background: '#e2e8f0', borderRadius: 8, width: '25%' }} />
+              </div>
+            ))
+          ) : filtered.length > 0 ? filtered.map((n, i) => (
             <div key={n.id || i} style={{
               background: '#ffffff',
               border: `1.5px solid ${n.is_primary ? '#e0e7ff' : '#f1f5f9'}`,
@@ -102,10 +136,10 @@ export default function WiFiPage() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
                   <svg width="24" height="20" viewBox="0 0 24 20" fill="none">
-                    <path d="M1 6.5C5 2.5 19 2.5 23 6.5" stroke={n.is_primary ? '#4f46e5' : '#94a3b8'} strokeWidth="1.8" strokeLinecap="round"/>
-                    <path d="M4.5 10C7.5 7 16.5 7 19.5 10" stroke={n.is_primary ? '#4f46e5' : '#94a3b8'} strokeWidth="1.8" strokeLinecap="round"/>
-                    <path d="M8 13.5C9.5 12 14.5 12 16 13.5" stroke={n.is_primary ? '#4f46e5' : '#94a3b8'} strokeWidth="1.8" strokeLinecap="round"/>
-                    <circle cx="12" cy="17.5" r="1.5" fill={n.is_primary ? '#4f46e5' : '#94a3b8'}/>
+                    <path d="M1 6.5C5 2.5 19 2.5 23 6.5" stroke={n.is_primary ? '#4f46e5' : '#94a3b8'} strokeWidth="1.8" strokeLinecap="round" />
+                    <path d="M4.5 10C7.5 7 16.5 7 19.5 10" stroke={n.is_primary ? '#4f46e5' : '#94a3b8'} strokeWidth="1.8" strokeLinecap="round" />
+                    <path d="M8 13.5C9.5 12 14.5 12 16 13.5" stroke={n.is_primary ? '#4f46e5' : '#94a3b8'} strokeWidth="1.8" strokeLinecap="round" />
+                    <circle cx="12" cy="17.5" r="1.5" fill={n.is_primary ? '#4f46e5' : '#94a3b8'} />
                   </svg>
                 </div>
                 <div>
@@ -127,8 +161,8 @@ export default function WiFiPage() {
                   }}>{shown[i] ? n.password : '•'.repeat(n.password.length)}</div>
                   <button onClick={() => toggleShow(i)} style={{ position: 'absolute', right: 10, background: 'transparent', border: 'none', cursor: 'pointer', padding: 2 }}>
                     {shown[i]
-                      ? <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5Z" stroke="#64748b" strokeWidth="1.2"/><circle cx="8" cy="8" r="2" stroke="#64748b" strokeWidth="1.2"/><path d="M2 2l12 12" stroke="#64748b" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                      : <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5Z" stroke="#64748b" strokeWidth="1.2"/><circle cx="8" cy="8" r="2" stroke="#64748b" strokeWidth="1.2"/></svg>}
+                      ? <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5Z" stroke="#64748b" strokeWidth="1.2" /><circle cx="8" cy="8" r="2" stroke="#64748b" strokeWidth="1.2" /><path d="M2 2l12 12" stroke="#64748b" strokeWidth="1.2" strokeLinecap="round" /></svg>
+                      : <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5Z" stroke="#64748b" strokeWidth="1.2" /><circle cx="8" cy="8" r="2" stroke="#64748b" strokeWidth="1.2" /></svg>}
                   </button>
                 </div>
               </div>
@@ -148,18 +182,20 @@ export default function WiFiPage() {
                   }}
                 >
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <rect x="4" y="4" width="8" height="9" rx="1.5" stroke={n.is_primary ? 'white' : '#64748b'} strokeWidth="1.2"/>
-                    <path d="M2 10V2.5A1.5 1.5 0 013.5 1H9" stroke={n.is_primary ? 'white' : '#64748b'} strokeWidth="1.2" strokeLinecap="round"/>
+                    <rect x="4" y="4" width="8" height="9" rx="1.5" stroke={n.is_primary ? 'white' : '#64748b'} strokeWidth="1.2" />
+                    <path d="M2 10V2.5A1.5 1.5 0 013.5 1H9" stroke={n.is_primary ? 'white' : '#64748b'} strokeWidth="1.2" strokeLinecap="round" />
                   </svg>
                   {copied === i ? 'Copied!' : 'Copy Password'}
                 </button>
               </div>
             </div>
-          )) : (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: '#94a3b8' }}>
+          )) : search ? (
+            <div style={{ textAlign: 'center', padding: '40px 0' }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
               <div style={pjs(16, 600, '22px', '#94a3b8')}>No networks found matching your search</div>
             </div>
+          ) : (
+            <EmptyNetworksState />
           )}
         </div>
 
@@ -169,7 +205,7 @@ export default function WiFiPage() {
           padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8" stroke="#4f46e5" strokeWidth="1.4"/><path d="M9 8v5M9 6v.5" stroke="#4f46e5" strokeWidth="1.4" strokeLinecap="round"/></svg>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8" stroke="#4f46e5" strokeWidth="1.4" /><path d="M9 8v5M9 6v.5" stroke="#4f46e5" strokeWidth="1.4" strokeLinecap="round" /></svg>
             <span style={pjs(14, 700, '19px', '#0f172a')}>Connection Tips</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
@@ -177,7 +213,6 @@ export default function WiFiPage() {
               ['Use 5GHz band', 'Faster speeds for devices close to access points'],
               ['Forget & reconnect', 'Clear saved network if facing auth issues'],
               ['Check VPN', 'Disable VPN when accessing internal resources'],
-              ['IT Support Desk', 'Building C — available Mon-Fri, 9 AM to 5 PM'],
             ].map(([title, desc], i) => (
               <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4f46e5', marginTop: 7, flexShrink: 0 }} />

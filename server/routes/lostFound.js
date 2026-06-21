@@ -6,7 +6,8 @@ import { authenticate } from '../middleware/auth.js'
 const router = Router()
 
 const ITEM_SELECT = `*, reporter:reporter_id(id, full_name, avatar_url, role)`
-const CATEGORIES  = ['electronics','keys','id_card','clothing','books','bag','wallet','jewellery','sports','other']
+const CATEGORIES = ['electronics', 'keys', 'id_card', 'clothing', 'books', 'bag', 'wallet', 'jewellery', 'sports', 'other']
+
 
 // ─── GET /api/lost-found ─────────────────────────────────────
 router.get('/', authenticate, async (req, res) => {
@@ -18,7 +19,7 @@ router.get('/', authenticate, async (req, res) => {
     .order('created_at', { ascending: false })
   if (req.user.org_id) query = query.eq('org_id', req.user.org_id)
 
-  if (status && status !== 'all')     query = query.eq('status', status)
+  if (status && status !== 'all') query = query.eq('status', status)
   if (category && category !== 'all') query = query.eq('category', category)
   if (search) query = query.or(
     `title.ilike.%${search}%,location.ilike.%${search}%,description.ilike.%${search}%`
@@ -81,6 +82,7 @@ router.get('/my-claims', authenticate, async (req, res) => {
   res.json({ success: true, data: filtered })
 })
 
+
 // ─── GET /api/lost-found/:id ─────────────────────────────────
 router.get('/:id', authenticate, async (req, res) => {
   const { data: item, error } = await supabaseAdmin
@@ -101,17 +103,171 @@ router.get('/:id', authenticate, async (req, res) => {
   res.json({ success: true, data: { ...item, claims: claims || [] } })
 })
 
+// ─── POST /api/lost-found/email-ingest ──────────────────────
+// Called by the Google Apps Script running in rraj_be23@thapar.edu.
+// The script polls Gmail every 5 min and POSTs email data here.
+// No user auth needed — secured by WEBHOOK_SECRET only.
+router.post('/email-ingest', async (req, res) => {
+  // Validate webhook secret
+  const secret = process.env.WEBHOOK_SECRET
+  if (!secret || req.body.secret !== secret) {
+    return res.status(401).json({ success: false, error: 'Invalid webhook secret.' })
+  }
+
+  const { from = '', subject = '', body = '' } = req.body
+
+  // Extract sender email
+  const senderEmail = from.replace(/.*<(.+)>/, '$1').trim().toLowerCase() || from.toLowerCase().trim()
+
+  // Validate sender is whitelisted
+  const whitelist = (process.env.GMAIL_SENDER_WHITELIST || 'adminofficer@thapar.edu')
+    .split(',').map(e => e.trim().toLowerCase())
+  if (!whitelist.includes(senderEmail)) {
+    return res.status(403).json({ success: false, error: `Sender ${senderEmail} not in whitelist.` })
+  }
+
+  // ── Lost & Found relevance check ──────────────────────────────────────────
+  // Only process emails that are genuinely about lost or found items.
+  // Non-L&F emails (notices, circulars, road closures etc.) are skipped.
+  const lostFoundKeywords = /\b(lost|found|missing|item|keys?|wallet|phone|laptop|mobile|bag|earring|airpods|jewel|id card|belongings|article|object|recover|claim)\b/i
+  if (!lostFoundKeywords.test(subject)) {
+    console.log(`[Email Ingest] Skipping non-L&F email: "${subject}"`)
+    return res.json({ success: true, skipped: true, message: 'Not a Lost & Found email — skipped.' })
+  }
+
+  // Smart parser (handles structured + free-form emails)
+  function inferCat(text) {
+    const t = text.toLowerCase()
+    if (/phone|mobile|laptop|tablet|earbuds|headphone|airpods|charger|cable|keyboard|mouse|camera|ipad/.test(t)) return 'electronics'
+    if (/\bkeys?\b|keychain/.test(t)) return 'keys'
+    if (/id[\s-]?card|identity[\s]?card|student[\s]?id|admit[\s]?card|aadhar|pan[\s]?card/.test(t)) return 'id_card'
+    if (/shirt|jacket|jeans|hoodie|sweater|coat|shoes|sandal|cap|\bhat\b|scarf|dress|t-shirt|tshirt/.test(t)) return 'clothing'
+    if (/\bbook\b|notebook|textbook|\bnotes\b|register/.test(t)) return 'books'
+    if (/\bbag\b|backpack|luggage|handbag/.test(t)) return 'bag'
+    if (/wallet/.test(t)) return 'wallet'
+    if (/ring|necklace|bracelet|\bwatch\b|chain|earring|jewel/.test(t)) return 'jewellery'
+    if (/\bball\b|racket|\bbat\b|jersey|\bkit\b|sports/.test(t)) return 'sports'
+    return 'other'
+  }
+
+  function fieldGet(labels, text) {
+    for (const label of labels) {
+      const m = text.match(new RegExp(`${label}\\s*[:：]\\s*([^\\n]{1,200})`, 'i'))
+      if (m) return m[1].trim()
+    }
+    return null
+  }
+
+  // Determine status from subject
+  let status = 'found'
+  if (/\blost\b/i.test(subject) && !/\bfound\b/i.test(subject)) status = 'lost'
+
+  // Extract fields — structured first, free-form fallback
+  let title = fieldGet(['item name', 'item', 'object', 'article', 'lost item', 'found item'], body)
+  if (!title) {
+    title = subject.replace(/^(lost|found)\s*[-:–—]?\s*/i, '').trim() || subject.trim() || 'Unknown Item'
+  }
+
+  let location = fieldGet(['location found', 'location lost', 'location', 'place', 'found at', 'found near'], body)
+  if (!location) {
+    const m = body.match(/(?:near|at|in|found\s+(?:at|near|in))\s+([^\n.!?,]{3,60})/i)
+    if (m) location = m[1].trim()
+  }
+
+  let contact_info = fieldGet(['contact number', 'contact no', 'contact', 'phone', 'mobile', 'whatsapp'], body)
+  if (!contact_info) {
+    const m = body.match(/\b(\+?91[-\s]?)?[6-9]\d{9}\b/)
+    if (m) contact_info = m[0].trim()
+  }
+
+  let description = fieldGet(['description', 'details', 'desc'], body)
+  if (!description) description = body.trim().slice(0, 1000) || null
+
+  let parsedDate = null
+  const dateRaw = fieldGet(['date found', 'date lost', 'date', 'found on', 'lost on'], body)
+  if (dateRaw) { const d = new Date(dateRaw); if (!isNaN(d)) parsedDate = d.toISOString().split('T')[0] }
+  if (!parsedDate) parsedDate = new Date().toISOString().split('T')[0]
+
+  const listing = {
+    title: title.slice(0, 200),
+    description,
+    status,
+    category: inferCat(`${title} ${description || ''} ${subject}`),
+    location:     location    ? location.slice(0, 200) : null,
+    contact_info: contact_info ? contact_info.slice(0, 200) : null,
+    date: parsedDate,
+  }
+
+  // Duplicate check — same title in last 24h
+  const { data: dup } = await supabaseAdmin
+    .from('lost_found').select('id').ilike('title', listing.title)
+    .gte('created_at', new Date(Date.now() - 86400000).toISOString()).limit(1)
+  if (dup?.length) {
+    return res.json({ success: true, message: 'Duplicate — listing already exists', duplicate: true })
+  }
+
+  // Use first admin user as reporter
+  const { data: adminUser } = await supabaseAdmin
+    .from('users').select('id, org_id').eq('role', 'admin')
+    .order('created_at', { ascending: true }).limit(1).single()
+
+  if (!adminUser) {
+    return res.status(503).json({ success: false, error: 'No admin user found in database.' })
+  }
+
+  const { data: item, error: insertErr } = await supabaseAdmin
+    .from('lost_found')
+    .insert({ ...listing, reporter_id: adminUser.id, org_id: adminUser.org_id })
+    .select(ITEM_SELECT).single()
+
+  if (insertErr) {
+    console.error('[Email Ingest] DB error:', insertErr.message)
+    return res.status(500).json({ success: false, error: 'Failed to create listing.' })
+  }
+
+  // Campus notifications
+  try {
+    const { data: members } = await supabaseAdmin
+      .from('users').select('id').eq('org_id', adminUser.org_id).neq('id', adminUser.id)
+    if (members?.length) {
+      const label = item.status === 'found' ? '🟢 Found' : '🔴 Lost'
+      await supabaseAdmin.from('notifications').insert(
+        members.map(m => ({
+          user_id: m.id,
+          title: `${label}: ${item.title}`,
+          message: [item.location ? `📍 ${item.location}` : null, description?.slice(0, 100)].filter(Boolean).join(' · ') || 'New Lost & Found listing.',
+          link: '/lost-found',
+        }))
+      )
+    }
+  } catch (e) { console.error('[Email Ingest] Notification error:', e.message) }
+
+  // Log to email_logs if table exists
+  try {
+    await supabaseAdmin.from('email_logs').upsert({
+      gmail_message_id: `appsscript_${Date.now()}`,
+      sender_email: senderEmail,
+      subject,
+      status: 'success',
+      item_id: item.id,
+    }, { onConflict: 'gmail_message_id' })
+  } catch { /* table may not exist yet */ }
+
+  console.log(`[Email Ingest] ✅ Created listing: "${item.title}" from ${senderEmail}`)
+  return res.status(201).json({ success: true, data: item })
+})
+
 // ─── POST /api/lost-found ────────────────────────────────────
 router.post('/', authenticate, async (req, res) => {
   const schema = z.object({
-    title:        z.string().min(1).max(200),
-    description:  z.string().max(1000).optional(),
-    image_url:    z.string().url().optional(),
-    status:       z.enum(['lost', 'found']),
-    category:     z.enum(CATEGORIES).default('other'),
-    location:     z.string().max(200).optional(),
+    title: z.string().min(1).max(200),
+    description: z.string().max(1000).optional(),
+    image_url: z.string().url().optional(),
+    status: z.enum(['lost', 'found']),
+    category: z.enum(CATEGORIES).default('other'),
+    location: z.string().max(200).optional(),
     contact_info: z.string().max(200).optional(),
-    date:         z.string().optional(),
+    date: z.string().optional(),
   })
 
   const parsed = schema.safeParse(req.body)
@@ -124,20 +280,21 @@ router.post('/', authenticate, async (req, res) => {
     .single()
 
   if (error) throw error
+
   res.status(201).json({ success: true, data })
 })
 
 // ─── PATCH /api/lost-found/:id ───────────────────────────────
 router.patch('/:id', authenticate, async (req, res) => {
   const schema = z.object({
-    title:        z.string().min(1).max(200).optional(),
-    description:  z.string().max(1000).optional(),
-    image_url:    z.string().url().optional().nullable(),
-    status:       z.enum(['lost', 'found', 'resolved']).optional(),
-    category:     z.enum(CATEGORIES).optional(),
-    location:     z.string().max(200).optional(),
+    title: z.string().min(1).max(200).optional(),
+    description: z.string().max(1000).optional(),
+    image_url: z.string().url().optional().nullable(),
+    status: z.enum(['lost', 'found', 'resolved']).optional(),
+    category: z.enum(CATEGORIES).optional(),
+    location: z.string().max(200).optional(),
     contact_info: z.string().max(200).optional(),
-    date:         z.string().optional(),
+    date: z.string().optional(),
   })
 
   const parsed = schema.safeParse(req.body)
@@ -222,7 +379,7 @@ router.delete('/:id', authenticate, async (req, res) => {
 // ─── POST /api/lost-found/:id/claim ─────────────────────────
 router.post('/:id/claim', authenticate, async (req, res) => {
   const schema = z.object({
-    message:   z.string().min(20, 'Please describe why this is yours (min 20 characters)').max(1000),
+    message: z.string().min(20, 'Please describe why this is yours (min 20 characters)').max(1000),
     proof_url: z.string().url().optional(),
   })
 
@@ -252,7 +409,7 @@ router.post('/:id/claim', authenticate, async (req, res) => {
 // Reporter approves or rejects a claim
 router.patch('/:id/claim/:claimId', authenticate, async (req, res) => {
   const schema = z.object({
-    action:     z.enum(['approve', 'reject']),
+    action: z.enum(['approve', 'reject']),
     admin_note: z.string().max(500).optional(),
   })
 

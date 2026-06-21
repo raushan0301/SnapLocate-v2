@@ -672,4 +672,52 @@ router.delete('/courses/:id', authenticate, requireAdmin, async (req, res) => {
   }
 })
 
+// ─── GMAIL POLLER LOGS ────────────────────────────────────────────────────────
+
+// GET /api/admin/email-logs?limit=50&status=all
+// Returns recent Gmail poller log entries for the admin Email Sync dashboard tab.
+router.get('/email-logs', authenticate, requireAdmin, async (req, res) => {
+  const { limit = 50, status } = req.query
+
+  let query = supabaseAdmin
+    .from('email_logs')
+    .select('*, item:item_id(id, title)')
+    .order('processed_at', { ascending: false })
+    .limit(Math.min(Number(limit), 200))
+
+  if (status && status !== 'all') query = query.eq('status', status)
+
+  const { data, error } = await query
+  if (error) throw error
+  res.json({ success: true, data: data || [] })
+})
+
+// GET /api/admin/gmail-status
+// Returns whether Gmail credentials are configured + last poll time.
+router.get('/gmail-status', authenticate, requireAdmin, async (req, res) => {
+  const configured = !!(
+    process.env.GMAIL_CLIENT_ID &&
+    process.env.GMAIL_CLIENT_SECRET &&
+    process.env.GMAIL_REFRESH_TOKEN
+  )
+
+  // Fetch last successful/failed poll time from email_logs
+  const { data: lastLog } = await supabaseAdmin
+    .from('email_logs')
+    .select('processed_at, status')
+    .order('processed_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  res.json({
+    success: true,
+    data: {
+      configured,
+      whitelist: (process.env.GMAIL_SENDER_WHITELIST || '').split(',').map(e => e.trim()).filter(Boolean),
+      last_polled_at: lastLog?.processed_at || null,
+      last_poll_status: lastLog?.status || null,
+    },
+  })
+})
+
 export default router

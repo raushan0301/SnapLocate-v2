@@ -1,18 +1,89 @@
 import { Router } from 'express'
 import { supabaseAdmin } from '../lib/supabase.js'
 import { authenticate } from '../middleware/auth.js'
+import { getFirestoreCollection } from '../lib/firestore.js'
 
 const router = Router()
 
+// ─── Helper: parse raw v0 president/VP string ───────────────────
+// v0 stores e.g. "Dr. Amrita Kaur Assistant Professor, CSED"
+// We just keep the full string as the display name.
+function parseV0Person(nameStr, emailStr) {
+  if (!nameStr || nameStr === 'N/A' || nameStr === 'NA') return null
+  // Guard against nested JSON accidentally stored
+  if (nameStr.startsWith('{')) {
+    try { nameStr = JSON.parse(nameStr)?.stringValue || '' } catch (_) { nameStr = '' }
+  }
+  if (!nameStr.trim()) return null
+  const email = (!emailStr || emailStr.startsWith('{') || emailStr === 'N/A') ? '' : emailStr.trim()
+  return { name: nameStr.trim(), email }
+}
+
 // ─── GET /api/societies ──────────────────────────────────────
 router.get('/', async (req, res) => {
-  const { category } = req.query
-  let query = supabaseAdmin.from('societies').select('*').order('name')
-  if (category) query = query.eq('category', category)
-  const { data, error } = await query
-  if (error) throw error
-  res.json({ success: true, data })
+  try {
+    const { category } = req.query
+
+    // ── 1. Fetch from Supabase (v2) ──────────────────────────────
+    let supabaseData = []
+    try {
+      let query = supabaseAdmin.from('societies').select('*').order('name')
+      if (category) query = query.eq('category', category)
+      const { data, error } = await query
+      if (!error && data) supabaseData = data
+    } catch (err) {
+      console.warn('Supabase societies fetch failed:', err.message)
+    }
+
+    // ── 2. Fetch from Firestore (v0 — 59 societies) ──────────────
+    let firestoreData = []
+    try {
+      const rawDocs = await getFirestoreCollection('societies')
+      // Build a set of Supabase names for deduplication
+      const supabaseNames = new Set(supabaseData.map(s => s.name.toLowerCase().trim()))
+
+      rawDocs.forEach(v0 => {
+        const name = v0.societyName || v0.name || ''
+        if (!name || supabaseNames.has(name.toLowerCase().trim())) return // skip if already in v2
+
+        // Parse president — v0 stores full string like "Dr. Amrita Kaur, CSED"
+        const president = parseV0Person(v0.president, v0.presidentEmail)
+        const vicePresident = parseV0Person(v0.vicePresident, v0.vicePresidentEmail)
+
+        firestoreData.push({
+          id: `v0_${v0.id}`,
+          name,
+          description: v0.objective || '',
+          category: v0.TYPE || 'General',
+          logo_img: null,
+          email_id: v0.email || '',
+          website_link: v0.website || '',
+          cover_url: null,
+          member_count: null,
+          presidents: president ? [president] : [],
+          vice_presidents: vicePresident ? [vicePresident] : [],
+          is_legacy: true
+        })
+      })
+    } catch (err) {
+      console.warn('Firestore societies fetch failed:', err.message)
+    }
+
+    // ── 3. Merge: Supabase first, then Firestore legacy ──────────
+    const merged = [...supabaseData, ...firestoreData]
+      .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+
+    // Apply category filter to merged result if requested
+    const finalData = category
+      ? merged.filter(s => s.category === category)
+      : merged
+
+    res.json({ success: true, data: finalData })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
 })
+
 
 // ─── GET /api/societies/:id ──────────────────────────────────
 router.get('/:id', async (req, res) => {
