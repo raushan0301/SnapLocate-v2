@@ -81,6 +81,9 @@ setTimeout(() => {
 const app = express()
 const PORT = process.env.PORT || 3001
 
+// Trust proxy (nginx / CloudFront in front of EC2)
+app.set('trust proxy', 1)
+
 // Config & Parsing
 app.use(helmet())
 app.use(cors({
