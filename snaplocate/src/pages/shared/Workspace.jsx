@@ -92,12 +92,18 @@ export default function Workspace({ role = 'student' }) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploadingFile, setUploadingFile] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(null)
+  const [uploadSuccess, setUploadSuccess] = useState(false)
+  const [uploadError, setUploadError] = useState(null)
 
   const [timetable, setTimetable] = useState([])
   const [notes, setNotes] = useState([])
   const [tasks, setTasks] = useState([])
   const [links, setLinks] = useState([])
   const [files, setFiles] = useState([])
+
+  const totalBytes = files.reduce((acc, f) => acc + (f.size_bytes || 0), 0)
+  const totalUsedMB = (totalBytes / (1024 * 1024)).toFixed(2)
 
   // Modal States
   const [ttModal, setTtModal] = useState(null)
@@ -212,14 +218,28 @@ export default function Workspace({ role = 'student' }) {
     const file = e.target.files[0]
     if (!file) return
     setUploadingFile(true)
+    setUploadProgress(0)
+    setUploadError(null)
+    setUploadSuccess(false)
     try {
       const formData = new FormData(); formData.append('file', file)
-      const res = await api.upload('/api/upload/workspace', formData)
+      const res = await api.upload('/api/upload/workspace', formData, (percent) => setUploadProgress(percent))
       if (!res.url) throw new Error('Upload failed')
       const dbRes = await api.post(`${apiBase}/files`, { name: file.name, file_url: res.url, size_bytes: file.size })
       setFiles(prev => [dbRes.data, ...prev])
-    } catch (err) { alert(err.message) }
-    finally { setUploadingFile(false) }
+      setUploadSuccess(true)
+      setTimeout(() => {
+        setUploadSuccess(false)
+        setUploadingFile(false)
+        setUploadProgress(null)
+      }, 3000)
+    } catch (err) { 
+      setUploadingFile(false)
+      setUploadProgress(null)
+      setUploadError(err.message || 'Storage limit of 20 MB exceeded. Please delete some files.')
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      setTimeout(() => setUploadError(null), 5000)
+    }
   }
 
   const confirmDelete = async () => {
@@ -259,6 +279,9 @@ export default function Workspace({ role = 'student' }) {
   return (
     <PageLayout>
       <style>{`
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { transform:translateY(20px);opacity:0 } to { transform:translateY(0);opacity:1 } }
+        @keyframes spin { 100% { transform:rotate(360deg) } }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -378,7 +401,7 @@ export default function Workspace({ role = 'student' }) {
       </div>
 
       {/* ── Productivity Grid ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 272px', gap: 16, marginTop: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 300px 340px', gap: 16, marginTop: 16 }}>
 
         {/* Notes Section */}
         <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -534,7 +557,10 @@ export default function Workspace({ role = 'student' }) {
                 <div style={{ width: 32, height: 32, borderRadius: 8, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <IconCloud />
                 </div>
-                <span style={pjs(18, 700, '24px', '#0f172a')}>Files</span>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={pjs(18, 700, '24px', '#0f172a')}>Files</span>
+                  <span style={pjs(12, 500, '16px', '#64748b')}>{totalUsedMB} MB / 20 MB used</span>
+                </div>
               </div>
               <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileUpload} />
               <button
@@ -545,6 +571,12 @@ export default function Workspace({ role = 'student' }) {
                 {uploadingFile ? '...' : '+'}
               </button>
             </div>
+            {uploadError && (
+              <div style={{ padding: '10px 12px', background: '#fef2f2', borderRadius: 10, border: '1px solid #fecaca', display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 12, animation: 'fadeIn 0.2s ease' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" style={{ flexShrink: 0, marginTop: 2 }}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <div style={pjs(13, 500, '18px', '#b91c1c')}>{uploadError}</div>
+              </div>
+            )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, overflowY: 'auto' }}>
               {files.map(f => (
                 <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', background: '#f8fafc', borderRadius: 10, cursor: 'pointer' }} onClick={() => openLink(f.file_url)} onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'} onMouseLeave={e => e.currentTarget.style.background = '#f8fafc'}>
@@ -577,6 +609,36 @@ export default function Workspace({ role = 'student' }) {
             </div>
           </div>
         </Modal>
+      )}
+
+      {/* ── Floating Upload Progress ── */}
+      {(uploadingFile || uploadSuccess) && (
+        <div style={{ 
+          position: 'fixed', bottom: 32, right: 32, zIndex: 9999,
+          background: '#fff', padding: '16px 20px', borderRadius: 16, 
+          boxShadow: '0 8px 24px rgba(0,0,0,0.12)', border: '1px solid #f1f5f9',
+          display: 'flex', alignItems: 'center', gap: 16, minWidth: 260,
+          animation: 'slideUp 0.3s ease'
+        }}>
+          {uploadSuccess ? (
+            <div style={{ width: 28, height: 28, borderRadius: 14, background: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7l3.5 3.5 5.5-5.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </div>
+          ) : (
+            <div style={{ width: 24, height: 24, border: '3px solid #eef2ff', borderTop: '3px solid #4f46e5', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+          )}
+          
+          <div style={{ flex: 1 }}>
+            <div style={{ ...pjs(14, 700, '18px', '#0f172a') }}>
+              {uploadSuccess ? 'Upload complete!' : `Uploading file... ${uploadProgress || 0}%`}
+            </div>
+            {!uploadSuccess && (
+              <div style={{ height: 4, background: '#f1f5f9', borderRadius: 2, marginTop: 8, overflow: 'hidden' }}>
+                <div style={{ height: '100%', background: '#4f46e5', width: `${uploadProgress || 0}%`, transition: 'width 0.2s ease' }} />
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
     </PageLayout>

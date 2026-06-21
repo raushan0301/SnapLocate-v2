@@ -64,7 +64,8 @@ export default function StudentRequests() {
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault()
-    if (!selectedFaculty) return
+    if (!selectedFaculty || !selectedFaculty.user_id) return
+    
     setSubmitting(true)
     try {
       await api.post('/api/requests', {
@@ -213,20 +214,28 @@ export default function StudentRequests() {
                   Select Professor
                 </label>
                 {selectedFaculty ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: '#f8fafc', borderRadius: 16, border: '1.5px solid #4f46e5' }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 10, background: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
-                      {selectedFaculty.avatar_url
-                        ? <img src={selectedFaculty.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        : <span style={pjs(14, 700, '16px', '#fff')}>{(selectedFaculty.full_name || 'F').charAt(0)}</span>
-                      }
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: '#f8fafc', borderRadius: 16, border: '1.5px solid #4f46e5' }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 10, background: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                        {selectedFaculty.avatar_url
+                          ? <img src={selectedFaculty.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          : <span style={pjs(14, 700, '16px', '#fff')}>{(selectedFaculty.full_name || 'F').charAt(0)}</span>
+                        }
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={pjs(14, 700, '18px', '#0f172a')}>{selectedFaculty.full_name}</div>
+                        <div style={pjs(12, 400, '16px', '#64748b')}>{selectedFaculty.designation} · {selectedFaculty.dept}</div>
+                      </div>
+                      <button onClick={() => setSelectedFaculty(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4f46e5' }}>
+                        <X size={18} />
+                      </button>
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={pjs(14, 700, '18px', '#0f172a')}>{selectedFaculty.full_name}</div>
-                      <div style={pjs(12, 400, '16px', '#64748b')}>{selectedFaculty.designation} · {selectedFaculty.dept}</div>
-                    </div>
-                    <button onClick={() => setSelectedFaculty(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4f46e5' }}>
-                      <X size={18} />
-                    </button>
+                    {!selectedFaculty.user_id && (
+                      <div style={{ padding: '12px', background: '#fef2f2', borderRadius: 12, border: '1px solid #fecaca', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" style={{ flexShrink: 0, marginTop: 2 }}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        <div style={pjs(13, 500, '18px', '#b91c1c')}>This faculty member has not yet registered on SnapLocate. Requests cannot be sent to unregistered accounts.</div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div>
@@ -318,8 +327,8 @@ export default function StudentRequests() {
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={!selectedFaculty || submitting}
-                  style={{ flex: 2, padding: '13px', borderRadius: 14, background: selectedFaculty ? '#4f46e5' : '#cbd5e1', color: '#fff', border: 'none', ...pjs(14, 700, '20px', '#fff'), cursor: selectedFaculty && !submitting ? 'pointer' : 'not-allowed', transition: 'all 0.2s', boxShadow: selectedFaculty ? '0 4px 12px rgba(79,70,229,0.3)' : 'none' }}
+                  disabled={!selectedFaculty || !selectedFaculty.user_id || submitting}
+                  style={{ flex: 2, padding: '13px', borderRadius: 14, background: (selectedFaculty && selectedFaculty.user_id) ? '#4f46e5' : '#cbd5e1', color: '#fff', border: 'none', ...pjs(14, 700, '20px', '#fff'), cursor: (selectedFaculty && selectedFaculty.user_id) && !submitting ? 'pointer' : 'not-allowed', transition: 'all 0.2s', boxShadow: (selectedFaculty && selectedFaculty.user_id) ? '0 4px 12px rgba(79,70,229,0.3)' : 'none' }}
                 >
                   {submitting ? 'Sending...' : 'Send Request →'}
                 </button>

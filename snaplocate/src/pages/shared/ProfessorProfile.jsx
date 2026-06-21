@@ -20,6 +20,10 @@ function RequestModal({ prof, onClose, onSuccess }) {
 
   const submit = async () => {
     if (!detail.trim()) { setError('Please describe your request'); return }
+    if (!prof.user_id) {
+      setError('This faculty member has not yet registered on SnapLocate. Requests cannot be sent to unregistered accounts.')
+      return
+    }
     setLoading(true)
     setError(null)
     try {

@@ -87,6 +87,16 @@ export default function StudentDashboard() {
     const id = setInterval(() => setNow(new Date()), 60000)
     return () => clearInterval(id)
   }, [])
+
+  const toggleTask = async (id, isDone) => {
+    setTasks(p => p.map(t => t.id === id ? { ...t, is_done: !isDone } : t))
+    const apiBase = user?.role === 'faculty' ? '/api/faculty-workspace' : '/api/workspace'
+    try {
+      await api.patch(`${apiBase}/tasks/${id}/toggle`, { is_done: !isDone })
+    } catch (err) {
+      console.error('Failed to toggle task:', err)
+    }
+  }
   
   const pendingTasks = tasks.filter(t => !t.is_done).slice(0, 3)
 
@@ -204,10 +214,20 @@ export default function StudentDashboard() {
           </div>
           <div style={{ display:'flex', flexDirection:'column', gap: 20 }}>
             {pendingTasks.length > 0 ? pendingTasks.map((t, i) => (
-              <div key={i} style={{ display:'flex', gap: 12, alignItems:'flex-start', padding:'0 4px' }}>
-                <div style={{ width:18, height:18, borderRadius:6, border:'2px solid #4f46e5', flexShrink:0, marginTop:2 }} />
+              <div key={t.id || i} style={{ display:'flex', gap: 12, alignItems:'flex-start', padding:'0 4px', transition: 'all 0.2s', opacity: t.is_done ? 0.5 : 1 }}>
+                <div 
+                  onClick={() => toggleTask(t.id, t.is_done)}
+                  style={{ 
+                    width:18, height:18, borderRadius:6, border: t.is_done ? 'none' : '2px solid #4f46e5', 
+                    background: t.is_done ? '#4f46e5' : 'transparent', flexShrink:0, marginTop:2, 
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {t.is_done && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                </div>
                 <div style={{ flex:1 }}>
-                  <div style={{ ...pjs(14, 600, '18px', '#0f172a'), whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{t.label}</div>
+                  <div style={{ ...pjs(14, 600, '18px', t.is_done ? '#94a3b8' : '#0f172a'), whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', textDecoration: t.is_done ? 'line-through' : 'none', transition: 'all 0.2s' }}>{t.label}</div>
                   <div style={{ ...pjs(12, 400, '16px', '#64748b'), marginTop:2 }}>{t.sub || 'Pending task'}</div>
                 </div>
               </div>
@@ -321,7 +341,7 @@ export default function StudentDashboard() {
               </div>
             ))}
           </div>
-          <button style={{ ...pjs(14, 500, '18px', '#64748b'), width:'100%', padding:'10px 0 2px', background:'transparent', border:'none', borderTop:'1px solid #f1f5f9', cursor:'pointer', textAlign:'center' }}>View all activity</button>
+          <button onClick={() => window.location.href='/workspace'} style={{ ...pjs(14, 500, '18px', '#64748b'), width:'100%', padding:'10px 0 2px', background:'transparent', border:'none', borderTop:'1px solid #f1f5f9', cursor:'pointer', textAlign:'center' }}>View all activity</button>
         </div>
       </div>
     </PageLayout>
