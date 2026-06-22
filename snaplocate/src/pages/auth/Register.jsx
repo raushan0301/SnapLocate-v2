@@ -11,7 +11,7 @@ export default function Register() {
   const { register, loginWithGoogle } = useAuth()
 
   const [step,    setStep]    = useState(1) // 1 = fill form, 2 = pick role
-  const [form,    setForm]    = useState({ full_name: '', email: '', password: '', confirm: '', role: 'student' })
+  const [form,    setForm]    = useState({ full_name: '', email: '', password: '', confirm: '' })
   const [error,   setError]   = useState('')
   const [loading, setLoading] = useState(false)
   const [showPass, setShowPass] = useState(false)
@@ -33,7 +33,7 @@ export default function Register() {
     if (err) { setError(err); return }
     setLoading(true)
     try {
-      const res = await register({ full_name: form.full_name, email: form.email, password: form.password, role: form.role })
+      const res = await register({ full_name: form.full_name, email: form.email, password: form.password })
       // Go to OTP verify page — pass email and dev_otp (if server returned it)
       navigate('/verify-otp', { state: { email: form.email, dev_otp: res.dev_otp || '' } })
     } catch (err) {
@@ -82,17 +82,16 @@ export default function Register() {
             </p>
           </div>
 
-          {/* Role preview cards */}
+          {/* Feature list */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {[
-              { icon: '🎓', label: 'Student', desc: 'Access resources, find professors, more' },
-              { icon: '🧑‍🏫', label: 'Faculty', desc: 'Manage profile, accept requests, share resources' },
-              { icon: '👑', label: 'Admin', desc: 'Manage platform, verify users, control campus data' },
+              { icon: '🎓', label: 'Campus Access', desc: 'Find classrooms, resources, and peers' },
+              { icon: '🔒', label: 'Secure Accounts', desc: 'Verified university members only' },
             ].map(r => (
               <div key={r.label} style={{
                 ...styles.roleCard,
-                background: form.role === r.label.toLowerCase() ? '#eef2ff' : '#fff',
-                border: form.role === r.label.toLowerCase() ? '1.5px solid #6366f1' : '1px solid #f1f5f9',
+                background: '#fff',
+                border: '1px solid #f1f5f9',
               }}>
                 <span style={{ fontSize: 22 }}>{r.icon}</span>
                 <div>
@@ -138,28 +137,6 @@ export default function Register() {
           </div>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-
-            {/* Role toggle */}
-            <div style={styles.field}>
-              <label style={styles.label}>I am a</label>
-              <div style={styles.roleToggle}>
-                {['student', 'faculty', 'admin'].map(r => (
-                  <button
-                    key={r} type="button"
-                    id={`role-${r}`}
-                    onClick={() => setForm(f => ({ ...f, role: r }))}
-                    style={{
-                      ...styles.roleBtn,
-                      background: form.role === r ? '#4f46e5' : 'transparent',
-                      color:      form.role === r ? '#fff'    : '#64748b',
-                      fontWeight: form.role === r ? 700       : 500,
-                    }}
-                  >
-                    {r === 'student' ? '🎓 Student' : r === 'faculty' ? '🧑‍🏫 Faculty' : '👑 Admin'}
-                  </button>
-                ))}
-              </div>
-            </div>
 
             {/* Full name */}
             <div style={styles.field}>

@@ -19,6 +19,7 @@ const updateUserSchema = z.object({
   full_name: z.string().min(2).optional(),
   dept: z.string().min(1).optional(),
   is_verified: z.boolean().optional(),
+  role: z.enum(['student', 'faculty', 'admin', 'guest']).optional(),
 })
 
 const verifyUserSchema = z.object({
@@ -98,7 +99,13 @@ router.get('/users', authenticate, requireAdmin, async (req, res) => {
     .select(`id, email, full_name, role, is_verified, created_at, avatar_url, faculty_profiles(dept)`)
     .order('created_at', { ascending: false })
 
-  if (req.query.role) query = query.eq('role', req.query.role)
+  if (req.query.role) {
+    if (req.query.role.includes(',')) {
+      query = query.in('role', req.query.role.split(','))
+    } else {
+      query = query.eq('role', req.query.role)
+    }
+  }
 
   const { data, error } = await query
   if (error) throw error
@@ -144,14 +151,15 @@ router.post('/users', authenticate, requireAdmin, async (req, res) => {
 // PATCH /api/admin/users/:id
 router.patch('/users/:id', authenticate, requireAdmin, async (req, res) => {
   const { id } = req.params
-  const { full_name, dept, is_verified } = updateUserSchema.parse(req.body)
+  const { full_name, dept, is_verified, role } = updateUserSchema.parse(req.body)
 
-  if (full_name !== undefined || is_verified !== undefined) {
+  if (full_name !== undefined || is_verified !== undefined || role !== undefined) {
     const { error: uErr } = await supabaseAdmin
       .from('users')
       .update({
         ...(full_name && { full_name }),
-        ...(is_verified !== undefined && { is_verified })
+        ...(is_verified !== undefined && { is_verified }),
+        ...(role && { role })
       })
       .eq('id', id)
     if (uErr) throw uErr

@@ -16,7 +16,6 @@ const registerSchema = z.object({
   full_name: z.string().min(2),
   email:     z.string().email(),
   password:  z.string().min(8),
-  role:      z.enum(['student', 'faculty', 'admin']),
 })
 
 const loginSchema = z.object({
@@ -64,6 +63,10 @@ router.post('/register', authLimiter, async (req, res) => {
   const otp = generateOTP()
   const otp_expires_at = new Date(Date.now() + 10 * 60 * 1000).toISOString()
 
+  // Assign role based on email domain
+  const isThapar = data.email.endsWith('@thapar.edu')
+  const assignedRole = isThapar ? 'student' : 'guest'
+
   // Insert user (unverified)
   const { data: user, error } = await supabaseAdmin
     .from('users')
@@ -71,7 +74,7 @@ router.post('/register', authLimiter, async (req, res) => {
       full_name:      data.full_name,
       email:          data.email,
       password_hash,
-      role:           data.role,
+      role:           assignedRole,
       is_verified:    false,
       otp,
       otp_expires_at,

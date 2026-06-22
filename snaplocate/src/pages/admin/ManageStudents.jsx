@@ -221,7 +221,7 @@ export default function ManageStudents() {
     setLoading(true)
     try {
       const [stuResult, facResult, advResult] = await Promise.allSettled([
-        api.get('/api/admin/users?role=student'),
+        api.get('/api/admin/users?role=student,guest'),
         api.get('/api/faculty'),
         api.get('/api/admin/student-advisors'),
       ])
@@ -275,6 +275,17 @@ export default function ManageStudents() {
       showToast(`${student.full_name} deleted`)
     } catch {
       showToast('Delete failed', 'error')
+    }
+  }
+
+  const handlePromote = async (student, newRole) => {
+    if (!window.confirm(`Are you sure you want to promote ${student.full_name} to ${newRole.toUpperCase()}?`)) return
+    try {
+      await api.patch(`/api/admin/users/${student.id}`, { role: newRole })
+      setStudents(prev => prev.filter(s => s.id !== student.id))
+      showToast(`${student.full_name} promoted to ${newRole}`)
+    } catch {
+      showToast('Promotion failed', 'error')
     }
   }
 
@@ -407,7 +418,12 @@ export default function ManageStudents() {
                             : <span style={pjs(14, 700, '18px', '#16a34a')}>{s.full_name?.charAt(0)}</span>}
                         </div>
                         <div>
-                          <div style={pjs(14, 700, '18px', '#0f172a')}>{s.full_name}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div style={pjs(14, 700, '18px', '#0f172a')}>{s.full_name}</div>
+                            <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: s.role === 'guest' ? '#f1f5f9' : '#eef2ff', color: s.role === 'guest' ? '#64748b' : '#4f46e5', textTransform: 'uppercase' }}>
+                              {s.role}
+                            </span>
+                          </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
                             <Mail size={11} color="#94a3b8" />
                             <span style={pjs(11, 400, '14px', '#64748b')}>{s.email}</span>
@@ -480,15 +496,31 @@ export default function ManageStudents() {
 
                     {/* Actions */}
                     <td style={{ padding: '14px 20px' }}>
-                      <button
-                        onClick={() => handleDelete(s)}
-                        style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 10, border: '1px solid #fecaca', background: '#fff', cursor: 'pointer', transition: 'all 0.15s', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-                        onMouseEnter={e => e.currentTarget.style.background = '#fef2f2'}
-                        onMouseLeave={e => e.currentTarget.style.background = '#fff'}
-                      >
-                        <Trash2 size={13} color="#ef4444" />
-                        <span style={pjs(12, 600, '16px', '#ef4444')}>Delete</span>
-                      </button>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <select
+                          onChange={(e) => {
+                            if (e.target.value) handlePromote(s, e.target.value)
+                          }}
+                          value=""
+                          style={{
+                            padding: '6px 12px', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', 
+                            cursor: 'pointer', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 12, fontWeight: 600, color: '#4f46e5'
+                          }}
+                        >
+                          <option value="" disabled>Promote...</option>
+                          <option value="faculty">To Faculty</option>
+                          <option value="admin">To Admin</option>
+                        </select>
+                        <button
+                          onClick={() => handleDelete(s)}
+                          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 10, border: '1px solid #fecaca', background: '#fff', cursor: 'pointer', transition: 'all 0.15s', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#fef2f2'}
+                          onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+                        >
+                          <Trash2 size={13} color="#ef4444" />
+                          <span style={pjs(12, 600, '16px', '#ef4444')}>Delete</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
