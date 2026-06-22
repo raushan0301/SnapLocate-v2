@@ -1,5 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import api from '../lib/api'
 import {
   LayoutDashboard,
   Users,
@@ -135,13 +137,13 @@ const adminNav = [
 ]
 
 
-function NavRow({ label, path, icon: Icon }) {
+function NavRow({ label, path, icon: Icon, count }) {
   return (
     <NavLink to={path} end style={{ display: 'block', textDecoration: 'none', borderRadius: 8 }}>
       {({ isActive }) => (
         <div
           style={{
-            display: 'flex', alignItems: 'center', gap: 10,
+            display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between',
             padding: '8px 12px', borderRadius: 8,
             background: isActive ? 'rgba(79,70,229,0.08)' : 'transparent',
             cursor: 'pointer', transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -149,20 +151,31 @@ function NavRow({ label, path, icon: Icon }) {
           onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#f1f5f9' }}
           onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
         >
-          <span style={{
-            width: 20, height: 20,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            color: isActive ? '#4f46e5' : '#64748b'
-          }}>
-            <Icon size={17} strokeWidth={isActive ? 2.5 : 2} />
-          </span>
-          <span style={{
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-            fontSize: 13, fontWeight: isActive ? 600 : 500,
-            lineHeight: '16px', color: isActive ? '#4f46e5' : '#64748b',
-          }}>
-            {label}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{
+              width: 20, height: 20,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              color: isActive ? '#4f46e5' : '#64748b'
+            }}>
+              <Icon size={17} strokeWidth={isActive ? 2.5 : 2} />
+            </span>
+            <span style={{
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              fontSize: 13, fontWeight: isActive ? 600 : 500,
+              lineHeight: '16px', color: isActive ? '#4f46e5' : '#64748b',
+            }}>
+              {label}
+            </span>
+          </div>
+          {count > 0 && (
+            <div style={{
+              background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 700,
+              padding: '2px 6px', borderRadius: 10, minWidth: 18, textAlign: 'center',
+              fontFamily: "'Inter', sans-serif"
+            }}>
+              {count}
+            </div>
+          )}
         </div>
       )}
     </NavLink>
@@ -172,6 +185,20 @@ function NavRow({ label, path, icon: Icon }) {
 export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const [reqCount, setReqCount] = useState(0)
+
+  useEffect(() => {
+    if (!user || user.role === 'admin') return
+    const isFaculty = user.role === 'faculty'
+    const endpoint = isFaculty ? '/api/requests/faculty' : '/api/requests'
+    
+    api.get(endpoint).then(res => {
+      const data = res.data?.data || res.data || []
+      // For both faculty and student, pending requests represent action items or wait states
+      const count = data.filter(r => r.status === 'pending').length
+      setReqCount(count)
+    }).catch(err => console.error('Sidebar fetch requests err:', err))
+  }, [user])
 
   const handleLogout = () => {
     logout()
@@ -242,9 +269,10 @@ export default function Sidebar({ isOpen, onClose }) {
                   </div>
                 )
               }
+              const isRequests = item.path === '/requests' || item.path === '/faculty/requests'
               return (
                 <div key={item.path} onClick={() => { if (window.innerWidth <= 1024) onClose() }}>
-                  <NavRow {...item} />
+                  <NavRow {...item} count={isRequests ? reqCount : undefined} />
                 </div>
               )
             })}

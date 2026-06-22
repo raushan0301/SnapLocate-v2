@@ -3,15 +3,15 @@ import PageLayout from '../../components/PageLayout'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../lib/api'
 import Modal from '../../components/admin/Modal'
-import { 
-  User, 
-  Shield, 
-  Palette, 
-  Bell, 
-  Camera, 
-  KeyRound, 
-  ShieldCheck, 
-  Sun, 
+import {
+  User,
+  Shield,
+  Palette,
+  Bell,
+  Camera,
+  KeyRound,
+  ShieldCheck,
+  Sun,
   Moon,
   Loader2,
   Globe,
@@ -109,7 +109,7 @@ function Checkbox({ checked, onChange }) {
     >
       {checked && (
         <svg width="12" height="9" viewBox="0 0 12 9" fill="none">
-          <path d="M1 4.5L4.5 8L11 1.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M1 4.5L4.5 8L11 1.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       )}
     </div>
@@ -122,14 +122,14 @@ function Checkbox({ checked, onChange }) {
 export default function SettingsPage() {
   const { user, updateUser } = useAuth()
   const fileInputRef = useRef(null)
-  
+
   const [profile, setProfile] = useState({
     firstName: user?.full_name?.split(' ')[0] || '',
-    lastName:  user?.full_name?.split(' ').slice(1).join(' ') || '',
-    email:     user?.email || '',
+    lastName: user?.full_name?.split(' ').slice(1).join(' ') || '',
+    email: user?.email || '',
     avatar_url: user?.avatar_url || ''
   })
-  
+
   const [prefs, setPrefs] = useState({
     theme: 'light',
     language: 'English',
@@ -140,11 +140,11 @@ export default function SettingsPage() {
   })
 
   const [loading, setLoading] = useState(true)
-  const [saving,  setSaving]  = useState(false)
+  const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [savingPwd, setSavingPwd] = useState(false)
   const [pwModal, setPwModal] = useState(false)
-  const [pwForm,  setPwForm]  = useState({ current: '', next: '', confirm: '' })
+  const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' })
   const [pwError, setPwError] = useState('')
   const [showPwd, setShowPwd] = useState({ current: false, next: false, confirm: false })
   const [toast, setToast] = useState({ msg: '', type: 'success' })
@@ -162,8 +162,8 @@ export default function SettingsPage() {
           const u = res.data
           setProfile({
             firstName: u.full_name?.split(' ')[0] || '',
-            lastName:  u.full_name?.split(' ').slice(1).join(' ') || '',
-            email:     u.email,
+            lastName: u.full_name?.split(' ').slice(1).join(' ') || '',
+            email: u.email,
             avatar_url: u.avatar_url || ''
           })
           if (u.preferences) {
@@ -224,12 +224,16 @@ export default function SettingsPage() {
   }
 
   const handlePrefChange = async (key, value) => {
+    const prev = { ...prefs }
     const nextPrefs = { ...prefs, [key]: value }
     setPrefs(nextPrefs)
     try {
       await api.put('/api/users/preferences', { preferences: nextPrefs })
+      showToast('Preferences updated!')
     } catch (err) {
       console.error('Failed to sync preferences:', err)
+      setPrefs(prev)
+      showToast('Failed to save preference', 'error')
     }
   }
 
@@ -239,7 +243,7 @@ export default function SettingsPage() {
     if (pwForm.current === pwForm.next) return setPwError('New password cannot be the same as current password')
     if (pwForm.next !== pwForm.confirm) return setPwError('Passwords do not match')
     if (pwForm.next.length < 8) return setPwError('Password must be at least 8 characters')
-    
+
     setSavingPwd(true)
     try {
       const res = await api.put('/api/users/password', {
@@ -257,7 +261,7 @@ export default function SettingsPage() {
       setSavingPwd(false)
     }
   }
-  
+
   const closePwModal = () => {
     setPwModal(false)
     setPwError('')
@@ -312,19 +316,19 @@ export default function SettingsPage() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20 }}>
-        
+
         {/* LEFT COLUMN */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          
+
           {/* User Profile Card */}
           <Card>
             <SectionHeading title="User Profile" icon={<User size={20} color="#4f46e5" strokeWidth={2.5} />} />
-            
+
             <div style={{ display: 'flex', gap: 28, alignItems: 'flex-start' }}>
               {/* Avatar Section */}
               <div style={{ position: 'relative', flexShrink: 0 }}>
-                <div style={{ 
-                  width: 104, height: 104, borderRadius: '50%', overflow: 'hidden', 
+                <div style={{
+                  width: 104, height: 104, borderRadius: '50%', overflow: 'hidden',
                   border: '4px solid #fff', boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
                   background: 'linear-gradient(135deg,#e0e7ff,#f1f5f9)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center'
@@ -339,7 +343,7 @@ export default function SettingsPage() {
                     </div>
                   )}
                 </div>
-                <button 
+                <button
                   onClick={() => fileInputRef.current?.click()}
                   style={{
                     position: 'absolute', bottom: 2, right: 2,
@@ -361,19 +365,19 @@ export default function SettingsPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                   <div>
                     <label style={labelStyle}>First Name</label>
-                    <input style={inputStyle} value={profile.firstName} onChange={e => setProfile({...profile, firstName: e.target.value})} />
+                    <input style={inputStyle} value={profile.firstName} onChange={e => setProfile({ ...profile, firstName: e.target.value })} />
                   </div>
                   <div>
                     <label style={labelStyle}>Last Name</label>
-                    <input style={inputStyle} value={profile.lastName} onChange={e => setProfile({...profile, lastName: e.target.value})} />
+                    <input style={inputStyle} value={profile.lastName} onChange={e => setProfile({ ...profile, lastName: e.target.value })} />
                   </div>
                 </div>
                 <div>
                   <label style={labelStyle}>Email Address</label>
-                  <input style={{...inputStyle, background: '#f8fafc', color: '#64748b'}} value={profile.email} disabled />
+                  <input style={{ ...inputStyle, background: '#f8fafc', color: '#64748b' }} value={profile.email} disabled />
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-                  <button 
+                  <button
                     onClick={handleProfileSave}
                     disabled={saving}
                     style={primaryButtonStyle}
@@ -390,8 +394,8 @@ export default function SettingsPage() {
           {/* Security & Access Card */}
           <Card>
             <SectionHeading title="Security & Access" icon={<Shield size={20} color="#4f46e5" strokeWidth={2.5} />} />
-            
-            <div style={{ background: '#f8fafc', border:'1px solid #f1f5f9', borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 20, marginBottom: 16 }}>
+
+            <div style={{ background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 20, marginBottom: 16 }}>
               <div style={{ width: 44, height: 44, borderRadius: 12, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <KeyRound size={20} color="#4f46e5" />
               </div>
@@ -399,8 +403,8 @@ export default function SettingsPage() {
                 <div style={pjs(15, 700, '21px', '#0f172a')}>Reset Password</div>
                 <div style={inter(13, 400, '18px', '#64748b')}>Change your password to keep your account secure.</div>
               </div>
-              <button onClick={() => setPwModal(true)} style={{ 
-                padding: '12px 20px', background: '#fff', border: '1px solid #e2e8f0', 
+              <button onClick={() => setPwModal(true)} style={{
+                padding: '12px 20px', background: '#fff', border: '1px solid #e2e8f0',
                 borderRadius: 12, cursor: 'pointer', ...pjs(13, 700, '18px', '#0f172a'),
                 transition: 'all 0.15s'
               }} onMouseEnter={e => e.currentTarget.style.borderColor = '#4f46e5'} onMouseLeave={e => e.currentTarget.style.borderColor = '#e2e8f0'}>
@@ -408,7 +412,7 @@ export default function SettingsPage() {
               </button>
             </div>
 
-            <div style={{ background: '#f8fafc', border:'1px solid #f1f5f9', borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 20 }}>
+            <div style={{ background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 20 }}>
               <div style={{ width: 44, height: 44, borderRadius: 12, background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <ShieldCheck size={20} color="#10b981" />
               </div>
@@ -416,25 +420,25 @@ export default function SettingsPage() {
                 <div style={pjs(15, 700, '21px', '#0f172a')}>Two-Factor Authentication</div>
                 <div style={inter(13, 400, '18px', '#64748b')}>Add an extra layer of security with SMS or App verification.</div>
               </div>
-              <Toggle on={true} onChange={()=>{}} />
+              <Toggle on={true} onChange={() => { }} />
             </div>
           </Card>
         </div>
 
         {/* RIGHT COLUMN */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          
+
           {/* Appearance Card */}
           <Card>
             <SectionHeading title="Appearance" icon={<Palette size={20} color="#4f46e5" strokeWidth={2.5} />} />
             <p style={{ ...inter(14, 400, '20px', '#64748b'), marginBottom: 20 }}>Choose how SnapLocate looks for you.</p>
-            
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               {[
                 { id: 'light', label: 'Light Mode', icon: <Sun size={24} /> },
-                { id: 'dark',  label: 'Dark Mode',  icon: <Moon size={24} /> },
+                { id: 'dark', label: 'Dark Mode', icon: <Moon size={24} /> },
               ].map(t => (
-                <div 
+                <div
                   key={t.id}
                   onClick={() => handlePrefChange('theme', t.id)}
                   style={{
@@ -458,10 +462,10 @@ export default function SettingsPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
                 <label style={labelStyle}>Language</label>
-                <select 
-                  value={prefs.language} 
+                <select
+                  value={prefs.language}
                   onChange={e => handlePrefChange('language', e.target.value)}
-                  style={{...inputStyle, background:'#fff', border:'1px solid #e2e8f0', cursor:'pointer'}}
+                  style={{ ...inputStyle, background: '#fff', border: '1px solid #e2e8f0', cursor: 'pointer' }}
                 >
                   <option>English</option>
                   <option>Hindi</option>
@@ -471,10 +475,10 @@ export default function SettingsPage() {
               </div>
               <div>
                 <label style={labelStyle}>Timezone</label>
-                <select 
-                  value={prefs.timezone} 
+                <select
+                  value={prefs.timezone}
                   onChange={e => handlePrefChange('timezone', e.target.value)}
-                  style={{...inputStyle, background:'#fff', border:'1px solid #e2e8f0', cursor:'pointer'}}
+                  style={{ ...inputStyle, background: '#fff', border: '1px solid #e2e8f0', cursor: 'pointer' }}
                 >
                   <option>Asia/Kolkata (IST)</option>
                   <option>UTC</option>
@@ -488,15 +492,21 @@ export default function SettingsPage() {
           {/* Notifications Card */}
           <Card>
             <SectionHeading title="Notifications" icon={<Bell size={20} color="#4f46e5" strokeWidth={2.5} />} />
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               {[
-                { k: 'push_notifs',      title: 'Push Notifications',  desc: 'Real-time alerts on your device' },
-                { k: 'email_notifs',     title: 'Email Notifications', desc: 'Summary and critical event emails' },
-                { k: 'weekly_analytics', title: 'Weekly Analytics',    desc: 'Detailed weekly usage reports' },
+                { k: 'push_notifs', title: 'Push Notifications', desc: 'Real-time alerts on your device' },
+                { k: 'email_notifs', title: 'Email Notifications', desc: 'Summary and critical event emails' },
+                { k: 'weekly_analytics', title: 'Weekly Analytics', desc: 'Detailed weekly usage reports' },
               ].map(n => (
-                <div key={n.k} style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-                  <Checkbox checked={prefs[n.k]} onChange={v => handlePrefChange(n.k, v)} />
+                <div
+                  key={n.k}
+                  onClick={() => handlePrefChange(n.k, !prefs[n.k])}
+                  style={{ display: 'flex', alignItems: 'flex-start', gap: 14, cursor: 'pointer' }}
+                >
+                  <div style={{ pointerEvents: 'none' }}>
+                    <Checkbox checked={prefs[n.k]} onChange={() => { }} />
+                  </div>
                   <div style={{ marginTop: -2 }}>
                     <div style={pjs(14, 700, '19px', '#0f172a')}>{n.title}</div>
                     <div style={inter(12, 400, '16px', '#64748b')}>{n.desc}</div>
@@ -519,16 +529,16 @@ export default function SettingsPage() {
           <div>
             <label style={labelStyle}>Current Password</label>
             <div style={{ position: 'relative' }}>
-              <input 
-                type={showPwd.current ? 'text' : 'password'} 
-                required 
-                style={{...inputStyle, paddingRight: 44}} 
-                value={pwForm.current} 
-                onChange={e => setPwForm({...pwForm, current: e.target.value})} 
+              <input
+                type={showPwd.current ? 'text' : 'password'}
+                required
+                style={{ ...inputStyle, paddingRight: 44 }}
+                value={pwForm.current}
+                onChange={e => setPwForm({ ...pwForm, current: e.target.value })}
               />
-              <button 
-                type="button" 
-                onClick={() => setShowPwd({...showPwd, current: !showPwd.current})}
+              <button
+                type="button"
+                onClick={() => setShowPwd({ ...showPwd, current: !showPwd.current })}
                 style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }}
               >
                 {showPwd.current ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -538,16 +548,16 @@ export default function SettingsPage() {
           <div>
             <label style={labelStyle}>New Password</label>
             <div style={{ position: 'relative' }}>
-              <input 
-                type={showPwd.next ? 'text' : 'password'} 
-                required 
-                style={{...inputStyle, paddingRight: 44}} 
-                value={pwForm.next} 
-                onChange={e => setPwForm({...pwForm, next: e.target.value})} 
+              <input
+                type={showPwd.next ? 'text' : 'password'}
+                required
+                style={{ ...inputStyle, paddingRight: 44 }}
+                value={pwForm.next}
+                onChange={e => setPwForm({ ...pwForm, next: e.target.value })}
               />
-              <button 
-                type="button" 
-                onClick={() => setShowPwd({...showPwd, next: !showPwd.next})}
+              <button
+                type="button"
+                onClick={() => setShowPwd({ ...showPwd, next: !showPwd.next })}
                 style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }}
               >
                 {showPwd.next ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -557,16 +567,16 @@ export default function SettingsPage() {
           <div>
             <label style={labelStyle}>Confirm New Password</label>
             <div style={{ position: 'relative' }}>
-              <input 
-                type={showPwd.confirm ? 'text' : 'password'} 
-                required 
-                style={{...inputStyle, paddingRight: 44, borderColor: pwForm.confirm && pwForm.next && pwForm.confirm !== pwForm.next ? '#ef4444' : '#e2e8f0'}} 
-                value={pwForm.confirm} 
-                onChange={e => setPwForm({...pwForm, confirm: e.target.value})} 
+              <input
+                type={showPwd.confirm ? 'text' : 'password'}
+                required
+                style={{ ...inputStyle, paddingRight: 44, borderColor: pwForm.confirm && pwForm.next && pwForm.confirm !== pwForm.next ? '#ef4444' : '#e2e8f0' }}
+                value={pwForm.confirm}
+                onChange={e => setPwForm({ ...pwForm, confirm: e.target.value })}
               />
-              <button 
-                type="button" 
-                onClick={() => setShowPwd({...showPwd, confirm: !showPwd.confirm})}
+              <button
+                type="button"
+                onClick={() => setShowPwd({ ...showPwd, confirm: !showPwd.confirm })}
                 style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }}
               >
                 {showPwd.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -577,17 +587,17 @@ export default function SettingsPage() {
             )}
           </div>
           <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end', gap: 14 }}>
-            <button 
-              type="button" 
-              onClick={() => setPwModal(false)} 
+            <button
+              type="button"
+              onClick={() => setPwModal(false)}
               style={secondaryButtonStyle}
               onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
               onMouseLeave={e => e.currentTarget.style.background = '#ffffff'}
             >
               Cancel
             </button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={savingPwd}
               style={primaryButtonStyle}
               onMouseEnter={e => e.currentTarget.style.background = '#4338ca'}
