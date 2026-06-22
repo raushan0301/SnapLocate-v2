@@ -72,7 +72,7 @@ export default function Login() {
   const pageStyle = {
     display: 'flex',
     flexDirection: isMobile ? 'column' : 'row',
-    minHeight: '100vh',
+    minHeight: '100dvh',
     fontFamily: "'Inter', sans-serif",
     background: '#f8fafc',
   }

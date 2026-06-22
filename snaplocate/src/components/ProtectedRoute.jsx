@@ -7,11 +7,10 @@ import { useAuth } from '../context/AuthContext'
 function AuthLoading() {
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      height: '100vh', flexDirection: 'column', gap: 16,
-      background: '#f8fafc',
-    }}>
-      <div style={spinnerStyle} />
+      display: 'flex', justifyContent: 'center', alignItems: 'center',
+      height: '100dvh', flexDirection: 'column', gap: 16,
+      background: '#f8fafc', fontFamily: "'Plus Jakarta Sans', sans-serif"
+    }}>  <div style={spinnerStyle} />
       <span style={{
         fontFamily: "'Plus Jakarta Sans', sans-serif",
         fontSize: 14, fontWeight: 500, color: '#64748b',

@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { supabaseAdmin } from '../lib/supabase.js'
 import { authenticate } from '../middleware/auth.js'
+import { createNotification } from '../lib/notifications.js'
 
 const router = Router()
 
@@ -164,6 +165,14 @@ router.post('/conversations/:convId/messages', authenticate, async (req, res) =>
     .from('lf_conversations')
     .update({ last_message_at: msg.created_at })
     .eq('id', convId)
+
+  const otherUserId = conv.participant_a === me ? conv.participant_b : conv.participant_a
+  createNotification(
+    otherUserId,
+    `New message from ${msg.sender?.full_name || 'someone'}`,
+    msg.content.slice(0, 60) + (msg.content.length > 60 ? '...' : ''),
+    '/lost-found'
+  )
 
   res.status(201).json({ success: true, data: msg })
 })

@@ -232,7 +232,7 @@ export default function Register() {
 }
 
 const styles = {
-  page: { display: 'flex', minHeight: '100vh', background: '#f8fafc' },
+  page: { display: 'flex', minHeight: '100dvh', background: '#f8fafc' },
   left: {
     flex: 1, background: '#fff', borderRight: '1px solid #f1f5f9',
     display: 'flex', alignItems: 'stretch', padding: '48px 56px',

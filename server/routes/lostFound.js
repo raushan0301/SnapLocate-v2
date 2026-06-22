@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { supabaseAdmin } from '../lib/supabase.js'
 import { authenticate } from '../middleware/auth.js'
+import { createNotification } from '../lib/notifications.js'
 
 const router = Router()
 
@@ -402,6 +403,15 @@ router.post('/:id/claim', authenticate, async (req, res) => {
     if (error.code === '23505') return res.status(409).json({ success: false, error: 'You have already submitted a claim for this item' })
     throw error
   }
+
+  // Notify Reporter about the new claim
+  createNotification(
+    item.reporter_id,
+    `New Claim on "${item.title || 'your item'}"`,
+    `Someone submitted a claim. Review it in the Lost & Found section.`,
+    '/lost-found'
+  )
+
   res.status(201).json({ success: true, data })
 })
 
@@ -447,6 +457,14 @@ router.patch('/:id/claim/:claimId', authenticate, async (req, res) => {
       .eq('status', 'pending')
       .neq('id', req.params.claimId)
   }
+
+  // Notify the claimer
+  const title = parsed.data.action === 'approve' ? 'Claim Approved! 🎉' : 'Claim Rejected'
+  const message = parsed.data.action === 'approve' 
+    ? `Your claim was approved. Coordinate with the reporter to collect the item.`
+    : `Your claim was rejected. Note: ${parsed.data.admin_note || 'No reason provided.'}`
+  
+  createNotification(claim.claimer_id, title, message, '/lost-found')
 
   res.json({ success: true, data: claim })
 })

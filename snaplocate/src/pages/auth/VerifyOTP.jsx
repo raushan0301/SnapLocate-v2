@@ -213,7 +213,7 @@ export default function VerifyOTP() {
 const styles = {
   page: {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    minHeight: '100vh', background: '#f8fafc',
+    minHeight: '100dvh', background: '#f8fafc',
     fontFamily: "'Inter', sans-serif", padding: 24,
   },
   card: {

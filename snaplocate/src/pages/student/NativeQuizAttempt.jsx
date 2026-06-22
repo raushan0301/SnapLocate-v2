@@ -87,7 +87,7 @@ export default function NativeQuizAttempt() {
   const secs = Math.floor(timeLeft % 60)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100dvh', background: '#f8fafc', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <div style={{ background: '#fff', padding: '16px 30px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
         <div>

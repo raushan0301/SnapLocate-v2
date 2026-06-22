@@ -375,7 +375,7 @@ export default function AdminSupportHub() {
       {/* Ticket Side Drawer */}
       {selectedTicket && (
         <div style={{
-          position: 'fixed', top: 0, right: 0, width: 440, height: '100vh',
+          position: 'fixed', top: 0, right: 0, width: 440, height: '100dvh',
           background: '#fff', boxShadow: '-10px 0 40px rgba(0,0,0,0.1)', zIndex: 1000,
           display: 'flex', flexDirection: 'column'
         }}>

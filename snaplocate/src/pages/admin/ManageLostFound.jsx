@@ -293,7 +293,7 @@ export default function ManageLostFound() {
                 <p style={{ fontSize: 12, marginTop: 6, color: '#cbd5e1' }}>Try a different status or category</p>
               </div>
             ) : (
-              <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: 'calc(100vh - 380px)' }}>
+              <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: 'calc(100dvh - 380px)' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 680 }}>
                   <thead>
                     <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>

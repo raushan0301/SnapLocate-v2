@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { supabaseAdmin } from '../lib/supabase.js'
 import { authenticate } from '../middleware/auth.js'
+import { createNotification } from '../lib/notifications.js'
 
 const router = Router()
 
@@ -199,6 +200,15 @@ router.post('/chats/:chatId/messages', authenticate, async (req, res) => {
     .from('marketplace_chats')
     .update({ last_message_at: msg.created_at, updated_at: msg.created_at })
     .eq('id', chatId)
+
+  // Notify the other user
+  const otherUserId = chat.buyer_id === me ? chat.seller_id : chat.buyer_id
+  createNotification(
+    otherUserId,
+    `Marketplace: New message from ${msg.sender?.full_name || 'someone'}`,
+    msg.content.slice(0, 60) + (msg.content.length > 60 ? '...' : ''),
+    '/marketplace'
+  )
 
   res.status(201).json({ success: true, data: msg })
 })

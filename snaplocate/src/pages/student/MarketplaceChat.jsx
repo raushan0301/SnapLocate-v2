@@ -331,7 +331,7 @@ export default function MarketplaceChat() {
         <div style={{
           display: 'grid',
           gridTemplateColumns: '310px 1fr',
-          height: 'calc(100vh - 220px)',
+          height: 'calc(100dvh - 220px)',
           minHeight: 500,
           maxHeight: 720,
           background: '#fff',

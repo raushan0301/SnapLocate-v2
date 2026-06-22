@@ -10,7 +10,7 @@ export default function FacultyLayout({ children }) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column',
-      height: '100vh', width: '100vw',
+      height: '100dvh', width: '100vw',
       overflow: 'hidden', background: '#f8fafc',
     }}>
       <FacultyHeader onMenuClick={() => setSidebarOpen(true)} />
@@ -18,7 +18,7 @@ export default function FacultyLayout({ children }) {
       <div style={{ 
         display: 'flex', 
         flex: 1, 
-        height: `calc(100vh - ${HEADER_H}px)`, 
+        height: `calc(100dvh - ${HEADER_H}px)`, 
         overflow: 'hidden',
         position: 'relative'
       }}>
