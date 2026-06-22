@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import PageLayout from '../../components/PageLayout'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../lib/api'
@@ -7,7 +8,7 @@ import {
   Plus, Search, X, ChevronDown, ChevronUp,
   MapPin, Calendar, User, AlertCircle, CheckCircle2,
   Package, Trash2, Edit2, Camera, Clock, MessageCircle, PlusSquare,
-  MonitorSmartphone, Key, Book, Shirt, Backpack, Wallet, Activity, Box, LayoutGrid, Contact, RotateCcw
+  MonitorSmartphone, Key, Book, Shirt, Backpack, Wallet, Activity, Box, LayoutGrid, Contact, RotateCcw, Eye
 } from 'lucide-react'
 
 const pjs = (size, weight, lh, color) => ({
@@ -78,7 +79,7 @@ function CustomConfirmModal({ open, title, message, onConfirm, onCancel, confirm
   const isDanger = type === 'danger'
   const isSuccess = type === 'success'
 
-  return (
+  return createPortal(
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.4)', backdropFilter: 'blur(8px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ background: '#fff', borderRadius: 28, padding: '32px 32px 24px', width: '100%', maxWidth: 400, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', border: '1px solid #f1f5f9', textAlign: 'center' }}>
         <div style={{ width: 64, height: 64, borderRadius: '50%', background: isDanger ? '#fef2f2' : isSuccess ? '#f0fdf4' : '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
@@ -96,17 +97,19 @@ function CustomConfirmModal({ open, title, message, onConfirm, onCancel, confirm
           }}>{confirmText}</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
 function ImageModal({ url, onClose }) {
   if (!url) return null
-  return (
+  return createPortal(
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.92)', backdropFilter: 'blur(12px)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={onClose}>
       <button style={{ position: 'absolute', top: 30, right: 30, background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 14, padding: 12, cursor: 'pointer', color: '#fff' }}><X size={24} /></button>
       <img src={url} alt="full view" style={{ maxWidth: '95vw', maxHeight: '90vh', borderRadius: 24, boxShadow: '0 24px 64px rgba(0,0,0,0.4)', objectFit: 'contain' }} onClick={e => e.stopPropagation()} />
-    </div>
+    </div>,
+    document.body
   )
 }
 
@@ -119,7 +122,10 @@ function shareOnWhatsApp(item) {
 function ItemCard({ item, currentUserId, isGuest, onClaim, onChat }) {
   const [descExpanded, setDescExpanded] = useState(false)
   const ci = catInfo(item.category)
-  const isResolved = item.status === 'resolved'
+  const ageInDays = (Date.now() - new Date(item.created_at || Date.now()).getTime()) / (1000 * 60 * 60 * 24)
+  const isAdminItem = item.reporter?.role === 'admin'
+  const isAutoResolved = isAdminItem && ageInDays > 20 && item.status !== 'resolved'
+  const isResolved = item.status === 'resolved' || isAutoResolved
   const isOwn = item.reporter?.id === currentUserId
 
   const itemDate = item.date ? new Date(item.date) : new Date(item.created_at || Date.now())
@@ -206,19 +212,34 @@ function ItemCard({ item, currentUserId, isGuest, onClaim, onChat }) {
         <div style={{ marginTop: item.reporter ? 0 : 'auto', display: 'flex', gap: 12 }}>
           {!isResolved && !isOwn && item.reporter && !isGuest && (
             <>
-              <button
-                onClick={() => isLost ? onClaim(item) : onChat(item, item.reporter)}
-                style={{
-                  flex: 1, padding: '12px', borderRadius: 14, border: 'none',
-                  background: '#4f46e5', color: '#fff',
-                  ...pjs(14, 700, '20px', '#fff'), cursor: 'pointer', transition: 'all 0.2s',
-                  boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = '#4338ca'}
-                onMouseLeave={e => e.currentTarget.style.background = '#4f46e5'}
-              >
-                {isLost ? 'This is Mine / Chat' : 'Contact Reporter'}
-              </button>
+              {item.reporter.role === 'admin' ? (
+                <div
+                  style={{
+                    flex: 1, padding: '12px', borderRadius: 14, border: '1px solid #e2e8f0',
+                    background: '#f8fafc', color: '#64748b',
+                    ...pjs(13, 700, '18px', '#64748b'), cursor: 'not-allowed',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    textAlign: 'center'
+                  }}
+                  title="This item was reported by the admin office. Please contact them directly."
+                >
+                  <AlertCircle size={16} /> Contact Thapar Admin Office
+                </div>
+              ) : (
+                <button
+                  onClick={() => isLost ? onClaim(item) : onChat(item, item.reporter)}
+                  style={{
+                    flex: 1, padding: '12px', borderRadius: 14, border: 'none',
+                    background: '#4f46e5', color: '#fff',
+                    ...pjs(14, 700, '20px', '#fff'), cursor: 'pointer', transition: 'all 0.2s',
+                    boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#4338ca'}
+                  onMouseLeave={e => e.currentTarget.style.background = '#4f46e5'}
+                >
+                  {isLost ? 'This is Mine / Chat' : 'Contact Reporter'}
+                </button>
+              )}
               <button
                 onClick={() => shareOnWhatsApp(item)}
                 style={{ width: 44, height: 44, borderRadius: 14, background: '#dcfce7', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
@@ -235,7 +256,12 @@ function ItemCard({ item, currentUserId, isGuest, onClaim, onChat }) {
           )}
           {isResolved && (
             <div style={{ flex: 1, padding: '12px', background: '#f0fdf4', borderRadius: 14, textAlign: 'center', ...pjs(13, 700, '18px', '#16a34a'), border: '1px solid #dcfce7' }}>
-              Resolved
+              {isAutoResolved ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                  <span>Resolved (20 Days)</span>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: '#15803d' }}>Item may still be in Admin Office</span>
+                </div>
+              ) : "Resolved"}
             </div>
           )}
         </div>
@@ -283,8 +309,8 @@ function ClaimChatModal({ item, otherUser, currentUser, onClose, onSubmit, hasCl
     } finally { setSubmitting(false) }
   }
 
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+  return createPortal(
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ background: '#fff', borderRadius: 22, width: '100%', maxWidth: 500, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', maxHeight: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Header */}
         <div style={{ padding: '20px 24px 0', flexShrink: 0 }}>
@@ -372,7 +398,8 @@ function ClaimChatModal({ item, otherUser, currentUser, onClose, onSubmit, hasCl
         </div>
       </div>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-    </div>
+    </div>,
+    document.body
   )
 }
 
@@ -419,8 +446,8 @@ function ReportModal({ initial, onClose, onSaved }) {
     } catch (err) { setError(err.message) } finally { setSaving(false) }
   }
 
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+  return createPortal(
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ background: '#fff', borderRadius: 22, padding: 32, width: '100%', maxWidth: 520, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', maxHeight: '92vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
           <div><h2 style={{ fontSize: 18, fontWeight: 800, color: '#0f172a', margin: 0 }}>{isEdit ? 'Edit Post' : 'Report Item'}</h2><p style={{ fontSize: 13, color: '#64748b', margin: '4px 0 0' }}>{isEdit ? 'Update your report' : 'Lost or found something? Let people know.'}</p></div>
@@ -528,11 +555,12 @@ function ReportModal({ initial, onClose, onSaved }) {
         </form>
       </div>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-    </div>
+    </div>,
+    document.body
   )
 }
 
-function MyPostCard({ item, onEdit, onDelete, onResolve, onClaimAction, onChat }) {
+function MyPostCard({ item, onView, onEdit, onDelete, onResolve, onClaimAction, onChat }) {
   const [expanded, setExpanded] = useState(false)
   const ci = catInfo(item.category)
   const pendingClaims = (item.claims || []).filter(c => c.status === 'pending')
@@ -555,6 +583,7 @@ function MyPostCard({ item, onEdit, onDelete, onResolve, onClaimAction, onChat }
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          <button onClick={() => onView(item)} style={{ padding: '8px 14px', borderRadius: 12, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', color: '#475569', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }} title="View Listing"><Eye size={14} />View</button>
           {item.status !== 'resolved' ? (
             <>
               <button onClick={() => onEdit(item)} style={{ padding: '8px 14px', borderRadius: 12, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', color: '#475569', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}><Edit2 size={14} />Edit</button>
@@ -631,6 +660,8 @@ export default function LostFoundPage() {
   const [sortBy, setSortBy] = useState('recent')
   // claimChatTarget: item (for lost items — opens combined Claim+Chat modal)
   const [claimChatTarget, setClaimChatTarget] = useState(null)
+  // viewItemTarget: item (for simply viewing a listing card in a modal)
+  const [viewItemTarget, setViewItemTarget] = useState(null)
   // chatTarget: { item, otherUser } (for found items — chat only)
   const [chatTarget, setChatTarget] = useState(null)
   const [reportTarget, setReportTarget] = useState(null)
@@ -642,14 +673,12 @@ export default function LostFoundPage() {
     setLoading(true)
     try {
       const params = new URLSearchParams()
-      if (statusFilter !== 'all') params.set('status', statusFilter)
-      if (catFilter !== 'all') params.set('category', catFilter)
       if (debouncedSearch) params.set('search', debouncedSearch)
       const res = await api.get(`/api/lost-found?${params}`)
       const fetched = res.success ? (res.data || []) : []
       setItems(fetched)
     } catch { } finally { setLoading(false) }
-  }, [statusFilter, catFilter, debouncedSearch])
+  }, [debouncedSearch])
 
   const fetchMyItems = useCallback(async () => {
     setMyLoading(true)
@@ -667,9 +696,16 @@ export default function LostFoundPage() {
   useEffect(() => { if (tab === 'mine') fetchMyItems() }, [tab, fetchMyItems])
   useEffect(() => { if (tab === 'claimed') fetchMyClaims() }, [tab, fetchMyClaims])
 
-  const lostCount = items.filter(i => i.status === 'lost').length
-  const foundCount = items.filter(i => i.status === 'found').length
-  const resolvedCount = items.filter(i => i.status === 'resolved').length
+  const getItemState = (item) => {
+    const ageInDays = (Date.now() - new Date(item.created_at || Date.now()).getTime()) / (1000 * 60 * 60 * 24)
+    const isAutoResolved = item.reporter?.role === 'admin' && ageInDays > 20 && item.status !== 'resolved'
+    const isResolved = item.status === 'resolved' || isAutoResolved
+    return { isResolved, isAutoResolved, originalStatus: item.status }
+  }
+
+  const lostCount = items.filter(i => !getItemState(i).isResolved && i.status === 'lost').length
+  const foundCount = items.filter(i => !getItemState(i).isResolved && i.status === 'found').length
+  const resolvedCount = items.filter(i => getItemState(i).isResolved).length
 
   const handleClaim = async ({ message, proof_url }) => {
     const res = await api.post(`/api/lost-found/${claimChatTarget.id}/claim`, { message, proof_url })
@@ -752,12 +788,21 @@ export default function LostFoundPage() {
             item={claimChatTarget}
             otherUser={claimChatTarget.reporter}
             currentUser={user}
-            onClose={() => handleAfterClaim(!alreadyClaimed)}
+            onClose={() => setClaimChatTarget(null)}
             onSubmit={handleClaim}
             hasClaim={alreadyClaimed}
           />
         )
       })()}
+      {viewItemTarget && createPortal(
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setViewItemTarget(null)}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 400, position: 'relative' }}>
+            <button onClick={() => setViewItemTarget(null)} style={{ position: 'absolute', top: -40, right: 0, background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}><X size={24} /></button>
+            <ItemCard item={viewItemTarget} currentUserId={user?.id} isGuest={true} onClaim={() => {}} onChat={() => {}} />
+          </div>
+        </div>,
+        document.body
+      )}
       {chatTarget && (
         <LFChatModal
           item={chatTarget.item}
@@ -942,7 +987,22 @@ export default function LostFoundPage() {
           </div>
 
           {(() => {
-            const sortedItems = [...items].sort((a, b) => {
+            const filteredItems = items.filter(item => {
+              const { isResolved, originalStatus } = getItemState(item)
+              if (statusFilter === 'resolved' && !isResolved) return false
+              if (statusFilter === 'lost' && (isResolved || originalStatus !== 'lost')) return false
+              if (statusFilter === 'found' && (isResolved || originalStatus !== 'found')) return false
+              if (catFilter !== 'all' && item.category !== catFilter) return false
+              return true
+            })
+
+            const sortedItems = filteredItems.sort((a, b) => {
+              const aState = getItemState(a)
+              const bState = getItemState(b)
+              
+              if (aState.isResolved && !bState.isResolved) return 1
+              if (!aState.isResolved && bState.isResolved) return -1
+
               const dA = new Date(a.date || a.created_at).getTime()
               const dB = new Date(b.date || b.created_at).getTime()
               return sortBy === 'recent' ? dB - dA : dA - dB
@@ -1028,6 +1088,11 @@ export default function LostFoundPage() {
                               <MessageCircle size={16} /> Chat with Reporter
                             </button>
                           )}
+                          <button
+                            onClick={() => setViewItemTarget(item)}
+                            style={{ padding: '10px 20px', borderRadius: 14, border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <Eye size={16} /> View Listing
+                          </button>
                           {claim.proof_url && (
                             <a href={claim.proof_url} target="_blank" rel="noopener noreferrer" style={{ padding: '10px 20px', borderRadius: 14, border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: 14, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
                               View Proof
@@ -1064,7 +1129,7 @@ export default function LostFoundPage() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {myItems.map(item => <MyPostCard key={item.id} item={item} onEdit={setReportTarget} onDelete={handleDelete} onResolve={handleResolve} onClaimAction={handleClaimAction} onChat={(item, otherUser) => setChatTarget({ item, otherUser })} />)}
+              {myItems.map(item => <MyPostCard key={item.id} item={item} onView={setViewItemTarget} onEdit={setReportTarget} onDelete={handleDelete} onResolve={handleResolve} onClaimAction={handleClaimAction} onChat={(item, otherUser) => setChatTarget({ item, otherUser })} />)}
             </div>
           )
       )}

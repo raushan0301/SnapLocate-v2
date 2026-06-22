@@ -56,10 +56,37 @@ function fieldExtract(labels, text) {
   return null
 }
 
+function cleanEmailBody(text) {
+  if (!text) return ''
+  let cleaned = text
+
+  // 1. Strip signature before forwarded message (e.g., *Warm Regards* ... Forwarded message)
+  const fwdIdx = cleaned.toLowerCase().indexOf('forwarded message')
+  if (fwdIdx !== -1) {
+    const toMatch = cleaned.substring(fwdIdx).match(/To:\s*.*?@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}>?/i)
+    if (toMatch) {
+      const endOfTo = fwdIdx + toMatch.index + toMatch[0].length
+      cleaned = cleaned.substring(endOfTo).trim()
+    } else {
+      cleaned = cleaned.substring(fwdIdx + 17).trim()
+    }
+  }
+
+  // 2. Remove standard header lines that might be leftover
+  cleaned = cleaned.replace(/^(?:From|Date|Subject|To|Cc|Sent|Reply-To):\s*.*(?:\r?\n|$)/gim, '').trim()
+
+  // 3. Remove common trailing signatures
+  cleaned = cleaned.replace(/(?:\bThanks(?:\s+and\s+regards)?|\bBest(?:\s+regards)?|\bWarm\s+regards|\bRegards)[\s\S]*$/i, '').trim()
+
+  return cleaned
+}
+
 /**
  * Main email parser — tries structured fields first, falls back to free-form.
  */
-function parseEmailContent(subject = '', body = '') {
+function parseEmailContent(subject = '', rawBody = '') {
+  const body = cleanEmailBody(rawBody)
+
   // ── Status detection ───────────────────────────────────────────────────────
   let status = 'found' // admin officers typically report found items
   const subLow = subject.toLowerCase()
@@ -136,10 +163,10 @@ function parseEmailContent(subject = '', body = '') {
 /**
  * Uploads a base64url-encoded image to Cloudinary and returns the secure URL.
  */
-async function uploadToCloudinary(base64urlData, filename) {
+async function uploadToCloudinary(base64urlData, filename, mimeType = 'image/jpeg') {
   // Convert base64url → standard base64
   const base64 = base64urlData.replace(/-/g, '+').replace(/_/g, '/')
-  const dataUri = `data:image/jpeg;base64,${base64}`
+  const dataUri = `data:${mimeType};base64,${base64}`
 
   const result = await cloudinary.uploader.upload(dataUri, {
     folder:        'snaplocate/lost_found',
@@ -243,7 +270,7 @@ async function processEmail(email, systemUserId, orgId) {
           data = await downloadAttachment(messageId, att.attachmentId)
         }
         if (data) {
-          imageUrl = await uploadToCloudinary(data, att.filename)
+          imageUrl = await uploadToCloudinary(data, att.filename, att.mimeType)
           console.log(`[Poller]   ↳ Attachment uploaded → ${imageUrl}`)
         }
       } catch (uploadErr) {

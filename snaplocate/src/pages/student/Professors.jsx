@@ -211,7 +211,7 @@ export default function ProfessorsPage() {
 
       {!isGuest && (
         <div style={{ background: '#eef2ff', border: '1px solid #c7d2fe', padding: '16px 20px', borderRadius: 14, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 14 }}>
-          <span style={{ fontSize: 24 }}>🚀</span>
+
           <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, color: '#4338ca', fontWeight: 500, lineHeight: '22px' }}>
             <strong>Onboarding In Progress:</strong> We are currently working on onboarding professors. Once onboarded, you will be able to access their entire profile. For reference, you can view the Test Faculty profiles below.
           </span>

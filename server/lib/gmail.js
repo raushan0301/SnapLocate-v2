@@ -130,13 +130,16 @@ function extractAttachments(payload, messageId) {
 
   function walk(part) {
     if (!part) return
-    const isAttachment = part.filename && part.filename.length > 0 && part.body
-    if (isAttachment && part.mimeType?.startsWith('image/')) {
+    const hasData = part.body && (part.body.attachmentId || part.body.data)
+    const isImageMime = part.mimeType?.startsWith('image/')
+    const isImageFile = part.filename && /\.(jpe?g|png|gif|webp|bmp|heic|tiff)$/i.test(part.filename)
+    
+    if (hasData && (isImageMime || isImageFile)) {
       attachments.push({
         messageId,
         attachmentId: part.body.attachmentId,
-        filename: part.filename,
-        mimeType: part.mimeType,
+        filename: part.filename || 'image.jpg',
+        mimeType: isImageMime ? part.mimeType : 'image/jpeg',
         data: part.body.data || null, // inline base64url if small
       })
     }
