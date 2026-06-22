@@ -170,7 +170,7 @@ function formatPrice(price) {
 export default function ListingDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, isGuest } = useAuth()
 
   const [listing,      setListing]      = useState(null)
   const [loading,      setLoading]      = useState(true)
@@ -404,7 +404,7 @@ export default function ListingDetail() {
             {/* ─── CTAs ─── */}
             {!isMine ? (
               <div style={S.ctaCol}>
-                {!isSold && (
+                {!isSold && !isGuest && (
                   <button onClick={handleChat} style={S.chatBtn}
                     onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                     onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
@@ -412,23 +412,25 @@ export default function ListingDetail() {
                     <MessageCircle size={20} /> Chat with Seller
                   </button>
                 )}
-                <div style={S.btnRow}>
-                  {/* Save — bg/border/color dynamic (saved state), kept inline */}
-                  <button onClick={handleSave} style={{
-                    flex: 1, padding: '12px', borderRadius: 14,
-                    background: saved ? '#fff5f5' : '#f8fafc',
-                    border: `1.5px solid ${saved ? '#fecaca' : '#e2e8f0'}`,
-                    color: saved ? '#ef4444' : '#475569', fontFamily: FONT,
-                    fontWeight: 600, fontSize: 14, cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  }}>
-                    <Heart size={16} fill={saved ? '#ef4444' : 'none'} color={saved ? '#ef4444' : '#475569'} />
-                    {saved ? 'Saved' : 'Save'}
-                  </button>
-                  <button onClick={() => setShowReport(true)} style={S.reportBtn}>
-                    <Flag size={15} /> Report
-                  </button>
-                </div>
+                {!isGuest && (
+                  <div style={S.btnRow}>
+                    {/* Save — bg/border/color dynamic (saved state), kept inline */}
+                    <button onClick={handleSave} style={{
+                      flex: 1, padding: '12px', borderRadius: 14,
+                      background: saved ? '#fff5f5' : '#f8fafc',
+                      border: `1.5px solid ${saved ? '#fecaca' : '#e2e8f0'}`,
+                      color: saved ? '#ef4444' : '#475569', fontFamily: FONT,
+                      fontWeight: 600, fontSize: 14, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    }}>
+                      <Heart size={16} fill={saved ? '#ef4444' : 'none'} color={saved ? '#ef4444' : '#475569'} />
+                      {saved ? 'Saved' : 'Save'}
+                    </button>
+                    <button onClick={() => setShowReport(true)} style={S.reportBtn}>
+                      <Flag size={15} /> Report
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               /* Seller actions */

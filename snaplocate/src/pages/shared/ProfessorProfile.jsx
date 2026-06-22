@@ -148,7 +148,7 @@ function Skeleton({ h, w = '100%', r = 8 }) {
 export default function ProfessorProfile() {
   const { id }     = useParams()
   const navigate   = useNavigate()
-  const { user }   = useAuth()
+  const { user, isGuest }   = useAuth()
 
   const [prof,        setProf]        = useState(null)
   const [loading,     setLoading]     = useState(true)
@@ -309,7 +309,7 @@ export default function ProfessorProfile() {
 
           {/* Action buttons */}
           <div style={{ display:'flex', flexDirection:'column', gap:12, minWidth: 200 }}>
-            {user?.role === 'student' && (
+            {user?.role === 'student' && !isGuest && (
               <button
                 onClick={() => setShowModal(true)}
                 style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'14px', borderRadius:24, border:'none', background:'#4f46e5', cursor:'pointer', ...pjs(14,700,'18px','#fff'), boxShadow:'0 4px 16px rgba(79,70,229,.3)' }}

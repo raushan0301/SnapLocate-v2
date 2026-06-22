@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { GoogleLogin } from '@react-oauth/google'
 
 /* ── style helpers ──────────────────────────────────────────── */
 const pjs = (size, weight, color) => ({
@@ -14,7 +15,7 @@ const inter = (size, weight, color) => ({
 
 export default function Login() {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login, loginWithGoogle } = useAuth()
 
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
@@ -41,15 +42,31 @@ export default function Login() {
     setLoading(true)
     try {
       const res = await login(form)
-      // Role-based redirect
-      if (res.user.role === 'admin') navigate('/admin/dashboard', { replace: true })
-      else if (res.user.role === 'faculty') navigate('/faculty/dashboard', { replace: true })
-      else navigate('/dashboard', { replace: true })
+      handleRedirect(res.user)
     } catch (err) {
       setError(err.message || 'Login failed. Please try again.')
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true)
+    setError('')
+    try {
+      const res = await loginWithGoogle(credentialResponse.credential)
+      handleRedirect(res.user)
+    } catch (err) {
+      setError(err.message || 'Google login failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRedirect = (user) => {
+    if (user.role === 'admin') navigate('/admin/dashboard', { replace: true })
+    else if (user.role === 'faculty') navigate('/faculty/dashboard', { replace: true })
+    else navigate('/dashboard', { replace: true })
   }
 
   const pageStyle = {
@@ -200,6 +217,23 @@ export default function Login() {
               <span style={inter(13, 500, '#991b1b')}>{error}</span>
             </div>
           )}
+
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError('Google Login was unsuccessful.')}
+              useOneTap
+              shape="pill"
+              theme="outline"
+              size="large"
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', margin: '20px 0' }}>
+            <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+            <span style={{ ...inter(12, 500, '#64748b'), margin: '0 12px' }}>OR</span>
+            <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+          </div>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {/* Email */}

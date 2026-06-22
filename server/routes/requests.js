@@ -16,7 +16,7 @@ router.get('/', authenticate, async (req, res) => {
     faculty_profile:faculty_id(id, users:user_id(full_name, avatar_url))
   `)
 
-  if (user.role === 'student') {
+  if (user.role === 'student' || user.role === 'guest') {
     query = query.eq('student_id', user.id)
   } else if (user.role === 'faculty') {
     const { data: fp } = await supabaseAdmin

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
+import { useAuth } from '../../context/AuthContext'
 
 /* ─── Typography helpers ──────────────────────────────────────── */
 const pjs = (size, weight, lh, color) => ({
@@ -89,6 +90,7 @@ const Modal = ({ close, title, children }) => (
 )
 
 export default function Workspace({ role = 'student' }) {
+  const { isGuest } = useAuth()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploadingFile, setUploadingFile] = useState(false)
@@ -286,6 +288,15 @@ export default function Workspace({ role = 'student' }) {
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
       `}</style>
+
+      {isGuest && (
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '12px 20px', borderRadius: 14, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 20 }}>🎓</span>
+          <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, color: '#b91c1c', fontWeight: 500 }}>
+            <strong>Guest Mode:</strong> Register with a university email (@thapar.edu) to unlock file uploads and cloud storage.
+          </span>
+        </div>
+      )}
 
       {/* ── Modals ── */}
       {ttModal && (
@@ -563,13 +574,15 @@ export default function Workspace({ role = 'student' }) {
                 </div>
               </div>
               <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileUpload} />
-              <button
-                onClick={() => fileInputRef.current.click()}
-                disabled={uploadingFile}
-                style={{ background: '#eef2ff', color: '#4f46e5', border: 'none', borderRadius: 6, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: 20 }}
-              >
-                {uploadingFile ? '...' : '+'}
-              </button>
+              {!isGuest && (
+                <button
+                  onClick={() => fileInputRef.current.click()}
+                  disabled={uploadingFile}
+                  style={{ background: '#eef2ff', color: '#4f46e5', border: 'none', borderRadius: 6, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: 20 }}
+                >
+                  {uploadingFile ? '...' : '+'}
+                </button>
+              )}
             </div>
             {uploadError && (
               <div style={{ padding: '10px 12px', background: '#fef2f2', borderRadius: 10, border: '1px solid #fecaca', display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 12, animation: 'fadeIn 0.2s ease' }}>

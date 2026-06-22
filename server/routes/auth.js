@@ -6,8 +6,10 @@ import { supabaseAdmin } from '../lib/supabase.js'
 import { sendOTPEmail } from '../lib/ses.js'
 import { authLimiter, otpLimiter } from '../middleware/rateLimiter.js'
 import { authenticate } from '../middleware/auth.js'
+import { OAuth2Client } from 'google-auth-library'
 
 const router = Router()
+const googleClient = new OAuth2Client(process.env.GMAIL_CLIENT_ID)
 
 // ─── Schemas ─────────────────────────────────────────────────
 const registerSchema = z.object({
@@ -207,6 +209,76 @@ router.post('/login', authLimiter, async (req, res) => {
       is_verified: user.is_verified,
     },
   })
+})
+
+// ─── POST /api/auth/google ────────────────────────────────────
+router.post('/google', authLimiter, async (req, res) => {
+  try {
+    const { credential } = req.body
+    if (!credential) return res.status(400).json({ success: false, message: 'Missing credential' })
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GMAIL_CLIENT_ID,
+    })
+    const payload = ticket.getPayload()
+    if (!payload || !payload.email) {
+      return res.status(400).json({ success: false, message: 'Invalid Google token' })
+    }
+
+    const { email, name, picture } = payload
+    const isThapar = email.endsWith('@thapar.edu')
+    const assignedRole = isThapar ? 'student' : 'guest'
+
+    // Check if user exists
+    let { data: user, error } = await supabaseAdmin
+      .from('users')
+      .select('id, email, full_name, role, avatar_url, is_verified')
+      .eq('email', email)
+      .single()
+
+    if (!user) {
+      // Auto-create user
+      // Provide a random password hash since they use Google
+      const randomPassword = crypto.randomBytes(16).toString('hex')
+      const password_hash = await bcrypt.hash(randomPassword, 10)
+
+      const { data: newUser, error: insertError } = await supabaseAdmin
+        .from('users')
+        .insert({
+          full_name: name,
+          email: email,
+          password_hash,
+          role: assignedRole,
+          avatar_url: picture,
+          is_verified: true, // Google verifies emails
+        })
+        .select('id, email, full_name, role, avatar_url, is_verified')
+        .single()
+
+      if (insertError) throw insertError
+      user = newUser
+    }
+
+    // Sign JWT
+    const token = signToken(user.id)
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id:         user.id,
+        email:      user.email,
+        full_name:  user.full_name,
+        role:       user.role,
+        avatar_url: user.avatar_url,
+        is_verified: user.is_verified,
+      },
+    })
+  } catch (error) {
+    console.error('[Google Auth Error]:', error)
+    res.status(500).json({ success: false, message: 'Failed to authenticate with Google' })
+  }
 })
 
 // ─── GET /api/auth/me ─────────────────────────────────────────

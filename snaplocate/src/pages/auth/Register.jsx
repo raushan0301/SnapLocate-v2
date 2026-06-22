@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { GoogleLogin } from '@react-oauth/google'
 
 const pjs   = (size, weight, color) => ({ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: size, fontWeight: weight, color, margin: 0 })
 const inter = (size, weight, color) => ({ fontFamily: "'Inter', sans-serif", fontSize: size, fontWeight: weight, color, margin: 0 })
 
 export default function Register() {
   const navigate = useNavigate()
-  const { register } = useAuth()
+  const { register, loginWithGoogle } = useAuth()
 
   const [step,    setStep]    = useState(1) // 1 = fill form, 2 = pick role
   const [form,    setForm]    = useState({ full_name: '', email: '', password: '', confirm: '', role: 'student' })
@@ -40,6 +41,25 @@ export default function Register() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true)
+    setError('')
+    try {
+      const res = await loginWithGoogle(credentialResponse.credential)
+      handleRedirect(res.user)
+    } catch (err) {
+      setError(err.message || 'Google signup failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRedirect = (user) => {
+    if (user.role === 'admin') navigate('/admin/dashboard', { replace: true })
+    else if (user.role === 'faculty') navigate('/faculty/dashboard', { replace: true })
+    else navigate('/dashboard', { replace: true })
   }
 
   return (
@@ -99,6 +119,23 @@ export default function Register() {
               <span style={inter(13, 500, '#991b1b')}>{error}</span>
             </div>
           )}
+
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError('Google Signup was unsuccessful.')}
+              useOneTap
+              shape="pill"
+              theme="outline"
+              size="large"
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', margin: '20px 0' }}>
+            <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+            <span style={{ ...inter(12, 500, '#64748b'), margin: '0 12px' }}>OR</span>
+            <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+          </div>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 

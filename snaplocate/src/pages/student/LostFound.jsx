@@ -116,7 +116,7 @@ function shareOnWhatsApp(item) {
   window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
 }
 
-function ItemCard({ item, currentUserId, onClaim, onChat }) {
+function ItemCard({ item, currentUserId, isGuest, onClaim, onChat }) {
   const [descExpanded, setDescExpanded] = useState(false)
   const ci = catInfo(item.category)
   const isResolved = item.status === 'resolved'
@@ -204,7 +204,7 @@ function ItemCard({ item, currentUserId, onClaim, onChat }) {
         )}
 
         <div style={{ marginTop: item.reporter ? 0 : 'auto', display: 'flex', gap: 12 }}>
-          {!isResolved && !isOwn && item.reporter && (
+          {!isResolved && !isOwn && item.reporter && !isGuest && (
             <>
               <button
                 onClick={() => isLost ? onClaim(item) : onChat(item, item.reporter)}
@@ -616,7 +616,7 @@ function MyPostCard({ item, onEdit, onDelete, onResolve, onClaimAction, onChat }
 }
 
 export default function LostFoundPage() {
-  const { user } = useAuth()
+  const { user, isGuest } = useAuth()
   const [tab, setTab] = useState('browse')
   const [items, setItems] = useState([])
   const [myItems, setMyItems] = useState([])
@@ -789,28 +789,41 @@ export default function LostFoundPage() {
           <h1 style={{ ...pjs(28, 800, '36px', '#0f172a'), margin: 0 }}>Lost & Found</h1>
           <p style={{ ...pjs(14, 400, '22px', '#64748b'), marginTop: 4 }}>Report lost items or help return found items to the community.</p>
         </div>
-        <button
-          onClick={() => setReportTarget({})}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            padding: '14px 28px', borderRadius: 16,
-            background: '#4f46e5', color: '#fff', border: 'none',
-            ...pjs(15, 700, '22px', '#fff'), cursor: 'pointer',
-            boxShadow: '0 8px 20px rgba(79, 70, 229, 0.25)',
-            transition: 'all 0.2s'
-          }}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.background = '#4338ca' }}
-          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.background = '#4f46e5' }}
-        >
-          <Plus size={18} strokeWidth={2.5} /> <span>Report New Item</span>
-        </button>
+        {!isGuest && (
+          <button
+            onClick={() => setReportTarget({})}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '14px 28px', borderRadius: 16,
+              background: '#4f46e5', color: '#fff', border: 'none',
+              ...pjs(15, 700, '22px', '#fff'), cursor: 'pointer',
+              boxShadow: '0 8px 20px rgba(79, 70, 229, 0.25)',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.background = '#4338ca' }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.background = '#4f46e5' }}
+          >
+            <Plus size={18} strokeWidth={2.5} /> <span>Report New Item</span>
+          </button>
+        )}
       </div>
+      
+      {isGuest && (
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '12px 20px', borderRadius: 14, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 20 }}>🎓</span>
+          <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, color: '#b91c1c', fontWeight: 500 }}>
+            <strong>Guest Mode:</strong> Register with a university email (@thapar.edu) to report items or chat with reporters.
+          </span>
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 8, padding: 4, background: '#f1f5f9', borderRadius: 18, width: 'fit-content' }}>
         {[
           { id: 'browse', label: 'Browse Items', icon: Package },
-          { id: 'claimed', label: 'My Claims', count: myClaims.length, icon: CheckCircle2 },
-          { id: 'mine', label: 'My Posts', count: myItems.length, icon: PlusSquare },
+          ...(!isGuest ? [
+            { id: 'claimed', label: 'My Claims', count: myClaims.length, icon: CheckCircle2 },
+            { id: 'mine', label: 'My Posts', count: myItems.length, icon: PlusSquare },
+          ] : []),
         ].map(t => (
           <button
             key={t.id}
@@ -945,7 +958,7 @@ export default function LostFoundPage() {
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
                 {sortedItems.map(item => (
-                  <ItemCard key={item.id} item={item} currentUserId={user?.id} onClaim={(item, mode) => mode === 'view' ? setViewImageUrl(item.image_url) : setClaimChatTarget(item)} onChat={(item, otherUser) => setChatTarget({ item, otherUser })} />
+                  <ItemCard key={item.id} item={item} currentUserId={user?.id} isGuest={isGuest} onClaim={(item, mode) => mode === 'view' ? setViewImageUrl(item.image_url) : setClaimChatTarget(item)} onChat={(item, otherUser) => setChatTarget({ item, otherUser })} />
                 ))}
               </div>
             )

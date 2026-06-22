@@ -47,7 +47,7 @@ function MenuModal({ isOpen, onClose, shop }) {
           position: 'absolute', top: 16, right: 16, border: 'none', background: '#f1f5f9',
           width: 32, height: 32, borderRadius: '50%', cursor: 'pointer', fontSize: 18
         }}>×</button>
-        
+
         <div style={{ padding: 24 }}>
           <h2 style={pjs(20, 700, '28px', '#0f172a')}>{shop.name} Menu</h2>
           <p style={{ ...pjs(13, 500, '18px', '#64748b'), marginBottom: 20 }}>{shop.type}</p>
@@ -96,13 +96,13 @@ function ShopCard({ shop, onOpenMenu }) {
     }}>
       {/* Image area */}
       <div style={{
-        height: 130, 
+        height: 130,
         background: shop.logo ? `url(${shop.logo}) center/cover no-repeat` : '#ffffff',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         position: 'relative', borderBottom: '1px solid #f8fafc'
       }}>
         {/* Overlay if image exists */}
-        {shop.logo && <div style={{ position: 'absolute', top:0, left:0, width:'100%', height:'100%', background: 'rgba(255,255,255,0.4)', backdropFilter: 'blur(1px)' }} />}
+        {shop.logo && <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(255,255,255,0.4)', backdropFilter: 'blur(1px)' }} />}
 
         {/* Status badge */}
         <div style={{
@@ -147,7 +147,7 @@ function ShopCard({ shop, onOpenMenu }) {
 
         {/* Action row */}
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 'auto' }}>
-          <button 
+          <button
             onClick={() => onOpenMenu(shop)}
             style={{
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -197,8 +197,8 @@ export default function ShopsPage() {
             status: db.status || 'OPEN',
             phone: db.phone || '+91 -',
             location: db.location_detail || 'Campus',
-            btnLabel: db.btn_label || 'View Details', 
-            btnIcon: db.btn_icon || 'book', 
+            btnLabel: db.btn_label || 'View Details',
+            btnIcon: db.btn_icon || 'book',
             logo: db.logo_img,
             emoji: '🏪',
             cat: db.category || 'General Store', loc: db.location_tag || 'All',
@@ -229,36 +229,54 @@ export default function ShopsPage() {
   return (
     <PageLayout>
       <MenuModal isOpen={!!selectedMenuShop} onClose={() => setSelectedMenuShop(null)} shop={selectedMenuShop} />
-      
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20, flexWrap: 'wrap' }}>
         <div>
           <h1 style={pjs(26, 700, '34px', '#0f172a')}>Campus Shop</h1>
           <p style={{ ...pjs(13, 400, '18px', '#64748b'), marginTop: 4 }}>Find your daily essentials effortlessly</p>
         </div>
+      </div>
 
+      <div style={{ 
+        marginTop: 40, 
+        padding: '60px 20px', 
+        background: '#fff', 
+        borderRadius: 24, 
+        border: '1px dashed #cbd5e1', 
+        textAlign: 'center',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.02)'
+      }}>
+        <div style={{ fontSize: 64, marginBottom: 20 }}>🚧</div>
+        <h2 style={pjs(24, 800, '32px', '#0f172a')}>Coming Soon</h2>
+        <p style={{ ...pjs(15, 400, '24px', '#64748b'), maxWidth: 400, margin: '12px auto 0' }}>
+          We're currently gathering data for all campus shops and menus. Check back later to browse your favorite snacks!
+        </p>
+      </div>
+
+      {false && (
+        <>
         <div style={{ position: 'relative', flex: '1 1 300px', maxWidth: 400 }}>
           <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} width="15" height="15" viewBox="0 0 15 15" fill="none">
-            <circle cx="6.5" cy="6.5" r="5.5" stroke="#94a3b8" strokeWidth="1.3"/>
-            <path d="M11 11l3 3" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round"/>
+            <circle cx="6.5" cy="6.5" r="5.5" stroke="#94a3b8" strokeWidth="1.3" />
+            <path d="M11 11l3 3" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round" />
           </svg>
-          <input 
-            value={search} 
-            onChange={e => setSearch(e.target.value)} 
-            placeholder="Search shops..." 
-            style={{ 
-              padding: '12px 16px 12px 42px', 
-              borderRadius: 14, 
-              border: '1px solid #e2e8f0', 
-              background: '#ffffff', 
-              ...pjs(14, 400, '20px', '#0f172a'), 
-              outline: 'none', 
-              width: '100%', 
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search shops..."
+            style={{
+              padding: '12px 16px 12px 42px',
+              borderRadius: 14,
+              border: '1px solid #e2e8f0',
+              background: '#ffffff',
+              ...pjs(14, 400, '20px', '#0f172a'),
+              outline: 'none',
+              width: '100%',
               boxSizing: 'border-box',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.04)' 
-            }} 
+              boxShadow: '0 1px 4px rgba(0,0,0,0.04)'
+            }}
           />
         </div>
-      </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -303,6 +321,8 @@ export default function ShopsPage() {
           <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
           <div style={pjs(16, 600, '22px', '#94a3b8')}>No shops found for this filter</div>
         </div>
+      )}
+      </>
       )}
     </PageLayout>
   )

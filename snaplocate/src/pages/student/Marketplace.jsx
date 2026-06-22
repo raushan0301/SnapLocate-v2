@@ -238,7 +238,7 @@ function EmptyState({ icon, title, desc, action }) {
 
 // ─── Main Page ────────────────────────────────────────────────
 export default function MarketplacePage() {
-  const { user } = useAuth()
+  const { user, isGuest } = useAuth()
   const navigate = useNavigate()
 
   const [items, setItems]           = useState([])
@@ -314,32 +314,45 @@ export default function MarketplacePage() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
-            <button onClick={() => navigate('/marketplace/chat')} style={{
-              padding: '10px 20px', borderRadius: 14, background: '#fff',
-              border: '1px solid #e2e8f0', color: '#0f172a', fontFamily: FONT,
-              fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-            }}>
-              <MessageCircle size={16} /> My Chats
-            </button>
-            <button onClick={() => navigate('/marketplace/dashboard')} style={{
-              padding: '10px 20px', borderRadius: 14, background: '#fff',
-              border: '1px solid #e2e8f0', color: '#0f172a', fontFamily: FONT,
-              fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-            }}>
-              <Bookmark size={16} /> My Listings
-            </button>
-            <button onClick={() => navigate('/marketplace/create')} style={{
-              padding: '10px 22px', borderRadius: 14, background: '#4f46e5',
-              border: 'none', color: '#fff', fontFamily: FONT,
-              fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-              boxShadow: '0 8px 20px rgba(79, 70, 229, 0.25)',
-            }}>
-              <Plus size={16} /> Sell Item
-            </button>
+            {!isGuest && (
+              <>
+                <button onClick={() => navigate('/marketplace/chat')} style={{
+                  padding: '10px 20px', borderRadius: 14, background: '#fff',
+                  border: '1px solid #e2e8f0', color: '#0f172a', fontFamily: FONT,
+                  fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                }}>
+                  <MessageCircle size={16} /> My Chats
+                </button>
+                <button onClick={() => navigate('/marketplace/dashboard')} style={{
+                  padding: '10px 20px', borderRadius: 14, background: '#fff',
+                  border: '1px solid #e2e8f0', color: '#0f172a', fontFamily: FONT,
+                  fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                }}>
+                  <Bookmark size={16} /> My Listings
+                </button>
+                <button onClick={() => navigate('/marketplace/create')} style={{
+                  padding: '10px 22px', borderRadius: 14, background: '#4f46e5',
+                  border: 'none', color: '#fff', fontFamily: FONT,
+                  fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+                  boxShadow: '0 8px 20px rgba(79, 70, 229, 0.25)',
+                }}>
+                  <Plus size={16} /> Sell Item
+                </button>
+              </>
+            )}
           </div>
         </div>
+        
+        {isGuest && (
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '12px 20px', borderRadius: 14, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 20 }}>🎓</span>
+            <span style={{ fontFamily: FONT, fontSize: 14, color: '#b91c1c', fontWeight: 500 }}>
+              <strong>Guest Mode:</strong> Register with a university email (@thapar.edu) to buy, sell, and chat on the Marketplace.
+            </span>
+          </div>
+        )}
 
         {/* Search bar */}
         <div style={{ position: 'relative', marginBottom: 24, maxWidth: 400 }}>
@@ -421,12 +434,14 @@ export default function MarketplacePage() {
               title="No listings found"
               desc={search ? `No results for "${search}". Try different keywords or clear filters.` : 'Be the first to list something amazing in this category!'}
               action={
-                <button onClick={() => navigate('/marketplace/create')} style={{
-                  padding: '12px 28px', borderRadius: 14, background: '#6366f1', border: 'none',
-                  color: '#fff', fontFamily: FONT, fontWeight: 700, fontSize: 15, cursor: 'pointer',
-                }}>
-                  + Post a Listing
-                </button>
+                !isGuest && (
+                  <button onClick={() => navigate('/marketplace/create')} style={{
+                    padding: '12px 28px', borderRadius: 14, background: '#6366f1', border: 'none',
+                    color: '#fff', fontFamily: FONT, fontWeight: 700, fontSize: 15, cursor: 'pointer',
+                  }}>
+                    + Post a Listing
+                  </button>
+                )
               }
             />
           ) : (

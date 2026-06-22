@@ -4,9 +4,9 @@ import { authenticate } from '../middleware/auth.js'
 
 const router = Router()
 
-// Middleware to ensure user is student
+// Middleware to ensure user is student or guest
 const requireStudent = (req, res, next) => {
-  if (req.user.role !== 'student') return res.status(403).json({ success: false, message: 'Forbidden' })
+  if (req.user.role !== 'student' && req.user.role !== 'guest') return res.status(403).json({ success: false, message: 'Forbidden' })
   next()
 }
 

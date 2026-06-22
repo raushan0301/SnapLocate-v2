@@ -101,27 +101,27 @@ export default function AppRoutes() {
         <Route path="/verify-otp" element={<VerifyOTP />} />
 
         {/* Student Routes */}
-        <Route path="/dashboard"      element={<ProtectedRoute allowedRole="student"><StudentDashboard /></ProtectedRoute>} />
-        <Route path="/requests"       element={<ProtectedRoute allowedRole="student"><StudentRequests /></ProtectedRoute>} />
-        <Route path="/professors"     element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><ProfessorsPage /></ProtectedRoute>} />
-        <Route path="/professors/:id" element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><ProfessorProfile /></ProtectedRoute>} />
-        <Route path="/classroom"      element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><ClassroomPage /></ProtectedRoute>} />
-        <Route path="/workspace"      element={<ProtectedRoute allowedRole="student"><Workspace role="student" /></ProtectedRoute>} />
-        <Route path="/calendar"       element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><CalendarPage /></ProtectedRoute>} />
-        <Route path="/wifi"           element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><WiFiPage /></ProtectedRoute>} />
-        <Route path="/society"        element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><SocietyPage /></ProtectedRoute>} />
-        <Route path="/shops"          element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><ShopsPage /></ProtectedRoute>} />
-        <Route path="/campus-support" element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><CampusSupportPage /></ProtectedRoute>} />
-        <Route path="/settings"       element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><SettingsPage /></ProtectedRoute>} />
-        <Route path="/support"        element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><SupportPage /></ProtectedRoute>} />
-        <Route path="/resources"      element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><ResourcesPage /></ProtectedRoute>} />
-        <Route path="/marketplace"              element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><MarketplacePage /></ProtectedRoute>} />
-        <Route path="/marketplace/listing/:id"  element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><MarketplaceListingDetail /></ProtectedRoute>} />
-        <Route path="/marketplace/create"       element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><MarketplaceCreate /></ProtectedRoute>} />
-        <Route path="/marketplace/edit/:id"     element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><MarketplaceEdit /></ProtectedRoute>} />
-        <Route path="/marketplace/dashboard"    element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><MarketplaceDashboard /></ProtectedRoute>} />
-        <Route path="/marketplace/chat"         element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><MarketplaceChat /></ProtectedRoute>} />
-        <Route path="/lost-found"     element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin']}><LostFoundPage /></ProtectedRoute>} />
+        <Route path="/dashboard"      element={<ProtectedRoute allowedRole={['student', 'guest']}><StudentDashboard /></ProtectedRoute>} />
+        <Route path="/requests"       element={<ProtectedRoute allowedRole={['student', 'guest']}><StudentRequests /></ProtectedRoute>} />
+        <Route path="/professors"     element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin', 'guest']}><ProfessorsPage /></ProtectedRoute>} />
+        <Route path="/professors/:id" element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin', 'guest']}><ProfessorProfile /></ProtectedRoute>} />
+        <Route path="/classroom"      element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin', 'guest']}><ClassroomPage /></ProtectedRoute>} />
+        <Route path="/workspace"      element={<ProtectedRoute allowedRole={['student', 'guest']}><Workspace role="student" /></ProtectedRoute>} />
+        <Route path="/calendar"       element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin', 'guest']}><CalendarPage /></ProtectedRoute>} />
+        <Route path="/wifi"           element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin', 'guest']}><WiFiPage /></ProtectedRoute>} />
+        <Route path="/society"        element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin', 'guest']}><SocietyPage /></ProtectedRoute>} />
+        <Route path="/shops"          element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin', 'guest']}><ShopsPage /></ProtectedRoute>} />
+        <Route path="/campus-support" element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin', 'guest']}><CampusSupportPage /></ProtectedRoute>} />
+        <Route path="/settings"       element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin', 'guest']}><SettingsPage /></ProtectedRoute>} />
+        <Route path="/support"        element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin', 'guest']}><SupportPage /></ProtectedRoute>} />
+        <Route path="/resources"      element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin', 'guest']}><ResourcesPage /></ProtectedRoute>} />
+        <Route path="/marketplace"              element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin', 'guest']}><MarketplacePage /></ProtectedRoute>} />
+        <Route path="/marketplace/listing/:id"  element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin', 'guest']}><MarketplaceListingDetail /></ProtectedRoute>} />
+        <Route path="/marketplace/create"       element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin', 'guest']}><MarketplaceCreate /></ProtectedRoute>} />
+        <Route path="/marketplace/edit/:id"     element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin', 'guest']}><MarketplaceEdit /></ProtectedRoute>} />
+        <Route path="/marketplace/dashboard"    element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin', 'guest']}><MarketplaceDashboard /></ProtectedRoute>} />
+        <Route path="/marketplace/chat"         element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin', 'guest']}><MarketplaceChat /></ProtectedRoute>} />
+        <Route path="/lost-found"     element={<ProtectedRoute allowedRole={['student', 'faculty', 'admin', 'guest']}><LostFoundPage /></ProtectedRoute>} />
 
         {/* Faculty Routes */}
         <Route path="/faculty/dashboard"    element={<ProtectedRoute allowedRole="faculty"><FacultyDashboard /></ProtectedRoute>} />

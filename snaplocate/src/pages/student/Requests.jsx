@@ -18,7 +18,7 @@ const statusConfig = {
 }
 
 export default function StudentRequests() {
-  const { user } = useAuth()
+  const { user, isGuest } = useAuth()
   const [requests, setRequests] = useState([])
   const [loading, setLoading]   = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -113,12 +113,14 @@ export default function StudentRequests() {
               {pendingCount > 0 ? `${pendingCount} pending · ` : ''}{acceptedCount} accepted
             </p>
           </div>
-          <button
-            onClick={() => setShowModal(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 12, background: '#4f46e5', color: '#fff', border: 'none', ...pjs(14, 700, '20px', '#fff'), cursor: 'pointer' }}
-          >
-            <Plus size={16} /> New Request
-          </button>
+          {!isGuest && (
+            <button
+              onClick={() => setShowModal(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 12, background: '#4f46e5', color: '#fff', border: 'none', ...pjs(14, 700, '20px', '#fff'), cursor: 'pointer' }}
+            >
+              <Plus size={16} /> New Request
+            </button>
+          )}
         </div>
 
         {/* List */}
@@ -128,13 +130,19 @@ export default function StudentRequests() {
           <div style={{ padding: 60, textAlign: 'center', background: '#fff', borderRadius: 24, border: '1px dashed #cbd5e1' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>📬</div>
             <h2 style={pjs(18, 700, '24px', '#0f172a')}>No requests yet</h2>
-            <p style={{ ...pjs(14, 400, '20px', '#64748b'), margin: '8px 0 20px' }}>Send a request to a professor to get started.</p>
-            <button
-              onClick={() => setShowModal(true)}
-              style={{ padding: '10px 24px', borderRadius: 12, background: '#4f46e5', color: '#fff', border: 'none', ...pjs(14, 700, '20px', '#fff'), cursor: 'pointer' }}
-            >
-              + New Request
-            </button>
+            {isGuest ? (
+              <p style={{ ...pjs(14, 400, '20px', '#64748b'), margin: '8px 0 20px' }}>Register with a university email to send requests or book appointments with professors.</p>
+            ) : (
+              <>
+                <p style={{ ...pjs(14, 400, '20px', '#64748b'), margin: '8px 0 20px' }}>Send a request to a professor to get started.</p>
+                <button
+                  onClick={() => setShowModal(true)}
+                  style={{ padding: '10px 24px', borderRadius: 12, background: '#4f46e5', color: '#fff', border: 'none', ...pjs(14, 700, '20px', '#fff'), cursor: 'pointer' }}
+                >
+                  + New Request
+                </button>
+              </>
+            )}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

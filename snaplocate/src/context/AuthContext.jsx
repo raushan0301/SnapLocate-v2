@@ -73,6 +73,18 @@ export function AuthProvider({ children }) {
     return res
   }, [])
 
+  // ─── Google Login ───────────────────────────────────────────
+  const loginWithGoogle = useCallback(async (credential) => {
+    const res = await api.post('/api/auth/google', { credential })
+    if (res.token) {
+      localStorage.setItem(TOKEN_KEY, res.token)
+      localStorage.setItem(USER_KEY, JSON.stringify(res.user))
+      setToken(res.token)
+      setUser(res.user)
+    }
+    return res
+  }, [])
+
   // ─── Logout ─────────────────────────────────────────────────
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY)
@@ -96,10 +108,12 @@ export function AuthProvider({ children }) {
     isStudent: user?.role === 'student',
     isFaculty: user?.role === 'faculty',
     isAdmin:   user?.role === 'admin',
+    isGuest:   user?.role === 'guest',
     register,
     verifyOtp,
     resendOtp,
     login,
+    loginWithGoogle,
     logout,
     updateUser,
   }
