@@ -11,8 +11,8 @@ const router = Router()
 const createUserSchema = z.object({
   full_name: z.string().min(2),
   email: z.string().email(),
-  dept: z.string().min(1),
-  role: z.enum(['faculty', 'admin']).default('faculty'),
+  dept: z.string().optional(),
+  role: z.enum(['student', 'faculty', 'admin', 'guest']).default('student'),
 })
 
 const updateUserSchema = z.object({

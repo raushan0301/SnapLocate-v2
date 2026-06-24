@@ -101,8 +101,7 @@ const adminNav = [
 
   // ── People ───────────────────────────────────
   { section: 'People' },
-  { label: 'Manage Faculty', path: '/admin/faculty', icon: Users },
-  { label: 'Manage Students', path: '/admin/students', icon: GraduationCap },
+  { label: 'User Management', path: '/admin/users', icon: Users },
 
   // ── Campus ───────────────────────────────────
   { section: 'Campus' },

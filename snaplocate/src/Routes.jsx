@@ -40,7 +40,7 @@ import FacultyResources  from './pages/faculty/Resources'
 
 // Admin Pages
 import AdminDashboard   from './pages/admin/Dashboard'
-import ManageFaculty    from './pages/admin/ManageFaculty'
+import ManageUsers      from './pages/admin/ManageUsers'
 import AdminClassrooms  from './pages/admin/Classrooms'
 import AdminShops       from './pages/admin/Shops'
 import AdminSocieties   from './pages/admin/Societies'
@@ -48,7 +48,6 @@ import AdminSupport     from './pages/admin/SupportContacts'
 import ManageCalendar   from './pages/admin/ManageCalendar'
 import AdminWiFi       from './pages/admin/WiFi'
 import SupportTicketsHub from './pages/admin/SupportTicketsHub'
-import ManageStudents    from './pages/admin/ManageStudents'
 import ManageMarketplace from './pages/admin/ManageMarketplace'
 import ManageLostFound   from './pages/admin/ManageLostFound'
 import ManageRequests    from './pages/admin/ManageRequests'
@@ -155,7 +154,9 @@ export default function AppRoutes() {
 
         {/* Admin Routes */}
         <Route path="/admin/dashboard"   element={<ProtectedRoute allowedRole="admin"><AdminDashboard /></ProtectedRoute>} />
-        <Route path="/admin/faculty"     element={<ProtectedRoute allowedRole="admin"><ManageFaculty /></ProtectedRoute>} />
+        <Route path="/admin/users"       element={<ProtectedRoute allowedRole="admin"><ManageUsers /></ProtectedRoute>} />
+        <Route path="/admin/faculty"     element={<Navigate to="/admin/users" replace />} />
+        <Route path="/admin/students"    element={<Navigate to="/admin/users" replace />} />
         <Route path="/admin/classrooms"  element={<ProtectedRoute allowedRole="admin"><AdminClassrooms /></ProtectedRoute>} />
         <Route path="/admin/shops"       element={<ProtectedRoute allowedRole="admin"><AdminShops /></ProtectedRoute>} />
         <Route path="/admin/societies"   element={<ProtectedRoute allowedRole="admin"><AdminSocieties /></ProtectedRoute>} />
@@ -163,7 +164,6 @@ export default function AppRoutes() {
         <Route path="/admin/support-contacts" element={<ProtectedRoute allowedRole="admin"><AdminSupport /></ProtectedRoute>} />
         <Route path="/admin/calendar"    element={<ProtectedRoute allowedRole="admin"><ManageCalendar /></ProtectedRoute>} />
         <Route path="/admin/wifi"        element={<ProtectedRoute allowedRole="admin"><AdminWiFi /></ProtectedRoute>} />
-        <Route path="/admin/students"    element={<ProtectedRoute allowedRole="admin"><ManageStudents /></ProtectedRoute>} />
         <Route path="/admin/marketplace" element={<ProtectedRoute allowedRole="admin"><ManageMarketplace /></ProtectedRoute>} />
         <Route path="/admin/lost-found"  element={<ProtectedRoute allowedRole="admin"><ManageLostFound /></ProtectedRoute>} />
         <Route path="/admin/requests"    element={<ProtectedRoute allowedRole="admin"><ManageRequests /></ProtectedRoute>} />
