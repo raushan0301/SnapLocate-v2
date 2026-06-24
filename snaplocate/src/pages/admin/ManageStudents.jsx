@@ -278,14 +278,24 @@ export default function ManageStudents() {
     }
   }
 
-  const handlePromote = async (student, newRole) => {
-    if (!window.confirm(`Are you sure you want to promote ${student.full_name} to ${newRole.toUpperCase()}?`)) return
+  const handleChangeRole = async (student, newRole) => {
+    const isDemotion = newRole === 'guest' || (student.role === 'faculty' && newRole === 'student')
+    const actionText = isDemotion ? 'demote' : 'promote'
+    
+    if (!window.confirm(`Are you sure you want to ${actionText} ${student.full_name} to ${newRole.toUpperCase()}?`)) return
     try {
       await api.patch(`/api/admin/users/${student.id}`, { role: newRole })
-      setStudents(prev => prev.filter(s => s.id !== student.id))
-      showToast(`${student.full_name} promoted to ${newRole}`)
+      
+      // If they are promoted to faculty or admin, remove them from this view
+      if (newRole === 'faculty' || newRole === 'admin') {
+        setStudents(prev => prev.filter(s => s.id !== student.id))
+      } else {
+        // Otherwise (student or guest), update their role in the UI
+        setStudents(prev => prev.map(s => s.id === student.id ? { ...s, role: newRole } : s))
+      }
+      showToast(`${student.full_name} ${actionText}d to ${newRole}`)
     } catch {
-      showToast('Promotion failed', 'error')
+      showToast('Role change failed', 'error')
     }
   }
 
@@ -499,7 +509,7 @@ export default function ManageStudents() {
                       <div style={{ display: 'flex', gap: 8 }}>
                         <select
                           onChange={(e) => {
-                            if (e.target.value) handlePromote(s, e.target.value)
+                            if (e.target.value) handleChangeRole(s, e.target.value)
                           }}
                           value=""
                           style={{
@@ -507,9 +517,11 @@ export default function ManageStudents() {
                             cursor: 'pointer', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 12, fontWeight: 600, color: '#4f46e5'
                           }}
                         >
-                          <option value="" disabled>Promote...</option>
-                          <option value="faculty">To Faculty</option>
-                          <option value="admin">To Admin</option>
+                          <option value="" disabled>Role Action...</option>
+                          {s.role === 'guest' && <option value="student">Promote to Student</option>}
+                          {s.role === 'student' && <option value="guest">Demote to Guest</option>}
+                          <option value="faculty">Promote to Faculty</option>
+                          <option value="admin">Promote to Admin</option>
                         </select>
                         <button
                           onClick={() => handleDelete(s)}

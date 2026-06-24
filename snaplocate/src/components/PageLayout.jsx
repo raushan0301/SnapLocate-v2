@@ -27,13 +27,14 @@ export default function PageLayout({ children }) {
         height: `calc(100dvh - ${HEADER_H}px)`,
         overflow: 'hidden',
         position: 'relative',
+        minHeight: 0,
       }}>
 
         {/* Sidebar — fills remaining height */}
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
         {/* Main content — scrollable */}
-        <main style={{
+        <main className="main-content" style={{
           flex: 1,
           overflowY: 'auto',
           padding: '24px 24px 40px', // Slightly reduced padding for mobile
@@ -41,6 +42,7 @@ export default function PageLayout({ children }) {
           flexDirection: 'column',
           gap: 24,
           minWidth: 0,
+          minHeight: 0,
         }}>
           {children}
         </main>
@@ -48,6 +50,9 @@ export default function PageLayout({ children }) {
       </div>
       
       <style>{`
+        .main-content > * {
+          flex-shrink: 0;
+        }
         @media (max-width: 640px) {
           main {
             padding: 16px 16px 32px !important;

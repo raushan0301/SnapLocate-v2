@@ -59,6 +59,8 @@ router.post('/', authenticate, async (req, res) => {
     return res.status(400).json({ success: false, message: 'faculty_profile_id and type are required' })
   }
 
+  const { data: fp } = await supabaseAdmin.from('faculty_profiles').select('user_id').eq('id', faculty_profile_id).single()
+
   const { data, error } = await supabaseAdmin
     .from('requests')
     .insert({
@@ -72,6 +74,16 @@ router.post('/', authenticate, async (req, res) => {
     .single()
 
   if (error) throw error
+
+  if (fp && fp.user_id) {
+    createNotification(
+      fp.user_id,
+      'New Student Request',
+      `You have a new ${type} request from ${req.user.full_name || 'a student'}.`,
+      '/faculty/requests'
+    )
+  }
+
   res.status(201).json({ success: true, data })
 })
 

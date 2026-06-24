@@ -291,15 +291,29 @@ export default function FacultyDashboard() {
             <div style={{ display:'flex', gap: 14, alignItems:'flex-start' }}>
               <div style={{ width:40, height:40, borderRadius:20, background:'#dcfce7', display:'flex', alignItems:'center', justifyContent:'center', padding: 10, flexShrink:0 }}><GradeIcon /></div>
               <div style={{ flex:1, alignSelf:'center' }}>
-                <p style={{ ...pjs(13, 400, '20px', '#0f172a'), margin:0 }}><span style={{ fontWeight:700 }}>Grading Update:</span> {stats.pendingGrades} papers are still pending for review.</p>
-                <span style={pjs(12, 400, '16px', '#64748b')}>Immediate attention</span>
+                <p style={{ ...pjs(13, 400, '20px', '#0f172a'), margin:0 }}>
+                  <span style={{ fontWeight:700 }}>Grading Update:</span> 
+                  {stats.pendingGrades > 0 
+                    ? ` ${stats.pendingGrades} papers are still pending for review.` 
+                    : ' All grading is up to date.'}
+                </p>
+                <span style={pjs(12, 400, '16px', '#64748b')}>
+                  {stats.pendingGrades > 0 ? 'Immediate attention' : 'All caught up'}
+                </span>
               </div>
             </div>
             <div style={{ display:'flex', gap: 14, alignItems:'flex-start' }}>
               <div style={{ width:40, height:40, borderRadius:20, background:'#e0e7ff', display:'flex', alignItems:'center', justifyContent:'center', padding: 10, flexShrink:0 }}><RequestIcon /></div>
               <div style={{ flex:1, alignSelf:'center' }}>
-                <p style={{ ...pjs(13, 400, '20px', '#0f172a'), margin:0 }}><span style={{ fontWeight:700 }}>Requests:</span> {requests.length} students waiting for office hour approval.</p>
-                <span style={pjs(12, 400, '16px', '#64748b')}>Recently synced</span>
+                <p style={{ ...pjs(13, 400, '20px', '#0f172a'), margin:0 }}>
+                  <span style={{ fontWeight:700 }}>Requests:</span> 
+                  {requests.length > 0 
+                    ? ` ${requests.length} students waiting for office hour approval.` 
+                    : ' No pending requests at the moment.'}
+                </p>
+                <span style={pjs(12, 400, '16px', '#64748b')}>
+                  {requests.length > 0 ? 'Recently synced' : 'Up to date'}
+                </span>
               </div>
             </div>
             <div style={{ display:'flex', gap: 14, alignItems:'flex-start' }}>

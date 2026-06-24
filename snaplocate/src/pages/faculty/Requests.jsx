@@ -17,6 +17,7 @@ export default function FacultyRequests() {
   const [filter, setFilter] = useState('All')
   const [statusFilter, setStatusFilter] = useState('All')
   const [apiLoading, setApiLoading] = useState(true)
+  const [commentModal, setCommentModal] = useState({ isOpen: false, requestId: null, status: null, notes: '' })
 
   const loadRequests = useCallback(async () => {
     try {
@@ -27,6 +28,7 @@ export default function FacultyRequests() {
             name:   r.users?.full_name || 'Student',
             type:   r.type || 'Request',
             detail: r.detail || '—',
+            notes:  r.notes || '',
             course: r.courses?.code || 'General',
             status: r.status || 'pending',
             init:   (r.users?.full_name || 'S').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
@@ -48,12 +50,18 @@ export default function FacultyRequests() {
     (statusFilter === 'All' || r.status === statusFilter)
   )
 
-  const updateStatus = async (id, status) => {
+  const openModal = (id, status) => {
+    setCommentModal({ isOpen: true, requestId: id, status, notes: '' })
+  }
+
+  const submitStatusWithComment = async () => {
+    const { requestId, status, notes } = commentModal;
     // optimistic update
-    setRequests(rs => rs.map(r => r.id === id ? { ...r, status } : r))
+    setRequests(rs => rs.map(r => r.id === requestId ? { ...r, status, notes } : r))
+    setCommentModal({ isOpen: false, requestId: null, status: null, notes: '' })
+    
     try {
-      const action = status === 'accepted' ? 'accept' : 'reject'
-      await api.patch(`/api/requests/${id}/${action}`)
+      await api.patch(`/api/requests/${requestId}`, { status, notes })
     } catch { /* already updated UI */ }
   }
 
@@ -65,7 +73,7 @@ export default function FacultyRequests() {
     setRequests(rs => rs.map(r => r.status === 'pending' ? { ...r, status: 'accepted' } : r))
     
     try {
-      await Promise.all(pending.map(r => api.patch(`/api/requests/${r.id}/accept`)))
+      await Promise.all(pending.map(r => api.patch(`/api/requests/${r.id}`, { status: 'accepted' })))
     } catch (err) {
       console.error("Accept all error:", err)
       loadRequests() // Rollback on error
@@ -100,12 +108,22 @@ export default function FacultyRequests() {
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
         {[
-          { label: 'Total Requests', value: requests.length, bg: '#eef2ff', color: '#4f46e5', icon: <ClipboardList size={22} color="#4f46e5" /> },
-          { label: 'Pending', value: requests.filter(r => r.status === 'pending').length, bg: '#fef3c7', color: '#d97706', icon: <Clock size={22} color="#d97706" /> },
-          { label: 'Approved', value: requests.filter(r => r.status === 'accepted').length, bg: '#dcfce7', color: '#16a34a', icon: <CheckCircle size={22} color="#16a34a" /> },
-          { label: 'Rejected', value: requests.filter(r => r.status === 'rejected').length, bg: '#fee2e2', color: '#ef4444', icon: <XCircle size={22} color="#ef4444" /> },
+          { label: 'Total Requests', id: 'All', value: requests.length, bg: '#eef2ff', color: '#4f46e5', icon: <ClipboardList size={22} color="#4f46e5" /> },
+          { label: 'Pending', id: 'pending', value: requests.filter(r => r.status === 'pending').length, bg: '#fef3c7', color: '#d97706', icon: <Clock size={22} color="#d97706" /> },
+          { label: 'Approved', id: 'accepted', value: requests.filter(r => r.status === 'accepted').length, bg: '#dcfce7', color: '#16a34a', icon: <CheckCircle size={22} color="#16a34a" /> },
+          { label: 'Rejected', id: 'rejected', value: requests.filter(r => r.status === 'rejected').length, bg: '#fee2e2', color: '#ef4444', icon: <XCircle size={22} color="#ef4444" /> },
         ].map((s, i) => (
-          <div key={i} style={{ background: '#ffffff', border: '1px solid #f1f5f9', borderRadius: 16, padding: '18px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div 
+            key={i} 
+            onClick={() => setStatusFilter(s.id)}
+            style={{ 
+              background: '#ffffff', 
+              border: statusFilter === s.id ? `2px solid ${s.color}` : '1px solid #f1f5f9', 
+              borderRadius: 16, padding: '18px 20px', 
+              boxShadow: statusFilter === s.id ? '0 4px 12px rgba(0,0,0,0.08)' : '0 1px 4px rgba(0,0,0,0.04)', 
+              display: 'flex', alignItems: 'center', gap: 14, 
+              cursor: 'pointer', transition: 'all 0.2s' 
+            }}>
             <div style={{ width: 44, height: 44, borderRadius: 12, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.icon}</div>
             <div>
               <div style={pjs(26, 800, '32px', s.color)}>{s.value}</div>
@@ -125,15 +143,6 @@ export default function FacultyRequests() {
               ...pjs(12, 600, '16px', filter === t ? '#ffffff' : '#64748b'),
               transition: 'all 0.15s',
             }}>{t}</button>
-          ))}
-        </div>
-        <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
-          {['All', 'pending', 'accepted', 'rejected'].map(s => (
-            <button key={s} onClick={() => setStatusFilter(s)} style={{
-              padding: '7px 14px', borderRadius: 10, border: `1px solid ${statusFilter === s ? '#4f46e5' : '#e2e8f0'}`, cursor: 'pointer',
-              background: statusFilter === s ? '#eef2ff' : '#ffffff',
-              ...pjs(12, 600, '16px', statusFilter === s ? '#4f46e5' : '#64748b'),
-            }}>{s === 'accepted' ? 'Approved' : s.charAt(0).toUpperCase() + s.slice(1)}</button>
           ))}
         </div>
       </div>
@@ -199,6 +208,18 @@ export default function FacultyRequests() {
                   }}>
                     {r.detail}
                   </div>
+                  {r.notes && (
+                    <div style={{
+                      ...pjs(13, 400, '20px', '#0f172a'),
+                      background: r.status === 'accepted' ? '#f0fdf4' : r.status === 'rejected' ? '#fef2f2' : '#f8fafc',
+                      padding: '10px 14px',
+                      borderRadius: 12,
+                      marginTop: 4,
+                      border: `1px solid ${r.status === 'accepted' ? '#bbf7d0' : r.status === 'rejected' ? '#fecaca' : '#e2e8f0'}`
+                    }}>
+                      <strong style={{ color: r.status === 'accepted' ? '#16a34a' : r.status === 'rejected' ? '#ef4444' : '#64748b' }}>Your Comment:</strong> {r.notes}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -206,7 +227,7 @@ export default function FacultyRequests() {
               {r.status === 'pending' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 10 }}>
                   <button 
-                    onClick={() => updateStatus(r.id, 'accepted')} 
+                    onClick={() => openModal(r.id, 'accepted')} 
                     title="Approve"
                     style={{ 
                       width: 38, height: 38, borderRadius: 12, background: '#dcfce7', 
@@ -219,7 +240,7 @@ export default function FacultyRequests() {
                     <svg width="18" height="18" viewBox="0 0 14 14" fill="none"><path d="M2.5 7l3.5 3.5 5.5-7" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </button>
                   <button 
-                    onClick={() => updateStatus(r.id, 'rejected')} 
+                    onClick={() => openModal(r.id, 'rejected')} 
                     title="Reject"
                     style={{ 
                       width: 38, height: 38, borderRadius: 12, background: '#fee2e2', 
@@ -237,6 +258,42 @@ export default function FacultyRequests() {
           )
         })}
       </div>
+
+      {/* Comment Modal */}
+      {commentModal.isOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, backdropFilter: 'blur(4px)' }}>
+          <div style={{ background: '#fff', borderRadius: 24, padding: 32, width: '100%', maxWidth: 400, boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <h3 style={pjs(20, 700, '28px', '#0f172a')}>
+              {commentModal.status === 'accepted' ? 'Approve Request' : 'Reject Request'}
+            </h3>
+            <p style={{ ...pjs(14, 400, '20px', '#64748b'), marginTop: 8, marginBottom: 20 }}>
+              Add an optional comment or reason. This will be visible to the student.
+            </p>
+            <textarea 
+              value={commentModal.notes}
+              onChange={e => setCommentModal(prev => ({ ...prev, notes: e.target.value }))}
+              placeholder="Your comment..."
+              style={{ 
+                width: '100%', height: 100, padding: 16, borderRadius: 16, 
+                border: '1px solid #e2e8f0', resize: 'none', outline: 'none',
+                ...pjs(14, 400, '20px', '#0f172a'),
+                boxSizing: 'border-box'
+              }}
+            />
+            <div style={{ display: 'flex', gap: 12, marginTop: 24, justifyContent: 'flex-end' }}>
+              <button 
+                onClick={() => setCommentModal({ isOpen: false, requestId: null, status: null, notes: '' })}
+                style={{ padding: '10px 20px', borderRadius: 12, border: 'none', background: '#f1f5f9', cursor: 'pointer', ...pjs(14, 600, '20px', '#64748b') }}
+              >Cancel</button>
+              <button 
+                onClick={submitStatusWithComment}
+                style={{ padding: '10px 20px', borderRadius: 12, border: 'none', background: commentModal.status === 'accepted' ? '#16a34a' : '#ef4444', cursor: 'pointer', ...pjs(14, 600, '20px', '#ffffff') }}
+              >{commentModal.status === 'accepted' ? 'Approve' : 'Reject'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </PageLayout>
   )
 }
