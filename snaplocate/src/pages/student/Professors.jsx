@@ -173,6 +173,12 @@ export default function ProfessorsPage() {
       return matchSearch && matchDept
     })
     .sort((a, b) => {
+      // Pin Test Faculty to the top
+      const isATest = a.full_name?.toLowerCase().includes('test')
+      const isBTest = b.full_name?.toLowerCase().includes('test')
+      if (isATest && !isBTest) return -1
+      if (!isATest && isBTest) return 1
+
       if (sort === 'Name A-Z') return (a.full_name || '').localeCompare(b.full_name || '')
       if (sort === 'Name Z-A') return (b.full_name || '').localeCompare(a.full_name || '')
       if (sort === 'Department') return (a.dept || '').localeCompare(b.dept || '')

@@ -242,4 +242,33 @@ router.patch('/chats/:chatId/read', authenticate, async (req, res) => {
   res.json({ success: true })
 })
 
+// ─── PATCH /api/marketplace-chat/chats/:chatId/archive ───────────
+// Toggle archive status
+router.patch('/chats/:chatId/archive', authenticate, async (req, res) => {
+  const me = req.user.id
+  const { chatId } = req.params
+  const { is_archived } = req.body
+
+  // Verify participant
+  const { data: chat } = await supabaseAdmin
+    .from('marketplace_chats')
+    .select('buyer_id, seller_id, org_id')
+    .eq('id', chatId)
+    .single()
+
+  if (!chat) return res.status(404).json({ success: false, error: 'Chat not found' })
+  if (chat.org_id !== req.user.org_id) return res.status(403).json({ success: false, error: 'Forbidden' })
+  if (chat.buyer_id !== me && chat.seller_id !== me) {
+    return res.status(403).json({ success: false, error: 'Not a participant' })
+  }
+
+  const { error } = await supabaseAdmin
+    .from('marketplace_chats')
+    .update({ is_archived: !!is_archived })
+    .eq('id', chatId)
+
+  if (error) throw error
+  res.json({ success: true })
+})
+
 export default router

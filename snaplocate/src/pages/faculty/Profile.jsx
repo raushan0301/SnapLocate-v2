@@ -193,7 +193,7 @@ export default function FacultyProfile() {
             teaching_exp_years: d.teaching_exp_years || '',
           })
           setQuals(d.qualifications || [])
-          setPubs(d.publications || [])
+          setPubs((d.publications || []).map(p => ({ ...p, link: p.doi || p.link })))
           setAwards(d.awards || [])
           setTimetable((d.timetable || []).map(t => ({ ...t, time: t.time_slot || t.time })))
           setVisiting((d.office_hours || []).map(v => ({ ...v, room: v.room_or_link || v.room })))
@@ -395,8 +395,8 @@ export default function FacultyProfile() {
           <Field label="Teacher Code" value={form.teacher_code} onChange={set('teacher_code')} placeholder="e.g. RAJ" />
           <Field label="Department" value={form.dept} onChange={set('dept')} placeholder="e.g. CSED" />
           <Field label="Phone Extension" value={form.phone} onChange={set('phone')} placeholder="+91 xxxxx xxxxx" />
-          <Field label="Department Website" value={form.dept_website} onChange={set('dept_website')} type="url" placeholder="https://..." />
-          <Field label="LinkedIn / ORCID" value={form.linkedin} onChange={set('linkedin')} type="url" placeholder="https://linkedin.com/in/..." />
+          <Field label="Portfolio" value={form.dept_website} onChange={set('dept_website')} type="url" placeholder="https://..." />
+          <Field label="LinkedIn " value={form.linkedin} onChange={set('linkedin')} type="url" placeholder="https://linkedin.com/in/..." />
           <Field label="Professional Bio" span2 multiline rows={5}
             value={form.bio} onChange={set('bio')} placeholder="Write a short professional bio that will appear on your public profile…" />
         </div>
@@ -545,15 +545,15 @@ export default function FacultyProfile() {
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 18 }}>
         <Section
           icon={<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 1h10a1 1 0 011 1v14a1 1 0 01-1 1H4a1 1 0 01-1-1V2a1 1 0 011-1z" stroke="#4f46e5" strokeWidth="1.4" /><path d="M6 5h6M6 8h6M6 11h4" stroke="#4f46e5" strokeWidth="1.3" strokeLinecap="round" /></svg>}
-          title="Journal Publications" badge="SCI / Scopus"
-          action={<AddBtn onClick={() => setPubs(p => [...p, { title: '', journal: '', year: '', doi: '' }])} />}
+          title="Journal Publications"
+          action={<AddBtn onClick={() => setPubs(p => [...p, { title: '', journal: '', year: '', link: '' }])} />}
         >
           <EditTable
             cols={[
               { key: 'title', label: 'Title', flex: 3, ph: 'Paper title' },
               { key: 'journal', label: 'Journal', flex: 2, ph: 'Journal / Conference' },
               { key: 'year', label: 'Year', flex: 0.6, ph: 'YYYY' },
-              { key: 'doi', label: 'DOI', flex: 1.5, ph: 'doi:xx.xxxx', mono: true },
+              { key: 'link', label: 'Link', flex: 1.5, ph: 'https://...', mono: true },
             ]}
             rows={pubs} setRows={setPubs} emptyMsg="No publications yet. Click Add Row."
           />
@@ -636,13 +636,13 @@ export default function FacultyProfile() {
         action={<AddBtn onClick={() => setTimetable(t => [...t, { day: '', time: '', course: '', location: '', type: '' }])} />}
       >
         <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
-          {[{ type: 'Lecture', bg: '#eef2ff', color: '#4f46e5' }, { type: 'Lab', bg: '#f0fdf4', color: '#16a34a' }, { type: 'Tutorial', bg: '#fefce8', color: '#ca8a04' }, { type: 'Meeting', bg: '#f8fafc', color: '#64748b' }].map(t => (
+          {[{ type: 'Lecture', bg: '#eef2ff', color: '#4f46e5' }, { type: 'Lab', bg: '#f0fdf4', color: '#16a34a' }, { type: 'Tutorial', bg: '#fefce8', color: '#ca8a04' }, { type: 'Meeting', bg: '#f8fafc', color: '#64748b' }, { type: 'Others', bg: '#fdf4ff', color: '#c026d3' }].map(t => (
             <span key={t.type} style={{ ...f(11, 600, '15px', t.color), background: t.bg, padding: '3px 10px', borderRadius: 20 }}>{t.type}</span>
           ))}
         </div>
         <EditTable
           cols={[
-            { key: 'day', label: 'Day', flex: 1, ph: 'Select Day', options: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] },
+            { key: 'day', label: 'Day', flex: 1, ph: 'Select Day', options: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] },
             {
               key: 'time', label: 'Time (12 hr)', flex: 1.8, ph: 'Select Slot', options: [
                 '08:00 AM - 08:50 AM', '08:50 AM - 09:40 AM', '09:40 AM - 10:30 AM', '10:30 AM - 11:20 AM',
@@ -653,7 +653,7 @@ export default function FacultyProfile() {
             },
             { key: 'course', label: 'Course', flex: 2, ph: 'CS101: Intro' },
             { key: 'location', label: 'Location', flex: 1.5, ph: 'Room 402' },
-            { key: 'type', label: 'Type', flex: 1, ph: 'Select Type', options: ['Lecture', 'Lab', 'Tutorial', 'Meeting', 'Open Session'] },
+            { key: 'type', label: 'Type', flex: 1, ph: 'Select Type', options: ['Lecture', 'Lab', 'Tutorial', 'Meeting', 'Open Session', 'Others'] },
           ]}
           rows={timetable} setRows={setTimetable} emptyMsg="No classes added. Click Add Row."
         />

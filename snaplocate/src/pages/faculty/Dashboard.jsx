@@ -46,15 +46,17 @@ export default function FacultyDashboard() {
   const [now, setNow] = useState(new Date())
   const [allTimetable, setAllTimetable] = useState([])
   const [requests, setRequests] = useState([])
+  const [notifications, setNotifications] = useState([])
   const [stats, setStats] = useState({ pendingGrades: 0 })
   const [viewMode, setViewMode] = useState('day')
 
   const fetchData = useCallback(async () => {
     try {
-      const [statsRes, profileRes, reqRes] = await Promise.all([
+      const [statsRes, profileRes, reqRes, notifRes] = await Promise.all([
         api.get('/api/faculty/dashboard/stats'),
         api.get('/api/faculty/me/profile'),
-        api.get('/api/requests/faculty')
+        api.get('/api/requests/faculty'),
+        api.get('/api/notifications')
       ])
       
       if(profileRes.success && profileRes.data) {
@@ -67,6 +69,10 @@ export default function FacultyDashboard() {
       
       if(reqRes.success) {
         setRequests(reqRes.data.filter(r => r.status === 'pending'))
+      }
+
+      if(notifRes.success) {
+        setNotifications(notifRes.data || [])
       }
     } catch (err) {
       console.error('Faculty Dashboard fetch error:', err)
@@ -288,41 +294,23 @@ export default function FacultyDashboard() {
         <div style={{ ...card, width: 320, flexShrink:0, padding: 28, display:'flex', flexDirection:'column', gap: 20 }}>
           <h3 style={pjs(18, 700, '23px', '#0f172a')}>Faculty Activity</h3>
           <div style={{ display:'flex', flexDirection:'column', gap: 20, flex:1 }}>
-            <div style={{ display:'flex', gap: 14, alignItems:'flex-start' }}>
-              <div style={{ width:40, height:40, borderRadius:20, background:'#dcfce7', display:'flex', alignItems:'center', justifyContent:'center', padding: 10, flexShrink:0 }}><GradeIcon /></div>
-              <div style={{ flex:1, alignSelf:'center' }}>
-                <p style={{ ...pjs(13, 400, '20px', '#0f172a'), margin:0 }}>
-                  <span style={{ fontWeight:700 }}>Grading Update:</span> 
-                  {stats.pendingGrades > 0 
-                    ? ` ${stats.pendingGrades} papers are still pending for review.` 
-                    : ' All grading is up to date.'}
-                </p>
-                <span style={pjs(12, 400, '16px', '#64748b')}>
-                  {stats.pendingGrades > 0 ? 'Immediate attention' : 'All caught up'}
-                </span>
+            {notifications.length > 0 ? notifications.slice(0, 4).map((n, i) => (
+              <div key={i} style={{ display:'flex', gap: 14, alignItems:'flex-start' }}>
+                <div style={{ width:40, height:40, borderRadius:20, background: n.is_read ? '#f1f5f9' : '#e0e7ff', display:'flex', alignItems:'center', justifyContent:'center', padding: 10, flexShrink:0 }}>
+                  <svg viewBox="0 0 20 20" fill="none" className="w-full h-full"><path d="M10 3.5c4 0 6.5 2 6.5 5s-2.5 5-5 5H8l-3.5 3.5V13.5C3 12 4 10.5 4 8.5c0-3 3-5 6-5z" stroke={n.is_read ? "#64748b" : "#6366f1"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </div>
+                <div style={{ flex:1, alignSelf:'center' }}>
+                  <p style={{ ...pjs(13, 400, '18px', '#0f172a'), margin:0 }}>
+                    <span style={{ fontWeight:700 }}>{n.title}:</span> {n.message}
+                  </p>
+                  <span style={pjs(11, 400, '16px', '#64748b')}>
+                    {new Date(n.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
               </div>
-            </div>
-            <div style={{ display:'flex', gap: 14, alignItems:'flex-start' }}>
-              <div style={{ width:40, height:40, borderRadius:20, background:'#e0e7ff', display:'flex', alignItems:'center', justifyContent:'center', padding: 10, flexShrink:0 }}><RequestIcon /></div>
-              <div style={{ flex:1, alignSelf:'center' }}>
-                <p style={{ ...pjs(13, 400, '20px', '#0f172a'), margin:0 }}>
-                  <span style={{ fontWeight:700 }}>Requests:</span> 
-                  {requests.length > 0 
-                    ? ` ${requests.length} students waiting for office hour approval.` 
-                    : ' No pending requests at the moment.'}
-                </p>
-                <span style={pjs(12, 400, '16px', '#64748b')}>
-                  {requests.length > 0 ? 'Recently synced' : 'Up to date'}
-                </span>
-              </div>
-            </div>
-            <div style={{ display:'flex', gap: 14, alignItems:'flex-start' }}>
-              <div style={{ width:40, height:40, borderRadius:20, background:'#ffedd5', display:'flex', alignItems:'center', justifyContent:'center', padding: 10, flexShrink:0 }}><ResourceIcon /></div>
-              <div style={{ flex:1, alignSelf:'center' }}>
-                <p style={{ ...pjs(13, 400, '20px', '#0f172a'), margin:0 }}><span style={{ fontWeight:700 }}>Resources:</span> LMS connection is stable. Syllabus synced.</p>
-                <span style={pjs(12, 400, '16px', '#64748b')}>Ready for today</span>
-              </div>
-            </div>
+            )) : (
+              <div style={{ textAlign:'center', ...pjs(13, 400, '20px', '#94a3b8'), padding: 20 }}>No recent activity.</div>
+            )}
           </div>
           <button onClick={() => window.location.href='/faculty/workspace'} style={{ ...pjs(14, 500, '18px', '#4f46e5'), width:'100%', padding:'10px 0 2px', background:'transparent', border:'none', borderTop:'1px solid #f1f5f9', cursor:'pointer', textAlign:'center' }}>Go to Workspace</button>
         </div>

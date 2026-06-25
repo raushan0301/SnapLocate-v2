@@ -218,7 +218,7 @@ router.put('/me/publications', authenticate, requireFaculty, async (req, res) =>
   const items = req.body.items || []
   if (items.length > 0) {
     const { error } = await supabaseAdmin.from('publications').insert(items.map(i => ({
-      faculty_id: profile.id, title: i.title, journal: i.journal, year: i.year || null, doi: i.doi
+      faculty_id: profile.id, title: i.title, journal: i.journal, year: i.year || null, doi: i.link || i.doi
     })))
     if (error) throw error
   }

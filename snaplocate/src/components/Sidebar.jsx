@@ -65,6 +65,7 @@ const facultyNav = [
   // ── Overview ─────────────────────────────────
   { section: 'Overview' },
   { label: 'Dashboard', path: '/faculty/dashboard', icon: LayoutDashboard },
+  { label: 'My Workspace', path: '/faculty/workspace', icon: Briefcase },
 
   // ── Teaching ─────────────────────────────────
   { section: 'Teaching' },
@@ -83,7 +84,6 @@ const facultyNav = [
   { label: 'Professors', path: '/professors', icon: Users },
   { label: 'Classroom', path: '/classroom', icon: DoorOpen },
   { label: 'Resources', path: '/resources', icon: FileStack },
-  { label: 'My Workspace', path: '/faculty/workspace', icon: Briefcase },
   { label: 'Calendar', path: '/faculty/calendar', icon: CalendarDays },
   { label: 'Market-Place', path: '/marketplace', icon: ShoppingCart },
   { label: 'Lost & Found', path: '/lost-found', icon: Search },

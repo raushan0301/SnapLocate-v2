@@ -300,9 +300,8 @@ export default function MarketplacePage() {
         {/* ─── Premium header ─── */}
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-          padding: '20px 28px', borderRadius: 24,
-          boxShadow: '0 10px 30px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9',
+          background: 'transparent',
+          padding: '0 0 20px 0',
           gap: 24, flexWrap: 'wrap', marginBottom: 20
         }}>
           <div>

@@ -32,13 +32,7 @@ function RoomCard({ room, selected, onClick }) {
       {/* Image */}
       <div style={{ position: 'relative', height: 180, overflow: 'hidden' }}>
         <img src={room.img} alt={room.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(3px)', transform: 'scale(1.05)' }} />
-        {/* Status badge */}
-        <div style={{
-          position: 'absolute', top: 12, left: 12,
-          background: room.statusBg, borderRadius: 6, padding: '4px 10px',
-        }}>
-          <span style={{ ...pjs(11, 700, '15px', room.statusC), letterSpacing: '0.04em' }}>{room.status}</span>
-        </div>
+
         {/* Type badge */}
         <div style={{
           position: 'absolute', top: 12, right: 12,

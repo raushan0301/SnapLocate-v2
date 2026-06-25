@@ -825,30 +825,29 @@ export default function LostFoundPage() {
       {/* Premium Header */}
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-        padding: '20px 28px', borderRadius: 24,
-        boxShadow: '0 10px 30px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9',
-        gap: 24, flexWrap: 'wrap', marginBottom: 8
+        background: 'transparent',
+        padding: '0 0 20px 0',
+        gap: 24, flexWrap: 'wrap', marginBottom: 20
       }}>
         <div>
-          <h1 style={{ ...pjs(28, 800, '36px', '#0f172a'), margin: 0 }}>Lost & Found</h1>
-          <p style={{ ...pjs(14, 400, '22px', '#64748b'), marginTop: 4 }}>Report lost items or help return found items to the community.</p>
+          <h1 style={{ ...pjs(30, 800, '36px', '#0f172a'), letterSpacing: '-0.5px', margin: 0 }}>Lost & Found</h1>
+          <p style={{ ...pjs(15, 400, '22px', '#64748b'), margin: '6px 0 0' }}>Report lost items or help return found items to the community.</p>
         </div>
         {!isGuest && (
           <button
             onClick={() => setReportTarget({})}
             style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: '14px 28px', borderRadius: 16,
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '10px 22px', borderRadius: 14,
               background: '#4f46e5', color: '#fff', border: 'none',
-              ...pjs(15, 700, '22px', '#fff'), cursor: 'pointer',
+              ...pjs(14, 700, '20px', '#fff'), cursor: 'pointer',
               boxShadow: '0 8px 20px rgba(79, 70, 229, 0.25)',
               transition: 'all 0.2s'
             }}
             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.background = '#4338ca' }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.background = '#4f46e5' }}
           >
-            <Plus size={18} strokeWidth={2.5} /> <span>Report New Item</span>
+            <Plus size={16} strokeWidth={2.5} /> <span>Report New Item</span>
           </button>
         )}
       </div>

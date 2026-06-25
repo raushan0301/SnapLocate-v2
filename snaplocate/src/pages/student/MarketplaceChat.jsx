@@ -85,7 +85,7 @@ function ChatInbox({ chats, activeId, onSelect }) {
 }
 
 // ─── Chat Thread Panel ────────────────────────────────────────
-function ChatThread({ chat, currentUserId, onMarkRead }) {
+function ChatThread({ chat, currentUserId, onMarkRead, onToggleArchive }) {
   const [messages, setMessages] = useState([])
   const [loading, setLoading]   = useState(true)
   const [input, setInput]       = useState('')
@@ -164,6 +164,18 @@ function ChatThread({ chat, currentUserId, onMarkRead }) {
             {chat.is_archived && (
               <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 700, background: '#fef3c7', color: '#d97706', padding: '2px 8px', borderRadius: 10 }}>Archived</span>
             )}
+            <button
+              onClick={() => onToggleArchive?.(chat.id, !chat.is_archived)}
+              style={{
+                background: 'none', border: '1px solid #e2e8f0', borderRadius: 6, padding: '2px 8px',
+                fontFamily: FONT, fontSize: 10, fontWeight: 700, color: '#64748b', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto', transition: 'background 0.15s'
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+              onMouseLeave={e => e.currentTarget.style.background = 'none'}
+            >
+              <Archive size={10} /> {chat.is_archived ? 'Unarchive' : 'Archive'}
+            </button>
           </div>
         </div>
       </div>
@@ -213,7 +225,7 @@ function ChatThread({ chat, currentUserId, onMarkRead }) {
       {chat.is_archived ? (
         <div style={{ padding: '14px 20px', background: '#fffbeb', borderTop: '1px solid #fef3c7', textAlign: 'center', flexShrink: 0 }}>
           <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: '#d97706', margin: 0 }}>
-            🔒 Listing sold — this chat is archived.
+            🗄️ This chat is archived and read-only.
           </p>
         </div>
       ) : (
@@ -284,6 +296,14 @@ export default function MarketplaceChat() {
   const handleMarkRead = (chatId) => {
     setChats(p => p.map(c => c.id === chatId ? { ...c, unread_count: 0 } : c))
     api.patch(`/api/marketplace-chat/chats/${chatId}/read`).catch(() => {})
+  }
+
+  const handleToggleArchive = async (chatId, is_archived) => {
+    try {
+      await api.patch(`/api/marketplace-chat/chats/${chatId}/archive`, { is_archived })
+      setChats(p => p.filter(c => c.id !== chatId))
+      if (activeChat?.id === chatId) setActiveChat(null)
+    } catch (err) { console.error(err) }
   }
 
   const totalUnread = chats.reduce((acc, c) => acc + (c.unread_count || 0), 0)
@@ -370,6 +390,7 @@ export default function MarketplaceChat() {
                 chat={activeChat}
                 currentUserId={user?.id}
                 onMarkRead={handleMarkRead}
+                onToggleArchive={handleToggleArchive}
               />
             ) : (
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fafaff' }}>

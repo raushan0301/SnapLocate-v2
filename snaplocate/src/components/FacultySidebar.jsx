@@ -22,12 +22,12 @@ import {
 
 const mainNav = [
   { label: 'Dashboard',      path: '/faculty/dashboard', icon: LayoutDashboard },
+  { label: 'Work-Space',     path: '/faculty/workspace', icon: Briefcase },
   { label: 'Manage Profile', path: '/faculty/profile',   icon: IdCard },
   { label: 'Professor',      path: '/professors',        icon: Users },
   { label: 'Requests',       path: '/faculty/requests',  icon: Inbox },
   { label: 'Classroom',      path: '/classroom',         icon: DoorOpen },
   { label: 'Resources',      path: '/faculty/resources',  icon: FileStack },
-  { label: 'Work-Space',     path: '/faculty/workspace', icon: Briefcase },
   { label: 'Calendar',       path: '/calendar',          icon: CalendarDays },
   { label: 'Market-Place',   path: '/marketplace',       icon: ShoppingCart },
   { label: 'Lost & Found',   path: '/lost-found',        icon: Search },

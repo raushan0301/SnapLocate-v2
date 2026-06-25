@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Menu, Bell, LogOut, Settings, Headset } from 'lucide-react'
+import { Menu, Bell, LogOut, Settings, Headset, Trash2 } from 'lucide-react'
 import api from '../lib/api'
 
 /**
@@ -9,6 +9,76 @@ import api from '../lib/api'
  * Now connected to AuthContext: shows real user name and avatar,
  * and has a dropdown with a Logout button.
  */
+
+function NotificationItem({ n, markOneRead, deleteNotification }) {
+  const [offset, setOffset] = useState(0)
+  const [hover, setHover] = useState(false)
+  const startX = useRef(null)
+
+  const onTouchStart = (e) => { startX.current = e.touches[0].clientX }
+  const onTouchMove = (e) => {
+    if (startX.current === null) return
+    const diff = e.touches[0].clientX - startX.current
+    if (diff > 0) setOffset(Math.min(diff, 120)) // swipe right
+    else setOffset(Math.max(diff, -20)) // bounce left slightly
+  }
+  const onTouchEnd = () => {
+    if (offset > 60) deleteNotification(n.id)
+    else setOffset(0)
+    startX.current = null
+  }
+
+  // Mouse drag support
+  const onMouseDown = (e) => { startX.current = e.clientX }
+  const onMouseMove = (e) => {
+    if (startX.current === null) return
+    const diff = e.clientX - startX.current
+    if (diff > 0) setOffset(Math.min(diff, 120))
+    else setOffset(Math.max(diff, -20))
+  }
+  const onMouseUp = () => {
+    if (startX.current === null) return
+    if (offset > 60) deleteNotification(n.id)
+    else setOffset(0)
+    startX.current = null
+  }
+
+  return (
+    <div
+      onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
+      onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={() => { onMouseUp(); setHover(false) }}
+      onMouseEnter={() => setHover(true)}
+      style={{ position: 'relative', overflow: 'hidden', cursor: startX.current ? 'grabbing' : (n.link ? 'pointer' : 'default') }}
+    >
+      <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: '100%', background: '#fee2e2', display: 'flex', alignItems: 'center', paddingLeft: 20, color: '#ef4444' }}>
+        <Trash2 size={18} />
+      </div>
+      <div
+        onClick={() => { if (offset === 0) markOneRead(n.id, n.link) }}
+        style={{
+          position: 'relative', display: 'flex', gap: 12, padding: '12px 18px',
+          background: hover && n.link ? '#f1f5f9' : (n.is_read ? '#fff' : '#f8faff'),
+          borderBottom: '1px solid #f8fafc',
+          transition: startX.current !== null ? 'none' : 'transform 0.2s',
+          transform: `translateX(${offset}px)`, zIndex: 10
+        }}
+      >
+        <div style={{ width: 8, height: 8, borderRadius: 4, background: n.is_read ? 'transparent' : '#4f46e5', marginTop: 6, flexShrink: 0 }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, fontWeight: n.is_read ? 500 : 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.title}</div>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: '#64748b', marginTop: 2, lineHeight: '16px' }}>{n.message}</div>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: '#94a3b8', marginTop: 4 }}>{new Date(n.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+        </div>
+        {hover && (
+          <button onClick={(e) => { e.stopPropagation(); deleteNotification(n.id) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 8, alignSelf: 'center' }}>
+            <Trash2 size={16} />
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function Header({ onMenuClick }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
@@ -60,6 +130,13 @@ export default function Header({ onMenuClick }) {
       setNotifications(n => n.map(x => x.id === id ? { ...x, is_read: true } : x))
     } catch { /* silent */ }
     if (link) { setBellOpen(false); navigate(link) }
+  }
+
+  const deleteNotification = async (id) => {
+    try {
+      await api.delete(`/api/notifications/${id}`)
+      setNotifications(n => n.filter(x => x.id !== id))
+    } catch { /* silent */ }
   }
 
   const displayName  = user?.full_name || 'Student'
@@ -176,32 +253,7 @@ export default function Header({ onMenuClick }) {
                     You're all caught up! 🎉
                   </div>
                 ) : notifications.map(n => (
-                  <div
-                    key={n.id}
-                    onClick={() => markOneRead(n.id, n.link)}
-                    style={{
-                      display: 'flex', gap: 12, padding: '12px 18px',
-                      cursor: n.link ? 'pointer' : 'default',
-                      background: n.is_read ? 'transparent' : '#f8faff',
-                      borderBottom: '1px solid #f8fafc',
-                      transition: 'background 0.15s',
-                    }}
-                    onMouseEnter={e => { if (n.link) e.currentTarget.style.background = '#f1f5f9' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = n.is_read ? 'transparent' : '#f8faff' }}
-                  >
-                    <div style={{ width: 8, height: 8, borderRadius: 4, background: n.is_read ? 'transparent' : '#4f46e5', marginTop: 6, flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, fontWeight: n.is_read ? 500 : 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {n.title}
-                      </div>
-                      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: '#64748b', marginTop: 2, lineHeight: '16px' }}>
-                        {n.message}
-                      </div>
-                      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: '#94a3b8', marginTop: 4 }}>
-                        {new Date(n.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </div>
-                    </div>
-                  </div>
+                  <NotificationItem key={n.id} n={n} markOneRead={markOneRead} deleteNotification={deleteNotification} />
                 ))}
               </div>
             </div>

@@ -42,4 +42,16 @@ router.patch('/:id/read', authenticate, async (req, res) => {
   res.json({ success: true })
 })
 
+// DELETE /api/notifications/:id — delete a notification
+router.delete('/:id', authenticate, async (req, res) => {
+  const { error } = await supabaseAdmin
+    .from('notifications')
+    .delete()
+    .eq('id', req.params.id)
+    .eq('user_id', req.user.id) // Ensure users can only delete their own
+  
+  if (error) throw error
+  res.json({ success: true })
+})
+
 export default router

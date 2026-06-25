@@ -31,6 +31,8 @@ import announcementsRoutes from './routes/announcements.js'
 import notificationsRoutes from './routes/notifications.js'
 import gmailAuthRoutes    from './routes/gmailAuth.js'
 import { startEmailPoller } from './lib/emailPoller.js'
+import { cleanupOldNotifications } from './lib/notifications.js'
+
 
 // LMS routes (Moodle-synced — DO NOT MODIFY)
 import lmsCoursesRoutes       from './routes/lms/courses.js'
@@ -169,6 +171,11 @@ app.listen(PORT, () => {
 
   // Start Gmail poller (gracefully skips if GMAIL_REFRESH_TOKEN not set)
   startEmailPoller()
+
+  // Clean up notifications on boot, and every 24 hours
+  cleanupOldNotifications()
+  setInterval(cleanupOldNotifications, 24 * 60 * 60 * 1000)
 })
+
 
 export default app
