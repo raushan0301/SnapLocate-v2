@@ -48,14 +48,7 @@ export default function FacultyHeader({ onMenuClick }) {
         </button>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 38, height: 38, borderRadius: 10,
-            background: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M10 2L3 6v4c0 4.4 3 8.3 7 9.3 4-1 7-4.9 7-9.3V6L10 2z" fill="white"/>
-            </svg>
-          </div>
+          <img src="/images/snaplocate-icon.svg" alt="SnapLocate" style={{ width: 38, height: 38 }} />
           <div>
             <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 15, fontWeight: 800, lineHeight: '19px', color: '#0f172a' }}>
               SnapLocate

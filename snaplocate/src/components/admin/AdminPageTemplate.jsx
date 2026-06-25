@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Pencil, Trash2, Plus } from 'lucide-react'
+import { Pencil, Trash2, Plus, FileSpreadsheet } from 'lucide-react'
 import PageLayout from '../PageLayout'
 
 const pjs = (size, weight, color) => ({
@@ -9,7 +9,7 @@ const inter = (size, weight, color) => ({
   fontFamily: "'Inter', sans-serif", fontSize: size, fontWeight: weight, color, margin: 0
 })
 
-export default function AdminPageTemplate({ title, description, columns, data, onAdd, onEdit, onDelete, loading, hideTable, headerAction, children }) {
+export default function AdminPageTemplate({ title, description, columns, data, onAdd, onEdit, onDelete, onBulkUpload, loading, hideTable, headerAction, children }) {
   const [search, setSearch] = useState('')
 
   const filteredData = data ? data.filter(item => 
@@ -55,21 +55,37 @@ export default function AdminPageTemplate({ title, description, columns, data, o
                 onFocus={e => e.target.style.borderColor = '#4f46e5'}
                 onBlur={e => e.target.style.borderColor = '#e2e8f0'}
               />
-              {!hideTable && onAdd && (
-                <button 
-                  onClick={onAdd}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '10px 20px', borderRadius: 10, border: 'none', background: '#4f46e5',
-                    ...pjs(13, 700, '#ffffff'), cursor: 'pointer', transition: '0.2s',
-                    boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#4338ca'}
-                  onMouseLeave={e => e.currentTarget.style.background = '#4f46e5'}
-                >
-                  <Plus size={16} /> Add New
-                </button>
-              )}
+              <div style={{ display: 'flex', gap: 12 }}>
+                {!hideTable && onBulkUpload && (
+                  <button 
+                    onClick={onBulkUpload}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '10px 20px', borderRadius: 10, border: '1.5px solid #cbd5e1', background: '#fff',
+                      ...pjs(13, 700, '#475569'), cursor: 'pointer', transition: '0.2s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#94a3b8'; e.currentTarget.style.background = '#f8fafc' }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.background = '#fff' }}
+                  >
+                    <FileSpreadsheet size={16} /> Bulk Upload
+                  </button>
+                )}
+                {!hideTable && onAdd && (
+                  <button 
+                    onClick={onAdd}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '10px 20px', borderRadius: 10, border: 'none', background: '#4f46e5',
+                      ...pjs(13, 700, '#ffffff'), cursor: 'pointer', transition: '0.2s',
+                      boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#4338ca'}
+                    onMouseLeave={e => e.currentTarget.style.background = '#4f46e5'}
+                  >
+                    <Plus size={16} /> Add New
+                  </button>
+                )}
+              </div>
             </div>
 
             <div style={{ overflowX: 'auto' }}>

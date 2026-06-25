@@ -1,0 +1,30 @@
+<svg width="520" height="100" viewBox="0 0 520 100" xmlns="http://www.w3.org/2000/svg">
+  <rect width="520" height="100" rx="14" fill="#4E46E5"/>
+  <g transform="translate(16,12) scale(0.38)">
+    <rect width="200" height="200" rx="44" fill="rgba(255,255,255,0.12)"/>
+    <line x1="66" y1="38" x2="100" y2="38" stroke="rgba(255,255,255,0.4)" stroke-width="2.5"/>
+    <line x1="100" y1="38" x2="134" y2="38" stroke="rgba(255,255,255,0.4)" stroke-width="2.5"/>
+    <line x1="66" y1="38" x2="66" y2="72" stroke="rgba(255,255,255,0.4)" stroke-width="2.5"/>
+    <line x1="66" y1="72" x2="66" y2="106" stroke="rgba(255,255,255,0.4)" stroke-width="2.5"/>
+    <line x1="66" y1="106" x2="100" y2="106" stroke="rgba(255,255,255,0.4)" stroke-width="2.5"/>
+    <line x1="100" y1="106" x2="134" y2="106" stroke="rgba(255,255,255,0.4)" stroke-width="2.5"/>
+    <line x1="134" y1="106" x2="134" y2="140" stroke="rgba(255,255,255,0.4)" stroke-width="2.5"/>
+    <line x1="134" y1="140" x2="134" y2="174" stroke="rgba(255,255,255,0.4)" stroke-width="2.5"/>
+    <line x1="66" y1="174" x2="100" y2="174" stroke="rgba(255,255,255,0.4)" stroke-width="2.5"/>
+    <line x1="100" y1="174" x2="134" y2="174" stroke="rgba(255,255,255,0.4)" stroke-width="2.5"/>
+    <circle cx="66"  cy="38"  r="9" fill="white"/>
+    <circle cx="100" cy="38"  r="9" fill="white"/>
+    <circle cx="134" cy="38"  r="9" fill="white"/>
+    <circle cx="66"  cy="72"  r="9" fill="white"/>
+    <circle cx="66"  cy="106" r="9" fill="white"/>
+    <circle cx="100" cy="106" r="9" fill="white"/>
+    <circle cx="134" cy="106" r="9" fill="white"/>
+    <circle cx="134" cy="140" r="9" fill="white" opacity="0.75"/>
+    <circle cx="66"  cy="174" r="9" fill="white" opacity="0.75"/>
+    <circle cx="100" cy="174" r="9" fill="white" opacity="0.75"/>
+    <circle cx="134" cy="174" r="9" fill="white" opacity="0.75"/>
+  </g>
+  <text x="112" y="44" font-family="Inter, sans-serif" font-weight="700" font-size="28" fill="white" letter-spacing="-1">Snap</text>
+  <text x="174" y="44" font-family="Inter, sans-serif" font-weight="700" font-size="28" fill="#D8D6FF" letter-spacing="-1">Locate</text>
+  <text x="113" y="66" font-family="Inter, sans-serif" font-weight="600" font-size="10" fill="rgba(255,255,255,0.6)" letter-spacing="3">CAMPUS OS</text>
+</svg>

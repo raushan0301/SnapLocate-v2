@@ -146,6 +146,27 @@ router.get('/:id/timetable', authenticate, async (req, res) => {
   }
 })
 
+// POST /api/classrooms/bulk (Admin only)
+router.post('/bulk', authenticate, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Forbidden' })
+  }
+  try {
+    const { rows } = req.body
+    if (!rows || !Array.isArray(rows)) return res.status(400).json({ success: false, message: 'Invalid data format' })
+
+    const { data, error } = await supabaseAdmin
+      .from('classrooms')
+      .insert(rows)
+      .select()
+
+    if (error) throw error
+    res.json({ success: true, count: data.length, data })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
 // POST /api/classrooms (Admin only)
 router.post('/', authenticate, async (req, res) => {
   if (req.user.role !== 'admin') {

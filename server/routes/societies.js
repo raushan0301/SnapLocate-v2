@@ -93,6 +93,25 @@ router.get('/:id', async (req, res) => {
   res.json({ success: true, data })
 })
 
+// ─── POST /api/societies/bulk ─────────────────────────────────────
+// Admin only
+router.post('/bulk', authenticate, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Admin only' })
+  try {
+    const { rows } = req.body
+    if (!rows || !Array.isArray(rows)) return res.status(400).json({ success: false, message: 'Invalid data format' })
+
+    const { data, error } = await supabaseAdmin
+      .from('societies')
+      .insert(rows)
+      .select()
+    if (error) throw error
+    res.status(201).json({ success: true, count: data.length, data })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
 // ─── POST /api/societies ─────────────────────────────────────
 // Admin only
 router.post('/', authenticate, async (req, res) => {

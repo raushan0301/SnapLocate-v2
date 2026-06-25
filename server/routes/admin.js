@@ -553,6 +553,14 @@ router.get('/requests', authenticate, requireAdmin, async (req, res) => {
   res.json({ success: true, data })
 })
 
+// DELETE /api/admin/requests/:id
+router.delete('/requests/:id', authenticate, requireAdmin, async (req, res) => {
+  const { error } = await supabaseAdmin.from('requests').delete().eq('id', req.params.id)
+  if (error) throw error
+  logAudit(req.user, 'DELETE_REQUEST', 'request', req.params.id)
+  res.json({ success: true, message: 'Request deleted successfully' })
+})
+
 // GET /api/admin/resources — All resources for moderation (scoped to org)
 router.get('/resources', authenticate, requireAdmin, async (req, res) => {
   const { type, search } = req.query

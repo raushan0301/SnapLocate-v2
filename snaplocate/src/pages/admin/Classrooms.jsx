@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import AdminPageTemplate from '../../components/admin/AdminPageTemplate'
 import api from '../../lib/api'
+import BulkUploadModal from '../../components/admin/BulkUploadModal'
 import { Plus, Trash2, X, CheckSquare, UploadCloud, Image as ImageIcon } from 'lucide-react'
 
 // Simple custom modal overlay
@@ -60,6 +61,7 @@ export default function ManageClassrooms() {
   
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [bulkLoading, setBulkLoading] = useState(false)
+  const [bulkModalOpen, setBulkModalOpen] = useState(false)
 
   // form state
   const [formData, setFormData] = useState({
@@ -181,6 +183,28 @@ export default function ManageClassrooms() {
     }
   }
 
+  const handleBulkUpload = async (parsedData) => {
+    const rows = parsedData.map(r => ({
+      name: r['Room Name'] || 'Unnamed Room',
+      block: String(r['Block'] || ''),
+      subtitle: String(r['Subtitle'] || ''),
+      capacity: String(r['Capacity'] || ''),
+      floor: String(r['Floor'] || ''),
+      type: r['Room Type'] || 'LEC',
+      status: r['Status'] || 'AVAILABLE NOW',
+      status_bg: r['Status Bg'] || '#dcfce7',
+      status_c: r['Status Text'] || '#166534',
+      indicator_bg: '#4f46e5',
+      image_url: r['Image URL'] || ''
+    }))
+
+    const res = await api.post('/api/classrooms/bulk', { rows })
+    if (res.success) {
+      alert(`Successfully imported ${res.count} classrooms!`)
+      fetchClassrooms()
+    }
+  }
+
   const columns = [
     {
       key: 'select',
@@ -274,6 +298,7 @@ export default function ManageClassrooms() {
         onAdd={handleOpenAdd}
         onEdit={handleOpenEdit}
         onDelete={handleDelete}
+        onBulkUpload={() => setBulkModalOpen(true)}
         onRefresh={fetchClassrooms}
       >
         {selectedIds.size > 0 && (
@@ -308,6 +333,19 @@ export default function ManageClassrooms() {
           </div>
         )}
       </AdminPageTemplate>
+
+      <BulkUploadModal 
+        isOpen={bulkModalOpen}
+        onClose={() => setBulkModalOpen(false)}
+        title="Bulk Upload Classrooms"
+        templateType="Classrooms"
+        templateColumns={['Room Name', 'Block', 'Subtitle', 'Capacity', 'Floor', 'Room Type', 'Status', 'Status Bg', 'Status Text', 'Image URL']}
+        templateData={[
+          ['Programming Lab 1 (Delete this row)', 'CSED', 'L 106', '60', '01', 'LAB (Options: LEC, LAB, GENERAL)', 'AVAILABLE NOW (Options: AVAILABLE NOW, IN USE, MAINTENANCE)', '#dcfce7', '#166534', 'https://example.com/image.jpg']
+        ]}
+        expectedHeaders={['Room Name']}
+        onUpload={(data) => handleBulkUpload(data.filter(r => !String(r['Room Name']).includes('(Delete this row)')))}
+      />
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editingCard ? 'Edit Classroom' : 'Add Classroom'}>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column' }}>

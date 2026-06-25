@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import AdminPageTemplate from '../../components/admin/AdminPageTemplate'
 import Modal from '../../components/admin/Modal'
+import BulkUploadModal from '../../components/admin/BulkUploadModal'
 import api from '../../lib/api'
 
 export default function AdminSocieties() {
@@ -10,6 +11,7 @@ export default function AdminSocieties() {
   const [modalOpen, setModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [editId, setEditId] = useState(null)
+  const [bulkModalOpen, setBulkModalOpen] = useState(false)
   
   // File state for logo
   const [logoFile, setLogoFile] = useState(null)
@@ -131,6 +133,27 @@ export default function AdminSocieties() {
     }
   }
 
+  const handleBulkUpload = async (parsedData) => {
+    const rows = parsedData.map(r => ({
+      name: r['Society Name'] || 'Unnamed Society',
+      category: r['Category'] || 'Technical',
+      description: r['Description'] || '',
+      email_id: r['Email ID'] || '',
+      website_link: r['Website Link'] || '',
+      presidents: r['President Name'] ? [{ name: r['President Name'], email: r['President Email'] || '' }] : [],
+      vice_presidents: r['VP Name'] ? [{ name: r['VP Name'], email: r['VP Email'] || '' }] : [],
+      logo_img: r['Logo URL'] || '',
+      cover_url: '',
+      member_count: 0
+    }))
+
+    const res = await api.post('/api/societies/bulk', { rows })
+    if (res.success) {
+      alert(`Successfully imported ${res.count} societies!`)
+      fetchSocieties()
+    }
+  }
+
   const columns = [
     { label: 'Society', key: 'name', render: (row) => (
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -195,6 +218,20 @@ export default function AdminSocieties() {
         onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onBulkUpload={() => setBulkModalOpen(true)}
+      />
+
+      <BulkUploadModal 
+        isOpen={bulkModalOpen}
+        onClose={() => setBulkModalOpen(false)}
+        title="Bulk Upload Societies"
+        templateType="Societies"
+        templateColumns={['Society Name', 'Category', 'Description', 'Email ID', 'Website Link', 'President Name', 'President Email', 'VP Name', 'VP Email', 'Logo URL']}
+        templateData={[
+          ['Robotics Club (Delete this row)', 'Technical (Options: Technical, Non-Technical, Academic, Cultural, Sports)', 'Club for robotics enthusiasts', 'robotics@uni.edu', 'https://robotics.uni.edu', 'John Doe', 'john@uni.edu', 'Jane Smith', 'jane@uni.edu', 'https://example.com/logo.jpg']
+        ]}
+        expectedHeaders={['Society Name']}
+        onUpload={(data) => handleBulkUpload(data.filter(r => !String(r['Society Name']).includes('(Delete this row)')))}
       />
 
       <Modal isOpen={modalOpen} onClose={() => !submitting && setModalOpen(false)} title={editId ? "Edit Society" : "Add Society"}>

@@ -120,7 +120,7 @@ export default function Login() {
           left: isTablet ? 36 : 56,
         }}>
           <img
-            src="/images/img_logo.svg"
+            src="/images/snaplocate-lockup-light.svg"
             alt="SnapLocate"
             style={{ width: 200, height: 'auto', display: 'block' }}
             onError={e => e.target.style.display = 'none'}
@@ -198,7 +198,7 @@ export default function Login() {
           {isMobile && (
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
               <img
-                src="/images/img_logo.svg"
+                src="/images/snaplocate-lockup-light.svg"
                 alt="SnapLocate"
                 style={{ width: 200, height: 'auto', display: 'block' }}
                 onError={e => e.target.style.display = 'none'}

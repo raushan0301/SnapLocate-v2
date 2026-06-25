@@ -1,20 +1,31 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { GoogleLogin } from '@react-oauth/google'
 
-const pjs   = (size, weight, color) => ({ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: size, fontWeight: weight, color, margin: 0 })
+const pjs = (size, weight, color) => ({ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: size, fontWeight: weight, color, margin: 0 })
 const inter = (size, weight, color) => ({ fontFamily: "'Inter', sans-serif", fontSize: size, fontWeight: weight, color, margin: 0 })
 
 export default function Register() {
   const navigate = useNavigate()
   const { register, loginWithGoogle } = useAuth()
 
-  const [step,    setStep]    = useState(1) // 1 = fill form, 2 = pick role
-  const [form,    setForm]    = useState({ full_name: '', email: '', password: '', confirm: '' })
-  const [error,   setError]   = useState('')
+  const [step, setStep] = useState(1) // 1 = fill form, 2 = pick role
+  const [form, setForm] = useState({ full_name: '', email: '', password: '', confirm: '' })
+  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPass, setShowPass] = useState(false)
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024)
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768)
+      setIsTablet(window.innerWidth >= 768 && window.innerWidth < 1024)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
 
@@ -62,18 +73,54 @@ export default function Register() {
     else navigate('/dashboard', { replace: true })
   }
 
+  const pageStyle = {
+    display: 'flex',
+    flexDirection: isMobile ? 'column' : 'row',
+    minHeight: '100dvh',
+    background: '#f8fafc',
+  }
+
+  const leftStyle = {
+    display: isMobile ? 'none' : 'flex',
+    flex: 1,
+    background: '#fff',
+    borderRight: '1px solid #f1f5f9',
+    alignItems: 'stretch',
+    padding: isTablet ? '40px 36px' : '48px 56px',
+  }
+
+  const rightStyle = {
+    width: isMobile ? '100%' : isTablet ? '380px' : '460px',
+    minWidth: isMobile ? 'unset' : isTablet ? '380px' : '460px',
+    display: 'flex',
+    alignItems: isMobile ? 'flex-start' : 'center',
+    justifyContent: 'center',
+    padding: isMobile ? '32px 20px' : '40px 32px',
+    overflowY: 'auto',
+  }
+
+  const cardStyle = {
+    width: '100%',
+    maxWidth: isMobile ? '100%' : '400px',
+    background: '#fff',
+    border: '1px solid #f1f5f9',
+    borderRadius: 24,
+    padding: isMobile ? '28px 20px' : '32px 28px',
+    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+  }
+
   return (
-    <div style={styles.page}>
+    <div style={pageStyle}>
       {/* Left branding */}
-      <div style={styles.left}>
+      <div style={leftStyle}>
         <div style={styles.leftInner}>
           <div style={styles.logo}>
-            <img src="/images/img_logo_icon.svg" alt="SnapLocate" style={{ width: 28, height: 28 }} onError={e => e.target.style.display='none'} />
-            <span style={pjs(20, 700, '#0f172a')}>SnapLocate</span>
+            <img src="/images/snaplocate-lockup-light.svg" alt="SnapLocate" style={{ width: 180, height: 'auto', display: 'block' }} onError={e => e.target.style.display = 'none'} />
+
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 16 }}>
             <div style={styles.badge}>🏫 Join Campus OS</div>
-            <h1 style={{ ...pjs(36, 800, '#0f172a'), lineHeight: '44px' }}>
+            <h1 style={{ ...pjs(isTablet ? 32 : 36, 800, '#0f172a'), lineHeight: isTablet ? '40px' : '44px' }}>
               Start your<br />
               <span style={{ color: '#4f46e5' }}>campus journey.</span>
             </h1>
@@ -105,10 +152,22 @@ export default function Register() {
       </div>
 
       {/* Right — form */}
-      <div style={styles.right}>
-        <div style={styles.card}>
+      <div style={rightStyle}>
+        <div style={cardStyle}>
+          {/* Logo on mobile */}
+          {isMobile && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+              <img
+                src="/images/snaplocate-lockup-light.svg"
+                alt="SnapLocate"
+                style={{ width: 180, height: 'auto', display: 'block' }}
+                onError={e => e.target.style.display = 'none'}
+              />
+            </div>
+          )}
+
           <div style={{ marginBottom: 24 }}>
-            <h2 style={{ ...pjs(26, 700, '#0f172a'), marginBottom: 6 }}>Create your account</h2>
+            <h2 style={{ ...pjs(isMobile ? 24 : 26, 700, '#0f172a'), marginBottom: 6 }}>Create your account</h2>
             <p style={inter(14, 400, '#64748b')}>Join thousands of students & faculty on campus</p>
           </div>
 
@@ -150,7 +209,7 @@ export default function Register() {
                 onChange={set('full_name')}
                 style={styles.input}
                 onFocus={e => e.target.style.borderColor = '#4f46e5'}
-                onBlur={e  => e.target.style.borderColor = '#e2e8f0'}
+                onBlur={e => e.target.style.borderColor = '#e2e8f0'}
               />
             </div>
 
@@ -166,7 +225,7 @@ export default function Register() {
                 onChange={set('email')}
                 style={styles.input}
                 onFocus={e => e.target.style.borderColor = '#4f46e5'}
-                onBlur={e  => e.target.style.borderColor = '#e2e8f0'}
+                onBlur={e => e.target.style.borderColor = '#e2e8f0'}
               />
             </div>
 
@@ -187,7 +246,7 @@ export default function Register() {
                 onChange={set('password')}
                 style={styles.input}
                 onFocus={e => e.target.style.borderColor = '#4f46e5'}
-                onBlur={e  => e.target.style.borderColor = '#e2e8f0'}
+                onBlur={e => e.target.style.borderColor = '#e2e8f0'}
               />
             </div>
 
@@ -206,7 +265,7 @@ export default function Register() {
                   borderColor: form.confirm && form.confirm !== form.password ? '#f87171' : '#e2e8f0',
                 }}
                 onFocus={e => e.target.style.borderColor = '#4f46e5'}
-                onBlur={e  => e.target.style.borderColor = form.confirm !== form.password ? '#f87171' : '#e2e8f0'}
+                onBlur={e => e.target.style.borderColor = form.confirm !== form.password ? '#f87171' : '#e2e8f0'}
               />
             </div>
 

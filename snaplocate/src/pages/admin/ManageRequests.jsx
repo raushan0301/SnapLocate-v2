@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
-import { Search, Clock, CheckCircle2, XCircle, AlertCircle, ArrowRight, RefreshCw } from 'lucide-react'
+import { Search, Clock, CheckCircle2, XCircle, AlertCircle, ArrowRight, RefreshCw, Trash2 } from 'lucide-react'
 
 const STATUS_FILTERS = ['all', 'pending', 'accepted', 'rejected']
 
@@ -34,6 +34,19 @@ export default function ManageRequests() {
       const res = await api.get('/api/admin/requests')
       if (res.success) setData(res.data || [])
     } catch (err) { console.error(err) } finally { setLoading(false) }
+  }
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this request?')) return
+    try {
+      const res = await api.delete(`/api/admin/requests/${id}`)
+      if (res.success) {
+        setData(prev => prev.filter(req => req.id !== id))
+      }
+    } catch (err) {
+      console.error(err)
+      alert('Failed to delete request')
+    }
   }
 
   const filtered = data.filter(d => {
@@ -120,16 +133,16 @@ export default function ManageRequests() {
           <table style={{ minWidth: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                {['Student', 'Faculty', 'Type', 'Status', 'Notes', 'Date'].map(h => (
-                  <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>{h}</th>
+                {['Student', 'Faculty', 'Type', 'Status', 'Conversation', 'Date', ''].map((h, i) => (
+                  <th key={i} style={{ padding: '14px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} style={{ padding: '40px 0', textAlign: 'center', color: '#64748b' }}>Loading...</td></tr>
+                <tr><td colSpan={7} style={{ padding: '40px 0', textAlign: 'center', color: '#64748b' }}>Loading...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} style={{ padding: '40px 0', textAlign: 'center', color: '#64748b' }}>No requests found.</td></tr>
+                <tr><td colSpan={7} style={{ padding: '40px 0', textAlign: 'center', color: '#64748b' }}>No requests found.</td></tr>
               ) : filtered.map(req => {
                 const st = statusStyle(req.status)
                 const typeColor = TYPE_COLORS[req.type?.toLowerCase()] || { bg: '#f1f5f9', color: '#475569' }
@@ -150,10 +163,25 @@ export default function ManageRequests() {
                         {st.label}
                       </span>
                     </td>
-                    <td style={{ padding: '16px', fontSize: 13, color: '#64748b', maxWidth: 320, lineHeight: '1.5', whiteSpace: 'normal', wordBreak: 'break-word' }}>
-                      {req.notes || req.detail || '—'}
+                    <td style={{ padding: '16px', fontSize: 13, color: '#334155', maxWidth: 320, lineHeight: '1.5', whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                      {req.detail && (
+                        <div style={{ marginBottom: req.notes ? 8 : 0 }}>
+                          <span style={{ fontWeight: 600, color: '#475569' }}>Student:</span> {req.detail}
+                        </div>
+                      )}
+                      {req.notes && (
+                        <div style={{ padding: '8px 12px', background: '#f1f5f9', borderRadius: 8, borderLeft: '3px solid #cbd5e1' }}>
+                          <span style={{ fontWeight: 600, color: '#475569' }}>Faculty:</span> {req.notes}
+                        </div>
+                      )}
+                      {!req.detail && !req.notes && <span style={{ color: '#94a3b8' }}>—</span>}
                     </td>
                     <td style={{ padding: '16px', fontSize: 13, color: '#64748b' }}>{new Date(req.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                    <td style={{ padding: '16px', textAlign: 'right' }}>
+                      <button onClick={() => handleDelete(req.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 8, borderRadius: 8, transition: '0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#fef2f2'} onMouseLeave={e => e.currentTarget.style.background = 'none'} title="Delete Request">
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
                   </tr>
                 )
               })}

@@ -14,26 +14,26 @@ const inter = (size, weight, lh, color) => ({
 
 /* ─── Colors matching Figma exactly ─────────────────────────────── */
 const COL = {
-  headerBg:   '#4f46e5',  // indigo week header
-  headerTxt:  '#ffffff',
-  dayBg:      '#f1f5f9',  // day label row bg
-  dayTxt:     '#334155',
-  teachBg:    '#fce4e4',  // pink teaching row
-  teachTxt:   '#991b1b',
-  mstBg:      '#fde68a',  // amber MST
-  mstTxt:     '#92400e',
-  estBg:      '#fde68a',
-  estTxt:     '#92400e',
-  ntBg:       '#fde68a',  // yellow NT week header
-  ntTxt:      '#78350f',
-  holGreen:   '#22c55e',  // green holiday cell
-  holTxt:     '#ffffff',
-  ntGreen:    '#4ade80',  // light green NT cell
-  ntCellTxt:  '#14532d',
-  borderC:    '#cbd5e1',
-  rowBg:      '#ffffff',
-  altRowBg:   '#f8fafc',
-  noteBg:     '#fffbeb',
+  headerBg: '#4f46e5',  // indigo week header
+  headerTxt: '#ffffff',
+  dayBg: '#f1f5f9',  // day label row bg
+  dayTxt: '#334155',
+  teachBg: '#fce4e4',  // pink teaching row
+  teachTxt: '#991b1b',
+  mstBg: '#fde68a',  // amber MST
+  mstTxt: '#92400e',
+  estBg: '#fde68a',
+  estTxt: '#92400e',
+  ntBg: '#fde68a',  // yellow NT week header
+  ntTxt: '#78350f',
+  holGreen: '#22c55e',  // green holiday cell
+  holTxt: '#ffffff',
+  ntGreen: '#4ade80',  // light green NT cell
+  ntCellTxt: '#14532d',
+  borderC: '#cbd5e1',
+  rowBg: '#ffffff',
+  altRowBg: '#f8fafc',
+  noteBg: '#fffbeb',
   noteBorder: '#f59e0b',
 }
 
@@ -44,10 +44,10 @@ const weeks = []
 
 /* ─── Week type styling ──────────────────────────────────────────── */
 function getTypeSyle(type) {
-  if (type === 'MST')  return { bg: COL.mstBg,   color: COL.mstTxt,   label: 'MST' }
-  if (type === 'EST')  return { bg: COL.estBg,   color: COL.estTxt,   label: 'EST' }
+  if (type === 'MST') return { bg: COL.mstBg, color: COL.mstTxt, label: 'MST' }
+  if (type === 'EST') return { bg: COL.estBg, color: COL.estTxt, label: 'EST' }
   if (type === 'NON-TEACHING (NT) WEEK') return { bg: COL.ntBg, color: COL.ntTxt, label: 'NON-TEACHING (NT) WEEK' }
-  return { bg: COL.teachBg,  color: COL.teachTxt, label: 'TEACHING' }
+  return { bg: COL.teachBg, color: COL.teachTxt, label: 'TEACHING' }
 }
 
 /* ─── Single Week Card ───────────────────────────────────────────── */
@@ -100,7 +100,7 @@ function WeekCard({ week }) {
       }}>
         {week.dates.map((cell, i) => {
           const isHoliday = cell.flag === 'H'
-          const isNTCell  = cell.flag === 'NT'
+          const isNTCell = cell.flag === 'NT'
           return (
             <div key={i} style={{
               textAlign: 'center', padding: '7px 2px',
@@ -159,8 +159,8 @@ export default function CalendarPage() {
 
       {/* ── Page heading ───────────────────────────────────── */}
       <div style={{ marginBottom: 6 }}>
-        <h1 style={pjs(26, 700, '34px', '#0f172a')}>Academic Calendar 2025-26</h1>
-        <p  style={{ ...inter(12, 500, '16px', '#64748b'), marginTop: 4, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+        <h1 style={pjs(26, 700, '34px', '#0f172a')}>Academic Calendar</h1>
+        <p style={{ ...inter(12, 500, '16px', '#64748b'), marginTop: 4, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
           Academic Session UG &amp; PG
         </p>
       </div>
@@ -171,31 +171,16 @@ export default function CalendarPage() {
         boxShadow: '0 2px 8px rgba(0,0,0,0.05)', padding: '24px 28px',
       }}>
 
-        {/* Banner */}
-        <div style={{
-          background: COL.ntBg, border: `1.5px solid #f59e0b`,
-          borderRadius: 8, padding: '10px 16px', marginBottom: 24, textAlign: 'center',
-        }}>
-          <span style={{ ...inter(12, 700, '16px', '#78350f'), letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-            ACADEMIC CALENDAR – UG‑ I, II, III, IV, PG‑I AND PG‑II (EVEN SEM 2025‑26)
-          </span>
-        </div>
-
-        {/* Title */}
-        <h2 style={{ ...inter(20, 800, '26px', '#0f172a'), textAlign: 'center', marginBottom: 24, letterSpacing: '0.02em', textTransform: 'uppercase' }}>
-          Academic Calendar (UG and PG)
-        </h2>
-        <div style={{ width: 60, height: 3, background: '#4f46e5', margin: '0 auto 28px' }} />
 
         {loading ? (
           <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Loading...</div>
         ) : calendars.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
             {calendars.map((cal, i) => (
-              <img 
+              <img
                 key={cal.id || i}
-                src={cal.url || cal} 
-                alt={`Academic Calendar ${i+1}`} 
+                src={cal.url || cal}
+                alt={`Academic Calendar ${i + 1}`}
                 style={{ width: '100%', borderRadius: 8, border: '1px solid #cbd5e1', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
               />
             ))}
