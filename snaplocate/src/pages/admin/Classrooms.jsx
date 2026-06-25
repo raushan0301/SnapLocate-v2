@@ -273,6 +273,7 @@ export default function ManageClassrooms() {
       label: 'Status',
       render: (row) => (
         <span style={{
+          display: 'inline-block', whiteSpace: 'nowrap',
           background: row.status_bg || '#dcfce7',
           color: row.status_c || '#166534',
           padding: '6px 14px', borderRadius: 50, fontSize: 11, fontWeight: 800,
