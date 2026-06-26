@@ -86,6 +86,9 @@ import LMSBulkUpload  from './pages/admin/LMSBulkUpload'
 import ProfessorProfile from './pages/shared/ProfessorProfile'
 import Workspace        from './pages/shared/Workspace'
 
+// Preview New Landing Page (Temporary)
+import LandingPagePreview from './pages/LandingPagePreview'
+
 export default function AppRoutes() {
   return (
     <Router>
@@ -93,6 +96,9 @@ export default function AppRoutes() {
 
         {/* Default */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+        {/* Landing Page Preview */}
+        <Route path="/preview" element={<LandingPagePreview />} />
 
         {/* Auth Routes */}
         <Route path="/login"      element={<PublicRoute><Login /></PublicRoute>} />
