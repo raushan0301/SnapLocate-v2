@@ -47,14 +47,14 @@ export default function AdminSettings() {
   const { user, updateUser } = useAuth()
   const fileInputRef = useRef(null)
 
-  const [adminName, setAdminName]         = useState('')
-  const [adminEmail, setAdminEmail]       = useState('')
-  const [saveStatus, setSaveStatus]       = useState('')
-  const [exporting, setExporting]         = useState('')
-  const [systemStats, setSystemStats]     = useState(null)
+  const [adminName, setAdminName] = useState('')
+  const [adminEmail, setAdminEmail] = useState('')
+  const [saveStatus, setSaveStatus] = useState('')
+  const [exporting, setExporting] = useState('')
+  const [systemStats, setSystemStats] = useState(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState(null)
-  const [toast, setToast]                 = useState({ msg: '', type: 'success' })
+  const [toast, setToast] = useState({ msg: '', type: 'success' })
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type })
@@ -71,7 +71,7 @@ export default function AdminSettings() {
   useEffect(() => {
     api.get('/api/admin/stats').then(res => {
       if (res.success) setSystemStats(res.data)
-    }).catch(() => {})
+    }).catch(() => { })
   }, [])
 
   const handleAvatarChange = async (e) => {
@@ -147,7 +147,7 @@ export default function AdminSettings() {
   }
 
   const saveLabel = saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? '✓ Saved' : saveStatus === 'error' ? 'Failed' : 'Save Changes'
-  const saveBg    = saveStatus === 'saved' ? '#10b981' : saveStatus === 'error' ? '#ef4444' : '#4f46e5'
+  const saveBg = saveStatus === 'saved' ? '#10b981' : saveStatus === 'error' ? '#ef4444' : '#4f46e5'
   const currentAvatar = avatarPreview || user?.avatar_url
   const initials = (adminName || 'A').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
 
@@ -264,9 +264,9 @@ export default function AdminSettings() {
           <Section title="Export Data (CSV)">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
-                { key: 'faculty',   label: 'Export Faculty List',    desc: 'Name, email, department, verification status', icon: <Users size={18} />,        color: '#4f46e5', bg: '#eef2ff' },
-                { key: 'students',  label: 'Export Student List',    desc: 'Name, email, account status, join date',        icon: <GraduationCap size={18} />, color: '#10b981', bg: '#ecfdf5' },
-                { key: 'tickets',   label: 'Export Support Tickets', desc: 'Subject, category, status, submitter',           icon: <Ticket size={18} />,        color: '#f59e0b', bg: '#fffbeb' },
+                { key: 'faculty', label: 'Export Faculty List', desc: 'Name, email, department, verification status', icon: <Users size={18} />, color: '#4f46e5', bg: '#eef2ff' },
+                { key: 'students', label: 'Export Student List', desc: 'Name, email, account status, join date', icon: <GraduationCap size={18} />, color: '#10b981', bg: '#ecfdf5' },
+                { key: 'tickets', label: 'Export Support Tickets', desc: 'Subject, category, status, submitter', icon: <Ticket size={18} />, color: '#f59e0b', bg: '#fffbeb' },
               ].map(item => (
                 <div key={item.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: '#f8fafc', borderRadius: 12, border: '1px solid #f1f5f9' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -293,12 +293,12 @@ export default function AdminSettings() {
           <Section title="System Status">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {[
-                { label: 'Platform',         value: 'SnapLocate Campus OS' },
-                { label: 'Version',          value: '1.0.0' },
-                { label: 'API Status',       value: 'Connected', ok: true },
-                { label: 'Total Users',      value: systemStats ? (systemStats.total_students + systemStats.total_faculty) : '—' },
-                { label: 'Open Tickets',     value: systemStats?.open_tickets ?? '—' },
-                { label: 'Active Listings',  value: systemStats?.marketplace_listings ?? '—' },
+                { label: 'Platfor', value: 'SnapLocate Campus OS' },
+                { label: 'Version', value: '1.0.0' },
+                { label: 'API Status', value: 'Connected', ok: true },
+                { label: 'Total Users', value: systemStats ? (systemStats.total_students + systemStats.total_faculty) : '—' },
+                { label: 'Open Tickets', value: systemStats?.open_tickets ?? '—' },
+                { label: 'Active Listings', value: systemStats?.marketplace_listings ?? '—' },
               ].map((row, i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #f8fafc' }}>
                   <span style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>{row.label}</span>
