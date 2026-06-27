@@ -293,7 +293,7 @@ export default function AdminSettings() {
           <Section title="System Status">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {[
-                { label: 'Platfor', value: 'SnapLocate Campus OS' },
+                { label: 'Platform', value: 'SnapLocate Campus OS' },
                 { label: 'Version', value: '1.0.0' },
                 { label: 'API Status', value: 'Connected', ok: true },
                 { label: 'Total Users', value: systemStats ? (systemStats.total_students + systemStats.total_faculty) : '—' },
