@@ -48,7 +48,7 @@ export default function PageLayout({ children }) {
         </main>
 
       </div>
-      
+
       <style>{`
         .main-content > * {
           flex-shrink: 0;

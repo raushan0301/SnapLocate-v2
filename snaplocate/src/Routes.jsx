@@ -1,8 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 
 // Auth Pages
-import Login     from './pages/auth/Login'
-import Register  from './pages/auth/Register'
 import VerifyOTP from './pages/auth/VerifyOTP'
 
 // Route Guards
@@ -87,22 +85,22 @@ import ProfessorProfile from './pages/shared/ProfessorProfile'
 import Workspace        from './pages/shared/Workspace'
 
 // Preview New Landing Page (Temporary)
-import LandingPagePreview from './pages/LandingPagePreview'
+import LandingPage from './pages/LandingPage'
 
 export default function AppRoutes() {
   return (
     <Router>
       <Routes>
 
-        {/* Default */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        {/* Main Landing Page (Handles Login & Registration via Modal) */}
+        <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
 
-        {/* Landing Page Preview */}
-        <Route path="/preview" element={<LandingPagePreview />} />
+        {/* Redirect old auth routes back to landing page */}
+        <Route path="/login"      element={<Navigate to="/" replace />} />
+        <Route path="/register"   element={<Navigate to="/" replace />} />
+        <Route path="/preview"    element={<Navigate to="/" replace />} />
 
-        {/* Auth Routes */}
-        <Route path="/login"      element={<PublicRoute><Login /></PublicRoute>} />
-        <Route path="/register"   element={<PublicRoute><Register /></PublicRoute>} />
+        {/* Auth Route */}
         <Route path="/verify-otp" element={<VerifyOTP />} />
 
         {/* Student Routes */}
