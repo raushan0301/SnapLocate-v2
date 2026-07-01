@@ -2,45 +2,20 @@ import { useState } from 'react'
 import FacultyHeader from './FacultyHeader'
 import FacultySidebar from './FacultySidebar'
 
-const HEADER_H = 72
-
 export default function FacultyLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column',
-      height: '100dvh', width: '100vw',
-      overflow: 'hidden', background: '#f8fafc',
-    }}>
+    <div className="flex flex-col h-dvh w-screen overflow-hidden bg-surface">
       <FacultyHeader onMenuClick={() => setSidebarOpen(true)} />
 
-      <div style={{ 
-        display: 'flex', 
-        flex: 1, 
-        height: `calc(100dvh - ${HEADER_H}px)`, 
-        overflow: 'hidden',
-        position: 'relative'
-      }}>
+      <div className="flex flex-1 overflow-hidden relative min-h-0">
         <FacultySidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        <main style={{
-          flex: 1, overflowY: 'auto',
-          padding: '24px 24px 40px',
-          display: 'flex', flexDirection: 'column', gap: 24,
-          minWidth: 0,
-        }}>
+        <main className="flex-1 overflow-y-auto min-w-0 min-h-0 flex flex-col gap-6 p-4 sm:p-6 pb-10">
           {children}
         </main>
       </div>
-
-      <style>{`
-        @media (max-width: 640px) {
-          main {
-            padding: 16px 16px 32px !important;
-          }
-        }
-      `}</style>
     </div>
   )
 }

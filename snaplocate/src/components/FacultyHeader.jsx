@@ -20,125 +20,74 @@ export default function FacultyHeader({ onMenuClick }) {
   const handleLogout = () => { logout(); navigate('/login', { replace: true }) }
   const displayName = user?.full_name || 'Faculty'
   const initials    = displayName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-  return (
-    <header style={{
-      width: '100%', height: 72,
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 28px',
-      background: 'rgba(255,255,255,0.95)',
-      backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-      borderBottom: '1px solid #f1f5f9',
-      boxShadow: '0 1px 0 rgba(0,0,0,0.04)',
-      flexShrink: 0, zIndex: 100,
-    }}>
 
-      {/* LEFT: Logo + FACULTY OS */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <button 
+  return (
+    <header className="w-full h-[72px] flex items-center justify-between px-4 sm:px-7 bg-white/95 backdrop-blur-[8px] [-webkit-backdrop-filter:blur(8px)] border-b border-slate-100 shadow-[0_1px_0_rgba(0,0,0,0.04)] shrink-0 z-[100]">
+
+      {/* LEFT: Hamburger (mobile) + Logo */}
+      <div className="flex items-center gap-3.5">
+        <button
           onClick={onMenuClick}
-          className="mobile-only"
-          style={{
-            background: 'transparent', border: 'none', cursor: 'pointer',
-            padding: 8, borderRadius: 8, display: 'none', alignItems: 'center', justifyContent: 'center'
-          }}
-          onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
-          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          className="flex lg:hidden items-center justify-center p-2 rounded-lg bg-transparent border-none cursor-pointer hover:bg-slate-100 transition-colors"
+          aria-label="Open navigation menu"
         >
-          <Menu size={24} color="#64748b" />
+          <Menu size={24} className="text-ink-secondary" />
         </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <img src="/images/snaplocate-icon.svg" alt="SnapLocate" style={{ width: 38, height: 38 }} />
+        <div className="flex items-center gap-2.5">
+          <img src="/images/snaplocate-icon.svg" alt="SnapLocate" className="w-[38px] h-[38px]" />
           <div>
-            <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 15, fontWeight: 800, lineHeight: '19px', color: '#0f172a' }}>
-              SnapLocate
-            </div>
-            <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 10, fontWeight: 700, lineHeight: '13px', color: '#4f46e5', letterSpacing: '0.08em' }}>
-              FACULTY OS
-            </div>
+            <div className="font-jakarta text-[15px] font-extrabold leading-[19px] text-ink">SnapLocate</div>
+            <div className="font-jakarta text-[10px] font-bold leading-[13px] text-brand uppercase tracking-[0.08em]">FACULTY OS</div>
           </div>
         </div>
       </div>
 
-      <style>{`
-        @media (max-width: 1024px) {
-          .mobile-only { display: flex !important; }
-        }
-      `}</style>
-
-      {/* RIGHT: Bell + Divider + User */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+      {/* RIGHT: Bell + Divider + User + Avatar */}
+      <div className="flex items-center gap-4">
 
         {/* Bell */}
         <button
           aria-label="Notifications"
-          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '10px', borderRadius: 10, display: 'flex', alignItems: 'center', position: 'relative' }}
-          onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
-          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          className="relative flex items-center p-2.5 rounded-[10px] bg-transparent border-none cursor-pointer hover:bg-slate-100 transition-colors"
         >
-          <Bell size={20} color="#64748b" />
-          {/* Red badge */}
-          <span style={{
-            position: 'absolute', top: 10, right: 10, width: 8, height: 8,
-            borderRadius: '50%', background: '#ef4444', border: '1.5px solid white',
-          }} />
+          <Bell size={20} className="text-ink-secondary" />
+          <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-red-500 border-[1.5px] border-white" />
         </button>
 
-        {/* Divider */}
-        <div style={{ width: 1, height: 32, background: '#e2e8f0', flexShrink: 0 }} />
+        {/* Vertical divider */}
+        <div className="w-px h-8 bg-ink-border shrink-0" />
 
-        {/* Name + role */}
-        <div className="user-text" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
-          <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 700, lineHeight: '18px', color: '#0f172a' }}>
-            {displayName}
-          </span>
-          <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 12, fontWeight: 500, lineHeight: '16px', color: '#64748b' }}>
-            Faculty
-          </span>
+        {/* Name + role — hidden on very small screens */}
+        <div className="hidden sm:flex flex-col items-end gap-0.5">
+          <span className="font-jakarta text-sm font-bold leading-[18px] text-ink">{displayName}</span>
+          <span className="font-jakarta text-xs font-medium leading-4 text-ink-secondary">Faculty</span>
         </div>
 
         {/* Avatar + dropdown */}
-        <div ref={dropRef} style={{ position: 'relative' }}>
+        <div ref={dropRef} className="relative">
           <button
             id="faculty-header-avatar"
             onClick={() => setDropOpen(o => !o)}
-            style={{
-              width: 40, height: 40, borderRadius: 20, overflow: 'hidden',
-              background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0, border: '2px solid #e2e8f0', cursor: 'pointer', padding: 0,
-            }}
+            className="w-10 h-10 rounded-full overflow-hidden border-2 border-ink-border cursor-pointer p-0 shrink-0 bg-gradient-to-br from-brand to-purple-700 flex items-center justify-center"
           >
             {user?.avatar_url ? (
-              <img src={user.avatar_url} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              <img src={user.avatar_url} alt={displayName} className="w-full h-full object-cover block" />
             ) : (
-              <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, fontWeight: 700, color: '#fff' }}>{initials}</span>
+              <span className="font-jakarta text-[13px] font-bold text-white">{initials}</span>
             )}
           </button>
 
           {dropOpen && (
-            <div style={{
-              position: 'absolute', top: 48, right: 0,
-              background: '#fff', border: '1px solid #f1f5f9',
-              borderRadius: 14, boxShadow: '0 8px 24px rgba(0,0,0,0.10)',
-              minWidth: 180, zIndex: 100, overflow: 'hidden',
-            }}>
-              <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
-                <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{displayName}</div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: '#64748b', marginTop: 2 }}>{user?.email}</div>
+            <div className="absolute top-12 right-0 bg-white border border-slate-100 rounded-[14px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] min-w-[180px] z-[100] overflow-hidden">
+              <div className="px-4 py-3 border-b border-slate-100">
+                <div className="font-jakarta text-[13px] font-bold text-ink">{displayName}</div>
+                <div className="font-inter text-xs text-ink-secondary mt-0.5">{user?.email}</div>
               </div>
               <button
                 id="faculty-logout-btn"
                 onClick={handleLogout}
-                style={{
-                  width: '100%', padding: '11px 16px',
-                  background: 'none', border: 'none', textAlign: 'left',
-                  fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 600,
-                  color: '#dc2626', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 10,
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = '#fef2f2'}
-                onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                className="w-full px-4 py-[11px] bg-transparent border-none text-left font-jakarta text-sm font-semibold text-danger cursor-pointer flex items-center gap-2.5 hover:bg-danger-light transition-colors"
               >
                 <LogOut size={16} /> Sign out
               </button>
@@ -146,11 +95,6 @@ export default function FacultyHeader({ onMenuClick }) {
           )}
         </div>
       </div>
-      <style>{`
-        @media (max-width: 640px) {
-          .user-text { display: none !important; }
-        }
-      `}</style>
     </header>
   )
 }

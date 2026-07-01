@@ -1,6 +1,71 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
+/* ── Tailwind v4 Design Tokens ── */
+/* Maps the app palette to Tailwind utility classes (bg-brand, text-ink, etc.) */
+@theme {
+  /* Brand / Primary */
+  --color-brand:        #4f46e5;
+  --color-brand-dark:   #3730a3;
+  --color-brand-light:  #eef2ff;
+  --color-brand-soft:   #e0e7ff;
+  --color-brand-muted:  #6366f1;
+  --color-brand-border: #a5b4fc;
+
+  /* Surfaces */
+  --color-surface:       #f8fafc;
+  --color-surface-card:  #ffffff;
+  --color-surface-muted: #f1f5f9;
+  --color-surface-light: #eef2ff;
+
+  /* Ink / Text */
+  --color-ink:          #0f172a;
+  --color-ink-secondary: #64748b;
+  --color-ink-muted:    #475569;
+  --color-ink-subtle:   #94a3b8;
+  --color-ink-light:    #374151;
+  --color-ink-border:   #e2e8f0;
+  --color-ink-divider:  #f1f5f9;
+  --color-ink-accent:   #334155;
+
+  /* Status — Success */
+  --color-success:        #16a34a;
+  --color-success-dark:   #15803d;
+  --color-success-light:  #f0fdf4;
+  --color-success-soft:   #dcfce7;
+  --color-success-border: #bbf7d0;
+  --color-success-mid:    #10b981;
+
+  /* Status — Danger */
+  --color-danger:        #dc2626;
+  --color-danger-alt:    #ef4444;
+  --color-danger-light:  #fef2f2;
+  --color-danger-soft:   #fee2e2;
+  --color-danger-border: #fecaca;
+
+  /* Status — Warning */
+  --color-warning:        #d97706;
+  --color-warning-light:  #fffbeb;
+  --color-warning-soft:   #fef3c7;
+  --color-warning-border: #fde68a;
+
+  /* Status — Info */
+  --color-info:        #2563eb;
+  --color-info-dark:   #0369a1;
+  --color-info-light:  #f0f9ff;
+  --color-info-border: #bae6fd;
+
+  /* Accent */
+  --color-accent-orange: #fb923c;
+  --color-accent-purple: #9333ea;
+  --color-accent-teal:   #0d9488;
+  --color-accent-pink:   #db2777;
+
+  /* Font families */
+  --font-family-jakarta: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-family-inter:   'Inter', system-ui, sans-serif;
+}
+
 /* ── Design Tokens (exact from snaplocate_student_dashboard) ── */
 :root {
   /* Primary */
@@ -195,4 +260,269 @@ body {
 .moodle-html-content i,
 .moodle-html-content em {
   font-style: italic;
+}
+
+/* ─────────────────────────────────────────────
+   TYPOGRAPHY UTILITIES
+   Replaces the pjs() / inter() inline helper
+   functions scattered across ~20 page files.
+
+   Usage:  className="t-body-sm t-muted"
+   Instead of: style={pjs(12, 400, '16px', '#94a3b8')}
+   ───────────────────────────────────────────── */
+@layer utilities {
+  /* Font families */
+  .font-jakarta { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .font-inter   { font-family: 'Inter', system-ui, sans-serif; }
+
+  /* ── Type scale ── */
+  /* xs  = 11px / 14px */
+  .t-xs   { font-size: 11px; line-height: 14px; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  /* sm  = 12px / 16px */
+  .t-sm   { font-size: 12px; line-height: 16px; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  /* md  = 13px / 18px */
+  .t-md   { font-size: 13px; line-height: 18px; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  /* base = 14px / 20px */
+  .t-base { font-size: 14px; line-height: 20px; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  /* lg  = 15px / 20px */
+  .t-lg   { font-size: 15px; line-height: 20px; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  /* xl  = 16px / 24px */
+  .t-xl   { font-size: 16px; line-height: 24px; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  /* 2xl = 18px / 24px */
+  .t-2xl  { font-size: 18px; line-height: 24px; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  /* 3xl = 20px / 28px */
+  .t-3xl  { font-size: 20px; line-height: 28px; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  /* 4xl = 24px / 32px */
+  .t-4xl  { font-size: 24px; line-height: 32px; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  /* 5xl = 30px / 38px */
+  .t-5xl  { font-size: 30px; line-height: 38px; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  /* 6xl = 48px / 60px */
+  .t-6xl  { font-size: 48px; line-height: 60px; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+
+  /* ── Colour shortcuts (pair with scale above) ── */
+  .t-primary   { color: #0f172a; }
+  .t-secondary { color: #64748b; }
+  .t-muted     { color: #475569; }
+  .t-subtle    { color: #94a3b8; }
+  .t-light     { color: #374151; }
+  .t-accent    { color: #4f46e5; }
+  .t-white     { color: #ffffff; }
+  .t-success   { color: #16a34a; }
+  .t-danger    { color: #dc2626; }
+  .t-warning   { color: #d97706; }
+  .t-info      { color: #0369a1; }
+
+  /* ── Common pjs() combos as single classes ── */
+  /* These are the top-frequency calls from the audit */
+  .t-label-xs  { font-size: 11px; line-height: 14px; font-weight: 600; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .t-label-sm  { font-size: 12px; line-height: 16px; font-weight: 600; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .t-label-md  { font-size: 13px; line-height: 18px; font-weight: 600; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .t-label-base{ font-size: 14px; line-height: 20px; font-weight: 600; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .t-label-lg  { font-size: 15px; line-height: 20px; font-weight: 600; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+
+  .t-heading-sm  { font-size: 13px; line-height: 18px; font-weight: 700; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .t-heading-md  { font-size: 14px; line-height: 20px; font-weight: 700; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .t-heading-base{ font-size: 15px; line-height: 20px; font-weight: 700; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .t-heading-lg  { font-size: 18px; line-height: 24px; font-weight: 700; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .t-heading-xl  { font-size: 20px; line-height: 28px; font-weight: 700; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .t-heading-2xl { font-size: 24px; line-height: 32px; font-weight: 700; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .t-heading-3xl { font-size: 30px; line-height: 38px; font-weight: 700; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .t-heading-4xl { font-size: 48px; line-height: 60px; font-weight: 700; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+}
+
+/* ─────────────────────────────────────────────
+   SHARED COMPONENT CLASSES
+   Common UI patterns used across many pages.
+   Convert inline style objects to these classes.
+   ───────────────────────────────────────────── */
+@layer components {
+
+  /* ── Cards ── */
+  .card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1.5rem;  /* rounded-3xl = 24px */
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+  .card-sm {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;    /* rounded-2xl = 16px */
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+  .card-subtle {
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 1rem;
+  }
+
+  /* ── Badges / Status pills ── */
+  /* Base badge — always pair with a colour variant */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    border-width: 1px;
+    border-style: solid;
+    white-space: nowrap;
+  }
+  .badge-primary  { background: #eef2ff; color: #4f46e5; border-color: #c7d2fe; }
+  .badge-success  { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+  .badge-danger   { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+  .badge-warning  { background: #fffbeb; color: #c2410c; border-color: #fed7aa; }
+  .badge-info     { background: #f0f9ff; color: #0369a1; border-color: #bae6fd; }
+  .badge-neutral  { background: #f8fafc; color: #475569; border-color: #e2e8f0; }
+  .badge-purple   { background: #faf5ff; color: #9333ea; border-color: #e9d5ff; }
+  .badge-pink     { background: #fdf2f8; color: #db2777; border-color: #fbcfe8; }
+  .badge-teal     { background: #f0fdfa; color: #0d9488; border-color: #99f6e4; }
+
+  /* Soft pill — smaller, no uppercase (for category chips) */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+  .chip-primary { background: #eef2ff; color: #4f46e5; }
+  .chip-success { background: #f0fdf4; color: #16a34a; }
+  .chip-danger  { background: #fef2f2; color: #dc2626; }
+  .chip-warning { background: #fffbeb; color: #d97706; }
+  .chip-neutral { background: #f1f5f9; color: #64748b; }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    cursor: pointer;
+    transition: opacity 0.15s, background 0.15s;
+    border: none;
+    white-space: nowrap;
+  }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-primary  { background: #4f46e5; color: #ffffff; }
+  .btn-primary:hover:not(:disabled)  { background: #4338ca; }
+
+  .btn-secondary { background: #f1f5f9; color: #0f172a; }
+  .btn-secondary:hover:not(:disabled) { background: #e2e8f0; }
+
+  .btn-danger   { background: #fef2f2; color: #dc2626; }
+  .btn-danger:hover:not(:disabled)  { background: #fee2e2; }
+
+  .btn-ghost    { background: transparent; color: #64748b; }
+  .btn-ghost:hover:not(:disabled)   { background: #f1f5f9; }
+
+  .btn-sm {
+    padding: 5px 12px;
+    font-size: 12px;
+    border-radius: 8px;
+    gap: 4px;
+  }
+  .btn-lg {
+    padding: 12px 24px;
+    font-size: 16px;
+    border-radius: 12px;
+  }
+
+  /* ── Avatar ── */
+  .avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex-shrink: 0;
+    overflow: hidden;
+    object-fit: cover;
+  }
+  .avatar-sm  { width: 28px;  height: 28px;  font-size: 11px; }
+  .avatar-md  { width: 36px;  height: 36px;  font-size: 13px; }
+  .avatar-lg  { width: 48px;  height: 48px;  font-size: 16px; }
+  .avatar-xl  { width: 64px;  height: 64px;  font-size: 20px; }
+  .avatar-2xl { width: 80px;  height: 80px;  font-size: 26px; }
+  .avatar-placeholder {
+    background: #e0e7ff;
+    color: #4f46e5;
+    font-weight: 700;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+
+  /* ── Section header row ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+
+  /* ── Empty state ── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 48px 24px;
+    text-align: center;
+    color: #94a3b8;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+  .empty-state-icon {
+    width: 48px;
+    height: 48px;
+    color: #cbd5e1;
+  }
+  .empty-state-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #64748b;
+  }
+  .empty-state-desc {
+    font-size: 13px;
+    color: #94a3b8;
+    max-width: 280px;
+  }
+
+  /* ── Input ── */
+  .input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    color: #0f172a;
+    background: #ffffff;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .input:focus { border-color: #a5b4fc; box-shadow: 0 0 0 3px #eef2ff; }
+  .input::placeholder { color: #94a3b8; }
+
+  /* ── Divider ── */
+  .divider { border: none; border-top: 1px solid #e2e8f0; }
 }

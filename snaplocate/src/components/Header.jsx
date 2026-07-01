@@ -4,12 +4,6 @@ import { useAuth } from '../context/AuthContext'
 import { Menu, Bell, LogOut, Settings, Headset, Trash2 } from 'lucide-react'
 import api from '../lib/api'
 
-/**
- * Header — full-width, uses exact Figma-exported SVG assets.
- * Now connected to AuthContext: shows real user name and avatar,
- * and has a dropdown with a Logout button.
- */
-
 function NotificationItem({ n, markOneRead, deleteNotification }) {
   const [offset, setOffset] = useState(0)
   const [hover, setHover] = useState(false)
@@ -19,8 +13,8 @@ function NotificationItem({ n, markOneRead, deleteNotification }) {
   const onTouchMove = (e) => {
     if (startX.current === null) return
     const diff = e.touches[0].clientX - startX.current
-    if (diff > 0) setOffset(Math.min(diff, 120)) // swipe right
-    else setOffset(Math.max(diff, -20)) // bounce left slightly
+    if (diff > 0) setOffset(Math.min(diff, 120))
+    else setOffset(Math.max(diff, -20))
   }
   const onTouchEnd = () => {
     if (offset > 60) deleteNotification(n.id)
@@ -28,7 +22,6 @@ function NotificationItem({ n, markOneRead, deleteNotification }) {
     startX.current = null
   }
 
-  // Mouse drag support
   const onMouseDown = (e) => { startX.current = e.clientX }
   const onMouseMove = (e) => {
     if (startX.current === null) return
@@ -46,31 +39,42 @@ function NotificationItem({ n, markOneRead, deleteNotification }) {
   return (
     <div
       onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
-      onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={() => { onMouseUp(); setHover(false) }}
+      onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp}
+      onMouseLeave={() => { onMouseUp(); setHover(false) }}
       onMouseEnter={() => setHover(true)}
-      style={{ position: 'relative', overflow: 'hidden', cursor: startX.current ? 'grabbing' : (n.link ? 'pointer' : 'default') }}
+      className="relative overflow-hidden"
+      style={{ cursor: startX.current ? 'grabbing' : (n.link ? 'pointer' : 'default') }}
     >
-      <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: '100%', background: '#fee2e2', display: 'flex', alignItems: 'center', paddingLeft: 20, color: '#ef4444' }}>
+      {/* Swipe-to-delete background */}
+      <div className="absolute inset-0 bg-danger-soft flex items-center pl-5 text-danger-alt">
         <Trash2 size={18} />
       </div>
+
+      {/* Notification row */}
       <div
         onClick={() => { if (offset === 0) markOneRead(n.id, n.link) }}
+        className="relative flex gap-3 px-[18px] py-3 border-b border-slate-50 z-10"
         style={{
-          position: 'relative', display: 'flex', gap: 12, padding: '12px 18px',
           background: hover && n.link ? '#f1f5f9' : (n.is_read ? '#fff' : '#f8faff'),
-          borderBottom: '1px solid #f8fafc',
           transition: startX.current !== null ? 'none' : 'transform 0.2s',
-          transform: `translateX(${offset}px)`, zIndex: 10
+          transform: `translateX(${offset}px)`,
         }}
       >
-        <div style={{ width: 8, height: 8, borderRadius: 4, background: n.is_read ? 'transparent' : '#4f46e5', marginTop: 6, flexShrink: 0 }} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, fontWeight: n.is_read ? 500 : 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.title}</div>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: '#64748b', marginTop: 2, lineHeight: '16px' }}>{n.message}</div>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: '#94a3b8', marginTop: 4 }}>{new Date(n.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+        <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.is_read ? 'bg-transparent' : 'bg-brand'}`} />
+        <div className="flex-1 min-w-0">
+          <div className={`font-jakarta text-[13px] text-ink truncate ${n.is_read ? 'font-medium' : 'font-bold'}`}>
+            {n.title}
+          </div>
+          <div className="font-inter text-xs text-ink-secondary mt-0.5 leading-4">{n.message}</div>
+          <div className="font-inter text-[11px] text-ink-subtle mt-1">
+            {new Date(n.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+          </div>
         </div>
         {hover && (
-          <button onClick={(e) => { e.stopPropagation(); deleteNotification(n.id) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 8, alignSelf: 'center' }}>
+          <button
+            onClick={(e) => { e.stopPropagation(); deleteNotification(n.id) }}
+            className="bg-transparent border-none cursor-pointer text-danger-alt p-2 self-center"
+          >
             <Trash2 size={16} />
           </button>
         )}
@@ -82,8 +86,8 @@ function NotificationItem({ n, markOneRead, deleteNotification }) {
 export default function Header({ onMenuClick }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const [dropOpen, setDropOpen]       = useState(false)
-  const [bellOpen, setBellOpen]       = useState(false)
+  const [dropOpen, setDropOpen]           = useState(false)
+  const [bellOpen, setBellOpen]           = useState(false)
   const [notifications, setNotifications] = useState([])
   const dropRef = useRef(null)
   const bellRef = useRef(null)
@@ -98,11 +102,10 @@ export default function Header({ onMenuClick }) {
 
   useEffect(() => {
     fetchNotifications()
-    const id = setInterval(fetchNotifications, 30000) // poll every 30s
+    const id = setInterval(fetchNotifications, 30000)
     return () => clearInterval(id)
   }, [fetchNotifications])
 
-  // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e) => {
       if (dropRef.current && !dropRef.current.contains(e.target)) setDropOpen(false)
@@ -139,117 +142,89 @@ export default function Header({ onMenuClick }) {
     } catch { /* silent */ }
   }
 
-  const displayName  = user?.full_name || 'Student'
-  const initials     = displayName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-  const unreadCount  = notifications.filter(n => !n.is_read).length
+  const displayName = user?.full_name || 'Student'
+  const initials    = displayName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+  const unreadCount = notifications.filter(n => !n.is_read).length
 
   return (
-    <header style={{
-      width: '100%', height: 72,
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 28px',
-      background: 'rgba(255,255,255,0.95)',
-      backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-      borderBottom: '1px solid #f1f5f9',
-      boxShadow: '0 1px 0 rgba(0,0,0,0.04)',
-      flexShrink: 0, zIndex: 100,
-    }}>
+    <header className="w-full h-[72px] flex items-center justify-between px-4 sm:px-7 bg-white/95 backdrop-blur-[8px] [-webkit-backdrop-filter:blur(8px)] border-b border-slate-100 shadow-[0_1px_0_rgba(0,0,0,0.04)] shrink-0 z-[100]">
 
-      {/* ── LEFT: Logo + Mobile Menu ────────────────────── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        {/* Mobile menu toggle (visible < 1024px) */}
-        <button 
+      {/* ── LEFT: Hamburger (mobile) + Logo ── */}
+      <div className="flex items-center gap-3.5">
+        {/* Hamburger — visible only on mobile */}
+        <button
           onClick={onMenuClick}
-          className="mobile-only"
-          style={{
-            background: 'transparent', border: 'none', cursor: 'pointer',
-            padding: 8, borderRadius: 8, display: 'none', alignItems: 'center', justifyContent: 'center'
-          }}
-          onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
-          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          className="flex lg:hidden items-center justify-center p-2 rounded-lg bg-transparent border-none cursor-pointer hover:bg-slate-100 transition-colors"
+          aria-label="Open navigation menu"
         >
-          <Menu size={24} color="#64748b" />
+          <Menu size={24} className="text-ink-secondary" />
         </button>
 
-        <div 
+        {/* Logo */}
+        <div
           onClick={() => {
             if (user?.role === 'admin') navigate('/admin/dashboard')
             else if (user?.role === 'faculty') navigate('/faculty/dashboard')
             else navigate('/dashboard')
           }}
-          style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+          className="flex items-center gap-2.5 cursor-pointer"
         >
-          <img src="/images/snaplocate-icon.svg" alt="SnapLocate" style={{ width: 38, height: 38 }} />
+          <img src="/images/snaplocate-icon.svg" alt="SnapLocate" className="w-[38px] h-[38px]" />
           <div>
-            <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 15, fontWeight: 800, lineHeight: '19px', color: '#0f172a' }}>
+            <div className="font-jakarta text-[15px] font-extrabold leading-[19px] text-ink">
               SnapLocate
             </div>
-            <div style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 10, fontWeight: 700, lineHeight: '13px',
-              color: '#4f46e5', letterSpacing: '0.08em', textTransform: 'uppercase'
-            }}>
+            <div className="font-jakarta text-[10px] font-bold leading-[13px] text-brand uppercase tracking-[0.08em]">
               {user?.role || 'user'} OS
             </div>
           </div>
         </div>
       </div>
 
-      <style>{`
-        @media (max-width: 1024px) {
-          .mobile-only { display: flex !important; }
-        }
-      `}</style>
-
-      {/* ── RIGHT: Bell + Divider + User + Avatar ────────────── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+      {/* ── RIGHT: Bell + Divider + User info + Avatar ── */}
+      <div className="flex items-center gap-4">
 
         {/* Bell + notification dropdown */}
-        <div ref={bellRef} style={{ position: 'relative' }}>
+        <div ref={bellRef} className="relative">
           <button
             aria-label="Notifications"
             onClick={() => setBellOpen(o => !o)}
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '10px', borderRadius: 10, display: 'flex', alignItems: 'center', position: 'relative' }}
-            onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            className="relative flex items-center p-2.5 rounded-[10px] bg-transparent border-none cursor-pointer hover:bg-slate-100 transition-colors"
           >
-            <Bell size={20} color={bellOpen ? '#4f46e5' : '#64748b'} />
+            <Bell size={20} className={bellOpen ? 'text-brand' : 'text-ink-secondary'} />
             {unreadCount > 0 && (
-              <span style={{
-                position: 'absolute', top: 6, right: 6,
-                width: 16, height: 16, borderRadius: 8,
-                background: '#ef4444', color: '#fff',
-                fontSize: 9, fontWeight: 800,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: '2px solid #fff',
-              }}>
+              <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-extrabold flex items-center justify-center border-2 border-white">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
           </button>
 
           {bellOpen && (
-            <div style={{
-              position: 'absolute', top: 48, right: 0,
-              background: '#fff', border: '1px solid #f1f5f9',
-              borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-              width: 340, zIndex: 200, overflow: 'hidden',
-            }}>
-              {/* Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid #f1f5f9' }}>
-                <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 700, color: '#0f172a' }}>
-                  Notifications {unreadCount > 0 && <span style={{ background: '#eef2ff', color: '#4f46e5', borderRadius: 6, padding: '1px 6px', fontSize: 11 }}>{unreadCount}</span>}
+            <div className="absolute top-12 right-0 bg-white border border-slate-100 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] w-[340px] z-[200] overflow-hidden">
+              {/* Dropdown header */}
+              <div className="flex justify-between items-center px-[18px] py-3.5 border-b border-slate-100">
+                <span className="font-jakarta text-sm font-bold text-ink">
+                  Notifications{' '}
+                  {unreadCount > 0 && (
+                    <span className="bg-brand-light text-brand rounded-md px-1.5 py-px text-[11px]">
+                      {unreadCount}
+                    </span>
+                  )}
                 </span>
                 {unreadCount > 0 && (
-                  <button onClick={markAllRead} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#4f46e5', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                  <button
+                    onClick={markAllRead}
+                    className="bg-transparent border-none cursor-pointer text-xs font-semibold text-brand font-jakarta"
+                  >
                     Mark all read
                   </button>
                 )}
               </div>
 
-              {/* List */}
-              <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+              {/* Notification list */}
+              <div className="max-h-80 overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <div style={{ padding: '36px 0', textAlign: 'center', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, color: '#94a3b8' }}>
+                  <div className="py-9 text-center font-jakarta text-[13px] text-ink-subtle">
                     You're all caught up! 🎉
                   </div>
                 ) : notifications.map(n => (
@@ -260,101 +235,61 @@ export default function Header({ onMenuClick }) {
           )}
         </div>
 
-        {/* Divider */}
-        <div style={{ width: 1, height: 32, background: '#e2e8f0', flexShrink: 0 }} />
+        {/* Vertical divider */}
+        <div className="w-px h-8 bg-ink-border shrink-0" />
 
-        {/* User name + role */}
-        <div className="user-text" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
-          <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 700, lineHeight: '18px', color: '#0f172a' }}>
-            {displayName}
-          </span>
-          <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 12, fontWeight: 500, lineHeight: '16px', color: '#64748b', textTransform: 'capitalize' }}>
-            {user?.role || 'User'}
-          </span>
+        {/* User name + role — hidden on very small screens */}
+        <div className="hidden sm:flex flex-col items-end gap-0.5">
+          <span className="font-jakarta text-sm font-bold leading-[18px] text-ink">{displayName}</span>
+          <span className="font-jakarta text-xs font-medium leading-4 text-ink-secondary capitalize">{user?.role || 'User'}</span>
         </div>
 
         {/* Avatar + dropdown */}
-        <div ref={dropRef} style={{ position: 'relative' }}>
+        <div ref={dropRef} className="relative">
           <button
             id="header-avatar-btn"
             aria-label="Profile menu"
             onClick={() => setDropOpen(o => !o)}
-            style={{
-              width: 40, height: 40, borderRadius: 20,
-              overflow: 'hidden', border: '2px solid #e2e8f0',
-              cursor: 'pointer', padding: 0, flexShrink: 0, lineHeight: 0,
-              background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
+            className="w-10 h-10 rounded-full overflow-hidden border-2 border-ink-border cursor-pointer p-0 shrink-0 bg-brand-light flex items-center justify-center"
           >
             {user?.avatar_url ? (
-              <img src={user.avatar_url} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              <img src={user.avatar_url} alt={displayName} className="w-full h-full object-cover block" />
             ) : (
-              <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, fontWeight: 700, color: '#4f46e5' }}>
-                {initials}
-              </span>
+              <span className="font-jakarta text-[13px] font-bold text-brand">{initials}</span>
             )}
           </button>
 
-          {/* Dropdown */}
           {dropOpen && (
-            <div style={{
-              position: 'absolute', top: 48, right: 0,
-              background: '#fff', border: '1px solid #f1f5f9',
-              borderRadius: 14, boxShadow: '0 8px 24px rgba(0,0,0,0.10)',
-              minWidth: 180, zIndex: 100, overflow: 'hidden',
-            }}>
-              <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
-                <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{displayName}</div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: '#64748b', marginTop: 2 }}>{user?.email}</div>
+            <div className="absolute top-12 right-0 bg-white border border-slate-100 rounded-[14px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] min-w-[180px] z-[100] overflow-hidden">
+              {/* User info */}
+              <div className="px-4 py-3 border-b border-slate-100">
+                <div className="font-jakarta text-[13px] font-bold text-ink">{displayName}</div>
+                <div className="font-inter text-xs text-ink-secondary mt-0.5">{user?.email}</div>
               </div>
+
               {/* Settings */}
               <button
                 onClick={() => { setDropOpen(false); navigate(user?.role === 'admin' ? '/admin/settings' : user?.role === 'faculty' ? '/faculty/settings' : '/settings') }}
-                style={{
-                  width: '100%', padding: '11px 16px',
-                  background: 'none', border: 'none', textAlign: 'left',
-                  fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 600,
-                  color: '#334155', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 10,
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-                onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                className="w-full px-4 py-[11px] bg-transparent border-none text-left font-jakarta text-sm font-semibold text-ink-accent cursor-pointer flex items-center gap-2.5 hover:bg-surface transition-colors"
               >
-                <Settings size={16} color="#64748b" /> Settings
+                <Settings size={16} className="text-ink-secondary" /> Settings
               </button>
 
               {/* Support */}
               <button
                 onClick={() => { setDropOpen(false); navigate('/support') }}
-                style={{
-                  width: '100%', padding: '11px 16px',
-                  background: 'none', border: 'none', textAlign: 'left',
-                  fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 600,
-                  color: '#334155', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 10,
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-                onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                className="w-full px-4 py-[11px] bg-transparent border-none text-left font-jakarta text-sm font-semibold text-ink-accent cursor-pointer flex items-center gap-2.5 hover:bg-surface transition-colors"
               >
-                <Headset size={16} color="#64748b" /> Support
+                <Headset size={16} className="text-ink-secondary" /> Support
               </button>
 
-              {/* Divider */}
-              <div style={{ height: 1, background: '#f1f5f9', margin: '4px 0' }} />
+              <div className="h-px bg-slate-100 my-1" />
 
               {/* Sign out */}
               <button
                 id="logout-btn"
                 onClick={handleLogout}
-                style={{
-                  width: '100%', padding: '11px 16px',
-                  background: 'none', border: 'none', textAlign: 'left',
-                  fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 600,
-                  color: '#dc2626', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 10,
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = '#fef2f2'}
-                onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                className="w-full px-4 py-[11px] bg-transparent border-none text-left font-jakarta text-sm font-semibold text-danger cursor-pointer flex items-center gap-2.5 hover:bg-danger-light transition-colors"
               >
                 <LogOut size={16} /> Sign out
               </button>
@@ -362,11 +297,6 @@ export default function Header({ onMenuClick }) {
           )}
         </div>
       </div>
-      <style>{`
-        @media (max-width: 640px) {
-          .user-text { display: none !important; }
-        }
-      `}</style>
     </header>
   )
 }

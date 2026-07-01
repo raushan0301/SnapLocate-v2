@@ -2,63 +2,26 @@ import { useState } from 'react'
 import Header from './Header'
 import Sidebar from './Sidebar'
 
-const HEADER_H = 72 // px — matches Figma header height
-
 export default function PageLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100dvh',
-      width: '100vw',
-      overflow: 'hidden',
-      background: '#f8fafc',
-    }}>
+    <div className="flex flex-col h-dvh w-screen overflow-hidden bg-surface">
 
-      {/* ── Full-width header (72px) ─────────────────────── */}
+      {/* Full-width header */}
       <Header onMenuClick={() => setSidebarOpen(true)} />
 
-      {/* ── Row below header: sidebar + scrollable content ─ */}
-      <div style={{
-        display: 'flex',
-        flex: 1,
-        height: `calc(100dvh - ${HEADER_H}px)`,
-        overflow: 'hidden',
-        position: 'relative',
-        minHeight: 0,
-      }}>
+      {/* Row below header: sidebar + scrollable content */}
+      <div className="flex flex-1 overflow-hidden relative min-h-0">
 
-        {/* Sidebar — fills remaining height */}
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        {/* Main content — scrollable */}
-        <main className="main-content" style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '24px 24px 40px', // Slightly reduced padding for mobile
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 24,
-          minWidth: 0,
-          minHeight: 0,
-        }}>
+        {/* Main scrollable content */}
+        <main className="flex-1 overflow-y-auto min-w-0 min-h-0 flex flex-col gap-6 p-4 sm:p-6 pb-10">
           {children}
         </main>
 
       </div>
-
-      <style>{`
-        .main-content > * {
-          flex-shrink: 0;
-        }
-        @media (max-width: 640px) {
-          main {
-            padding: 16px 16px 32px !important;
-          }
-        }
-      `}</style>
     </div>
   )
 }

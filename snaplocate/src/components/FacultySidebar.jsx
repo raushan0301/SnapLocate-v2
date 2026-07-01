@@ -1,23 +1,23 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { 
-  LayoutDashboard, 
-  IdCard, 
-  Users, 
-  Inbox, 
-  DoorOpen, 
-  FileStack, 
-  Briefcase, 
-  CalendarDays, 
-  ShoppingCart, 
-  Search, 
-  Users2, 
-  Store, 
-  Wifi, 
-  LifeBuoy, 
-  Settings, 
-  Headset, 
-  LogOut 
+import {
+  LayoutDashboard,
+  IdCard,
+  Users,
+  Inbox,
+  DoorOpen,
+  FileStack,
+  Briefcase,
+  CalendarDays,
+  ShoppingCart,
+  Search,
+  Users2,
+  Store,
+  Wifi,
+  LifeBuoy,
+  Settings,
+  Headset,
+  LogOut,
 } from 'lucide-react'
 
 const mainNav = [
@@ -27,7 +27,7 @@ const mainNav = [
   { label: 'Professor',      path: '/professors',        icon: Users },
   { label: 'Requests',       path: '/faculty/requests',  icon: Inbox },
   { label: 'Classroom',      path: '/classroom',         icon: DoorOpen },
-  { label: 'Resources',      path: '/faculty/resources',  icon: FileStack },
+  { label: 'Resources',      path: '/faculty/resources', icon: FileStack },
   { label: 'Calendar',       path: '/calendar',          icon: CalendarDays },
   { label: 'Market-Place',   path: '/marketplace',       icon: ShoppingCart },
   { label: 'Lost & Found',   path: '/lost-found',        icon: Search },
@@ -37,37 +37,17 @@ const mainNav = [
   { label: 'Campus-Support', path: '/campus-support',    icon: LifeBuoy },
 ]
 
-const bottomNav = [
-  { label: 'Settings', path: '/settings', icon: Settings },
-  { label: 'Support',  path: '/support',  icon: Headset },
-]
-
 function NavRow({ label, path, icon: Icon }) {
   return (
-    <NavLink to={path} end style={{ display: 'block', textDecoration: 'none', borderRadius: 8 }}>
+    <NavLink to={path} end className="block no-underline rounded-lg">
       {({ isActive }) => (
-        <div
-          style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            padding: '8px 12px', borderRadius: 8,
-            background: isActive ? 'rgba(79,70,229,0.08)' : 'transparent',
-            cursor: 'pointer', transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-          onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#f1f5f9' }}
-          onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
-        >
-          <span style={{ 
-            width: 20, height: 20, 
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            color: isActive ? '#4f46e5' : '#64748b'
-          }}>
+        <div className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 ${
+          isActive ? 'bg-[rgba(79,70,229,0.08)]' : 'hover:bg-slate-100'
+        }`}>
+          <span className={`w-5 h-5 flex items-center justify-center shrink-0 ${isActive ? 'text-brand' : 'text-ink-secondary'}`}>
             <Icon size={17} strokeWidth={isActive ? 2.5 : 2} />
           </span>
-          <span style={{
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-            fontSize: 13, fontWeight: isActive ? 600 : 500,
-            lineHeight: '16px', color: isActive ? '#4f46e5' : '#64748b',
-          }}>
+          <span className={`font-jakarta text-[13px] leading-4 ${isActive ? 'text-brand font-semibold' : 'text-ink-secondary font-medium'}`}>
             {label}
           </span>
         </div>
@@ -80,84 +60,61 @@ export default function FacultySidebar({ isOpen, onClose }) {
   const navigate = useNavigate()
   const { logout } = useAuth()
 
-  const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
+  const handleLogout = () => { logout(); navigate('/login') }
 
   return (
     <>
-      {/* Mobile Overlay */}
+      {/* Mobile overlay */}
       {isOpen && (
-        <div 
+        <div
           onClick={onClose}
-          style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(15,23,42,0.4)', backdropFilter: 'blur(4px)',
-            zIndex: 998,
-          }}
+          className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-[998] lg:hidden"
         />
       )}
 
-      <aside 
-        className={`faculty-sidebar ${isOpen ? 'open' : ''}`}
-        style={{
-          width: 240, flexShrink: 0, height: '100%',
-          display: 'flex', flexDirection: 'column',
-          background: 'rgba(255,255,255,0.88)',
-          backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
-          borderRight: '1px solid #f1f5f9',
-          boxShadow: '4px 0 16px rgba(136,136,136,0.06)',
-          overflowY: 'auto',
-          transition: 'transform 0.3s ease, left 0.3s ease',
-          zIndex: 999,
-        }}
-      >
-        {/* Mobile Header in Sidebar */}
-        <div style={{ padding: '20px 20px 0', justifyContent: 'space-between', alignItems: 'center', display: 'none' }} className="mobile-only">
-          <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: '#4f46e5' }}>FACULTY MENU</span>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 24, color: '#64748b' }}>×</button>
+      <aside className={`
+        fixed inset-y-0 left-0 w-60 z-[999]
+        flex flex-col shrink-0
+        bg-white/90 backdrop-blur-[10px] [-webkit-backdrop-filter:blur(10px)]
+        border-r border-slate-100
+        shadow-[4px_0_16px_rgba(136,136,136,0.06)]
+        overflow-y-auto
+        transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:static lg:inset-auto lg:h-full lg:translate-x-0
+      `}>
+
+        {/* Mobile-only header row */}
+        <div className="flex lg:hidden items-center justify-between px-5 pt-5 pb-0">
+          <span className="font-jakarta font-extrabold text-brand">FACULTY MENU</span>
+          <button
+            onClick={onClose}
+            className="bg-transparent border-none cursor-pointer text-2xl leading-none text-ink-secondary hover:text-ink transition-colors"
+          >
+            ×
+          </button>
         </div>
 
-        <nav style={{ flex: 1, padding: '12px 10px 4px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
+        {/* Main nav */}
+        <nav className="flex-1 p-3 flex flex-col gap-0.5 overflow-y-auto">
           {mainNav.map(item => (
-            <div key={item.path} onClick={() => { if(window.innerWidth <= 1024) onClose() }}>
+            <div key={item.path} onClick={() => { if (window.innerWidth <= 1024) onClose() }}>
               <NavRow {...item} />
             </div>
           ))}
         </nav>
 
-        {/* Settings + Support */}
-        <div style={{ 
-          padding: '12px 10px 24px', 
-          display: 'flex', flexDirection: 'column',
-          borderTop: '1px solid #e2e8f0',
-          gap: 2
-        }}>
-          <div onClick={() => { if(window.innerWidth <= 1024) onClose() }}>
-            <NavRow label="Settings" path="/settings" icon={Settings} />
-          </div>
-
-          <div onClick={() => { if(window.innerWidth <= 1024) onClose() }}>
-            <NavRow label="Support" path="/support" icon={Headset} />
-          </div>
+        {/* Bottom: Settings + Support */}
+        <div className="p-3 pb-6 flex flex-col gap-0.5 border-t border-ink-border">
+          {[
+            { label: 'Settings', path: '/settings', icon: Settings },
+            { label: 'Support',  path: '/support',  icon: Headset },
+          ].map(item => (
+            <div key={item.path} onClick={() => { if (window.innerWidth <= 1024) onClose() }}>
+              <NavRow {...item} />
+            </div>
+          ))}
         </div>
-
-        <style>{`
-          @media (max-width: 1024px) {
-            .faculty-sidebar {
-              position: fixed !important;
-              left: -240px;
-              top: 0;
-              bottom: 0;
-              transform: translateX(0);
-            }
-            .faculty-sidebar.open {
-              left: 0;
-            }
-            .mobile-only { display: flex !important; }
-          }
-        `}</style>
       </aside>
     </>
   )

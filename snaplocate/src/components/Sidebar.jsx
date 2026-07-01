@@ -23,15 +23,12 @@ import {
   MessageSquare,
   Contact,
   Router,
-  GraduationCap,
   ShoppingBag,
   PackageSearch,
   Megaphone,
   ScrollText,
   Clock,
   BookOpen,
-  BarChart2,
-  CalendarCheck,
   Upload,
   FileQuestion,
   FolderOpen,
@@ -51,35 +48,18 @@ const studentNav = [
   { label: 'Shops', path: '/shops', icon: Store },
   { label: 'Wi-Fi', path: '/wifi', icon: Wifi },
   { label: 'Campus-Support', path: '/campus-support', icon: LifeBuoy },
-
-  // ── My Courses ───────────────────────────────
-  //{ section: 'My Courses' },
-  //{ label: 'LMS',              path: '/lms',                        icon: BookOpen },
-  //{ label: 'Assignments',      path: '/lms/native/assignments',     icon: ClipboardList },
-  //{ label: 'Grades',           path: '/lms/native/grades',          icon: BarChart2 },
-  //{ label: 'Attendance',       path: '/lms/native/attendance',      icon: CalendarCheck },
-  //{ label: 'PYQ Library',      path: '/lms/native/pyq',             icon: FolderOpen },
 ]
 
 const facultyNav = [
-  // ── Overview ─────────────────────────────────
   { section: 'Overview' },
   { label: 'Dashboard', path: '/faculty/dashboard', icon: LayoutDashboard },
   { label: 'My Workspace', path: '/faculty/workspace', icon: Briefcase },
 
-  // ── Teaching ─────────────────────────────────
   { section: 'Teaching' },
   { label: 'My Profile', path: '/faculty/profile', icon: IdCard },
   { label: 'Office Hours', path: '/faculty/office-hours', icon: Clock },
   { label: 'Student Req', path: '/faculty/requests', icon: Inbox },
-  // { label: 'My Students',    path: '/faculty/students',     icon: GraduationCap },
-  //{ label: 'LMS Courses',           path: '/faculty/lms',                      icon: BookOpen },
-  //{ label: 'Native Attendance',     path: '/faculty/lms/native/attendance',    icon: CalendarCheck },
-  //{ label: 'Native Assignments',    path: '/faculty/lms/native/assignments',   icon: ClipboardList },
-  //{ label: 'Native Quizzes',        path: '/faculty/lms/native/quizzes',       icon: FileQuestion },
-  //{ label: 'PYQ Library',           path: '/lms/native/pyq',                   icon: FolderOpen },
 
-  // ── Campus ───────────────────────────────────
   { section: 'Campus' },
   { label: 'Professors', path: '/professors', icon: Users },
   { label: 'Classroom', path: '/classroom', icon: DoorOpen },
@@ -91,19 +71,15 @@ const facultyNav = [
   { label: 'Shops', path: '/shops', icon: Store },
   { label: 'Wi-Fi', path: '/wifi', icon: Wifi },
   { label: 'Campus-Support', path: '/campus-support', icon: LifeBuoy },
-
 ]
 
 const adminNav = [
-  // ── Overview ─────────────────────────────────
   { section: 'Overview' },
   { label: 'Admin Dashboard', path: '/admin/dashboard', icon: ShieldCheck },
 
-  // ── People ───────────────────────────────────
   { section: 'People' },
   { label: 'User Management', path: '/admin/users', icon: Users },
 
-  // ── Campus ───────────────────────────────────
   { section: 'Campus' },
   { label: 'Classrooms', path: '/admin/classrooms', icon: Map },
   { label: 'Calendar', path: '/admin/calendar', icon: CalendarDays },
@@ -111,26 +87,22 @@ const adminNav = [
   { label: 'Societies', path: '/admin/societies', icon: Users2 },
   { label: 'Wi-Fi Hub', path: '/admin/wifi', icon: Router },
 
-  // ── Moderation ───────────────────────────────
   { section: 'Moderation' },
   { label: 'Marketplace', path: '/admin/marketplace', icon: ShoppingBag },
   { label: 'Lost & Found', path: '/admin/lost-found', icon: PackageSearch },
   { label: 'Resources', path: '/admin/resources', icon: FileStack },
   { label: 'Requests', path: '/admin/requests', icon: ClipboardList },
 
-  // ── Support ──────────────────────────────────
   { section: 'Support' },
   { label: 'Support Tickets', path: '/admin/support', icon: MessageSquare },
   { label: 'Support Contacts', path: '/admin/support-contacts', icon: Contact },
   { label: 'Broadcast', path: '/admin/broadcast', icon: Megaphone },
 
-  // ── LMS & Academic ───────────────────────────
   { section: 'LMS & Academic' },
   { label: 'Courses (Moodle)', path: '/admin/lms/courses', icon: BookOpen },
   { label: 'LMS Structure', path: '/admin/lms/structure', icon: LayoutDashboard },
   { label: 'Bulk Upload', path: '/admin/lms/bulk', icon: Upload },
 
-  // ── System ───────────────────────────────────
   { section: 'System' },
   { label: 'Audit Log', path: '/admin/audit-log', icon: ScrollText },
 ]
@@ -138,40 +110,21 @@ const adminNav = [
 
 function NavRow({ label, path, icon: Icon, count }) {
   return (
-    <NavLink to={path} end style={{ display: 'block', textDecoration: 'none', borderRadius: 8 }}>
+    <NavLink to={path} end className="block no-underline rounded-lg">
       {({ isActive }) => (
-        <div
-          style={{
-            display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between',
-            padding: '8px 12px', borderRadius: 8,
-            background: isActive ? 'rgba(79,70,229,0.08)' : 'transparent',
-            cursor: 'pointer', transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-          onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#f1f5f9' }}
-          onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{
-              width: 20, height: 20,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              color: isActive ? '#4f46e5' : '#64748b'
-            }}>
+        <div className={`flex items-center justify-between gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 ${
+          isActive ? 'bg-[rgba(79,70,229,0.08)]' : 'hover:bg-slate-100'
+        }`}>
+          <div className="flex items-center gap-2.5">
+            <span className={`w-5 h-5 flex items-center justify-center shrink-0 ${isActive ? 'text-brand' : 'text-ink-secondary'}`}>
               <Icon size={17} strokeWidth={isActive ? 2.5 : 2} />
             </span>
-            <span style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontSize: 13, fontWeight: isActive ? 600 : 500,
-              lineHeight: '16px', color: isActive ? '#4f46e5' : '#64748b',
-            }}>
+            <span className={`font-jakarta text-[13px] leading-4 ${isActive ? 'text-brand font-semibold' : 'text-ink-secondary font-medium'}`}>
               {label}
             </span>
           </div>
           {count > 0 && (
-            <div style={{
-              background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 700,
-              padding: '2px 6px', borderRadius: 10, minWidth: 18, textAlign: 'center',
-              fontFamily: "'Inter', sans-serif"
-            }}>
+            <div className="bg-red-500 text-white font-inter text-[10px] font-bold px-1.5 py-0.5 rounded-[10px] min-w-[18px] text-center">
               {count}
             </div>
           )}
@@ -190,10 +143,9 @@ export default function Sidebar({ isOpen, onClose }) {
     if (!user || user.role === 'admin') return
     const isFaculty = user.role === 'faculty'
     const endpoint = isFaculty ? '/api/requests/faculty' : '/api/requests'
-    
+
     api.get(endpoint).then(res => {
       const data = res.data?.data || res.data || []
-      // For both faculty and student, pending requests represent action items or wait states
       const count = data.filter(r => r.status === 'pending').length
       setReqCount(count)
     }).catch(err => console.error('Sidebar fetch requests err:', err))
@@ -206,51 +158,40 @@ export default function Sidebar({ isOpen, onClose }) {
 
   return (
     <>
-      {/* Mobile Overlay */}
+      {/* Mobile overlay — backdrop behind open sidebar, hidden on desktop */}
       {isOpen && (
         <div
-          className="mobile-overlay"
+          className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-[998] lg:hidden"
           onClick={onClose}
-          style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(15,23,42,0.4)', backdropFilter: 'blur(4px)',
-            zIndex: 998, display: 'none'
-          }}
         />
       )}
 
-      <aside
-        className={`sidebar ${isOpen ? 'open' : ''}`}
-        style={{
-          width: 240,
-          flexShrink: 0,
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          background: 'rgba(255,255,255,0.88)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-          borderRight: '1px solid #f1f5f9',
-          boxShadow: '4px 0 16px rgba(136,136,136,0.06)',
-          overflowY: 'auto',
-          transition: 'transform 0.3s ease, left 0.3s ease',
-          zIndex: 999,
-        }}
-      >
-        {/* Mobile Header in Sidebar */}
-        <div className="mobile-only" style={{ padding: '20px 20px 0', justifyContent: 'space-between', alignItems: 'center', display: 'none' }}>
-          <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: '#4f46e5' }}>MENU</span>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 24, color: '#64748b' }}>×</button>
+      <aside className={`
+        fixed inset-y-0 left-0 w-60 z-[999]
+        flex flex-col shrink-0
+        bg-white/90 backdrop-blur-[10px] [-webkit-backdrop-filter:blur(10px)]
+        border-r border-slate-100
+        shadow-[4px_0_16px_rgba(136,136,136,0.06)]
+        overflow-y-auto
+        transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:static lg:inset-auto lg:h-full lg:translate-x-0
+      `}>
+
+        {/* Mobile-only header row inside sidebar */}
+        <div className="flex lg:hidden items-center justify-between px-5 pt-5 pb-0">
+          <span className="font-jakarta font-extrabold text-brand">MENU</span>
+          <button
+            onClick={onClose}
+            className="bg-transparent border-none cursor-pointer text-2xl leading-none text-ink-secondary hover:text-ink transition-colors"
+          >
+            ×
+          </button>
         </div>
 
-        {/* ── Main nav ────────────────────────────────────── */}
+        {/* ── Main nav ── */}
         <nav
-          style={{
-            flex: 1,
-            padding: '12px 10px 4px',
-            display: 'flex', flexDirection: 'column', gap: 2,
-            overflowY: 'auto',
-          }}
+          className="flex-1 p-3 pt-3 pb-1 flex flex-col gap-0.5 overflow-y-auto"
           role="navigation"
           aria-label="Main navigation"
         >
@@ -258,12 +199,10 @@ export default function Sidebar({ isOpen, onClose }) {
             .map((item, idx) => {
               if (item.section) {
                 return (
-                  <div key={`section-${idx}`} style={{
-                    padding: '10px 12px 3px',
-                    fontSize: 10, fontWeight: 800, color: '#94a3b8',
-                    textTransform: 'uppercase', letterSpacing: '0.08em',
-                    marginTop: idx === 0 ? 0 : 6,
-                  }}>
+                  <div
+                    key={`section-${idx}`}
+                    className={`px-3 pb-0.5 text-[10px] font-extrabold text-ink-subtle uppercase tracking-[0.08em] ${idx === 0 ? 'pt-2.5' : 'pt-4'}`}
+                  >
                     {item.section}
                   </div>
                 )
@@ -276,24 +215,6 @@ export default function Sidebar({ isOpen, onClose }) {
               )
             })}
         </nav>
-
-
-        <style>{`
-          @media (max-width: 1024px) {
-            .sidebar {
-              position: fixed !important;
-              left: -240px;
-              top: 0;
-              bottom: 0;
-              transform: translateX(0);
-            }
-            .sidebar.open {
-              left: 0;
-            }
-            .mobile-overlay { display: block !important; }
-            .mobile-only { display: flex !important; }
-          }
-        `}</style>
       </aside>
     </>
   )
