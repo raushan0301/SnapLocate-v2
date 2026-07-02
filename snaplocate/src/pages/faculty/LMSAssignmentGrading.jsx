@@ -2,22 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
-import {
-  ClipboardList,
-  ChevronLeft,
-  CheckCircle,
-  Clock,
-  AlertCircle,
-  User,
-} from 'lucide-react'
-
-const pjs = (size, weight, lh, color) => ({
-  fontFamily: "'Plus Jakarta Sans', sans-serif",
-  fontSize: size,
-  fontWeight: weight,
-  lineHeight: lh,
-  color,
-})
+import { ClipboardList, ChevronLeft, CheckCircle, Clock, AlertCircle, User } from 'lucide-react'
 
 export default function LMSAssignmentGrading() {
   const { id } = useParams()
@@ -27,8 +12,6 @@ export default function LMSAssignmentGrading() {
   const [submissions, setSubmissions] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-
-  // Per-submission grade state: { [submissionId]: { marks, feedback, saving, saved, error } }
   const [gradeState, setGradeState] = useState({})
 
   useEffect(() => {
@@ -43,16 +26,9 @@ export default function LMSAssignmentGrading() {
         setAssignment(assignRes.data)
         const subs = subRes.data || []
         setSubmissions(subs)
-        // Pre-fill grade state with existing marks/feedback
         const initial = {}
-        subs.forEach((s) => {
-          initial[s.id] = {
-            marks: s.marks !== undefined && s.marks !== null ? String(s.marks) : '',
-            feedback: s.feedback || '',
-            saving: false,
-            saved: false,
-            error: null,
-          }
+        subs.forEach(s => {
+          initial[s.id] = { marks: s.marks !== undefined && s.marks !== null ? String(s.marks) : '', feedback: s.feedback || '', saving: false, saved: false, error: null }
         })
         setGradeState(initial)
       } catch (err) {
@@ -65,342 +41,126 @@ export default function LMSAssignmentGrading() {
   }, [id])
 
   function updateGradeField(subId, field, value) {
-    setGradeState((prev) => ({
-      ...prev,
-      [subId]: { ...prev[subId], [field]: value, saved: false, error: null },
-    }))
+    setGradeState(prev => ({ ...prev, [subId]: { ...prev[subId], [field]: value, saved: false, error: null } }))
   }
 
   async function handleSaveGrade(subId) {
     const gs = gradeState[subId]
     if (!gs) return
-    setGradeState((prev) => ({
-      ...prev,
-      [subId]: { ...prev[subId], saving: true, saved: false, error: null },
-    }))
+    setGradeState(prev => ({ ...prev, [subId]: { ...prev[subId], saving: true, saved: false, error: null } }))
     try {
-      await api.patch(`/api/lms/submissions/${subId}/grade`, {
-        marks: Number(gs.marks),
-        feedback: gs.feedback,
-      })
-      setGradeState((prev) => ({
-        ...prev,
-        [subId]: { ...prev[subId], saving: false, saved: true },
-      }))
-      // Update submission in list
-      setSubmissions((prev) =>
-        prev.map((s) =>
-          s.id === subId
-            ? { ...s, marks: Number(gs.marks), feedback: gs.feedback, status: s.status === 'late' ? 'late' : 'graded' }
-            : s
-        )
-      )
+      await api.patch(`/api/lms/submissions/${subId}/grade`, { marks: Number(gs.marks), feedback: gs.feedback })
+      setGradeState(prev => ({ ...prev, [subId]: { ...prev[subId], saving: false, saved: true } }))
+      setSubmissions(prev => prev.map(s => s.id === subId ? { ...s, marks: Number(gs.marks), feedback: gs.feedback, status: s.status === 'late' ? 'late' : 'graded' } : s))
     } catch (err) {
-      setGradeState((prev) => ({
-        ...prev,
-        [subId]: { ...prev[subId], saving: false, error: err.message || 'Failed to save' },
-      }))
+      setGradeState(prev => ({ ...prev, [subId]: { ...prev[subId], saving: false, error: err.message || 'Failed to save' } }))
     }
   }
 
-  const styles = {
-    page: { padding: '32px 40px', maxWidth: 1050, margin: '0 auto' },
-    backBtn: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 4,
-      background: 'none',
-      border: 'none',
-      cursor: 'pointer',
-      marginBottom: 24,
-      padding: '4px 0',
-      ...pjs('14px', 500, '20px', '#6B7280'),
-    },
-    headerCard: {
-      background: '#fff',
-      border: '1px solid #E5E7EB',
-      borderRadius: 16,
-      padding: '26px 32px',
-      marginBottom: 28,
-      display: 'flex',
-      alignItems: 'flex-start',
-      gap: 20,
-    },
-    headerIcon: {
-      width: 50,
-      height: 50,
-      borderRadius: 14,
-      background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexShrink: 0,
-    },
-    assignTitle: { ...pjs('21px', 700, '30px', '#111827'), marginBottom: 8 },
-    statsRow: { display: 'flex', gap: 24, flexWrap: 'wrap' },
-    statChip: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 6,
-      background: '#F3F4F6',
-      borderRadius: 8,
-      padding: '5px 12px',
-      ...pjs('12px', 600, '16px', '#374151'),
-    },
-    sectionTitle: { ...pjs('16px', 700, '22px', '#111827'), marginBottom: 18 },
-    subCard: {
-      background: '#fff',
-      border: '1px solid #E5E7EB',
-      borderRadius: 14,
-      padding: '20px 24px',
-      marginBottom: 14,
-    },
-    subTopRow: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      flexWrap: 'wrap',
-      gap: 12,
-      marginBottom: 16,
-    },
-    studentName: { ...pjs('15px', 700, '22px', '#111827'), marginBottom: 4 },
-    subMeta: { display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' },
-    submittedAt: { ...pjs('12px', 400, '16px', '#6B7280') },
-    lateBadge: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 4,
-      background: '#FEE2E2',
-      borderRadius: 6,
-      padding: '3px 8px',
-      ...pjs('11px', 600, '14px', '#DC2626'),
-    },
-    gradedBadge: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 4,
-      background: '#D1FAE5',
-      borderRadius: 6,
-      padding: '3px 8px',
-      ...pjs('11px', 600, '14px', '#059669'),
-    },
-    currentGrade: { ...pjs('12px', 500, '16px', '#6366F1') },
-    gradeForm: {
-      display: 'flex',
-      gap: 12,
-      alignItems: 'flex-end',
-      flexWrap: 'wrap',
-      paddingTop: 14,
-      borderTop: '1px solid #F3F4F6',
-    },
-    gradeGroup: { display: 'flex', flexDirection: 'column', gap: 5 },
-    label: { ...pjs('11px', 600, '14px', '#6B7280'), textTransform: 'uppercase', letterSpacing: '0.05em' },
-    marksInput: {
-      width: 90,
-      padding: '8px 10px',
-      borderRadius: 8,
-      border: '1.5px solid #D1D5DB',
-      ...pjs('13px', 600, '18px', '#111827'),
-      outline: 'none',
-      textAlign: 'center',
-    },
-    feedbackInput: {
-      width: 280,
-      padding: '8px 12px',
-      borderRadius: 8,
-      border: '1.5px solid #D1D5DB',
-      ...pjs('13px', 400, '18px', '#374151'),
-      outline: 'none',
-    },
-    saveBtn: (saving, saved) => ({
-      padding: '8px 20px',
-      borderRadius: 9,
-      border: 'none',
-      cursor: saving ? 'not-allowed' : 'pointer',
-      background: saved ? '#D1FAE5' : saving ? '#E0E7FF' : '#6366F1',
-      ...pjs('13px', 600, '18px', saved ? '#059669' : saving ? '#6366F1' : '#fff'),
-      transition: 'all 0.2s',
-      alignSelf: 'flex-end',
-    }),
-    errorText: { ...pjs('12px', 500, '16px', '#EF4444'), alignSelf: 'center' },
-    emptyState: {
-      textAlign: 'center',
-      padding: '56px 24px',
-      ...pjs('14px', 400, '20px', '#9CA3AF'),
-    },
-  }
-
-  const studentName = (sub) => {
-    if (sub.users) {
-      return sub.users.name || sub.users.full_name || sub.users.email || 'Student'
-    }
-    return sub.student_name || sub.student_id || 'Student'
-  }
+  const studentName = sub => sub.users ? (sub.users.name || sub.users.full_name || sub.users.email || 'Student') : (sub.student_name || sub.student_id || 'Student')
 
   return (
     <PageLayout>
-      <div style={styles.page}>
-        <button
-          style={styles.backBtn}
-          onClick={() =>
-            assignment?.course_id
-              ? navigate(`/faculty/lms/courses/${assignment.course_id}`)
-              : navigate('/faculty/lms')
-          }
-        >
-          <ChevronLeft size={16} />
-          Back to Course
-        </button>
+      <button onClick={() => assignment?.course_id ? navigate(`/faculty/lms/courses/${assignment.course_id}`) : navigate('/faculty/lms')}
+        className="inline-flex items-center gap-1 bg-transparent border-0 cursor-pointer mb-6 p-1 text-[14px] font-medium text-slate-500">
+        <ChevronLeft size={16} /> Back to Course
+      </button>
 
-        {loading ? (
-          <div style={styles.emptyState}>Loading assignment...</div>
-        ) : error ? (
-          <div style={{ ...styles.emptyState, color: '#EF4444' }}>{error}</div>
-        ) : (
-          <>
-            {/* Assignment Header */}
-            <div style={styles.headerCard}>
-              <div style={styles.headerIcon}>
-                <ClipboardList size={24} color="#fff" />
-              </div>
-              <div>
-                <div style={styles.assignTitle}>{assignment?.title || 'Assignment'}</div>
-                <div style={styles.statsRow}>
-                  {assignment?.max_marks !== undefined && (
-                    <span style={styles.statChip}>
-                      Max Marks: {assignment.max_marks}
-                    </span>
-                  )}
-                  {assignment?.due_date && (
-                    <span style={styles.statChip}>
-                      <Clock size={13} />
-                      Due:{' '}
-                      {new Date(assignment.due_date).toLocaleDateString('en-IN', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  )}
-                  <span style={styles.statChip}>
-                    <User size={13} />
-                    {submissions.length} Submission{submissions.length !== 1 ? 's' : ''}
+      {loading ? (
+        <div className="text-center py-[56px] text-[14px] t-muted">Loading assignment...</div>
+      ) : error ? (
+        <div className="text-center py-[56px] text-[14px] text-red-500">{error}</div>
+      ) : (
+        <>
+          <div className="bg-white border border-slate-200 rounded-[16px] px-8 py-[26px] mb-7 flex items-start gap-5">
+            <div className="w-[50px] h-[50px] rounded-[14px] flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}>
+              <ClipboardList size={24} color="#fff" />
+            </div>
+            <div>
+              <div className="text-[21px] font-bold t-primary mb-2">{assignment?.title || 'Assignment'}</div>
+              <div className="flex gap-6 flex-wrap">
+                {assignment?.max_marks !== undefined && (
+                  <span className="inline-flex items-center gap-1.5 bg-slate-100 rounded-[8px] px-3 py-[5px] text-[12px] font-semibold text-slate-700">Max Marks: {assignment.max_marks}</span>
+                )}
+                {assignment?.due_date && (
+                  <span className="inline-flex items-center gap-1.5 bg-slate-100 rounded-[8px] px-3 py-[5px] text-[12px] font-semibold text-slate-700">
+                    <Clock size={13} /> Due: {new Date(assignment.due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </span>
-                </div>
+                )}
+                <span className="inline-flex items-center gap-1.5 bg-slate-100 rounded-[8px] px-3 py-[5px] text-[12px] font-semibold text-slate-700">
+                  <User size={13} /> {submissions.length} Submission{submissions.length !== 1 ? 's' : ''}
+                </span>
               </div>
             </div>
+          </div>
 
-            {/* Submissions */}
-            <div style={styles.sectionTitle}>Submissions</div>
+          <div className="text-[16px] font-bold t-primary mb-[18px]">Submissions</div>
 
-            {submissions.length === 0 ? (
-              <div style={styles.emptyState}>No submissions yet.</div>
-            ) : (
-              submissions.map((sub) => {
-                const gs = gradeState[sub.id] || { marks: '', feedback: '', saving: false, saved: false, error: null }
-                const isGraded = sub.marks !== undefined && sub.marks !== null
-                return (
-                  <div key={sub.id} style={styles.subCard}>
-                    <div style={styles.subTopRow}>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                          <div
-                            style={{
-                              width: 32,
-                              height: 32,
-                              borderRadius: '50%',
-                              background: '#EEF2FF',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              flexShrink: 0,
-                            }}
-                          >
-                            <User size={16} color="#6366F1" />
-                          </div>
-                          <div style={styles.studentName}>{studentName(sub)}</div>
-                        </div>
-                        <div style={styles.subMeta}>
-                          {sub.submitted_at && (
-                            <span style={styles.submittedAt}>
-                              Submitted:{' '}
-                              {new Date(sub.submitted_at).toLocaleDateString('en-IN', {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </span>
-                          )}
-                          {sub.status === 'late' && (
-                            <span style={styles.lateBadge}>
-                              <AlertCircle size={10} />
-                              Late
-                            </span>
-                          )}
-                          {isGraded && (
-                            <span style={styles.gradedBadge}>
-                              <CheckCircle size={10} />
-                              Graded
-                            </span>
-                          )}
-                        </div>
+          {submissions.length === 0 ? (
+            <div className="text-center py-[56px] text-[14px] t-muted">No submissions yet.</div>
+          ) : submissions.map(sub => {
+            const gs = gradeState[sub.id] || { marks: '', feedback: '', saving: false, saved: false, error: null }
+            const isGraded = sub.marks !== undefined && sub.marks !== null
+            return (
+              <div key={sub.id} className="bg-white border border-slate-200 rounded-[14px] px-6 py-5 mb-3.5">
+                <div className="flex justify-between items-start flex-wrap gap-3 mb-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
+                        <User size={16} color="#6366f1" />
                       </div>
+                      <div className="text-[15px] font-bold t-primary">{studentName(sub)}</div>
+                    </div>
+                    <div className="flex gap-3 flex-wrap items-center">
+                      {sub.submitted_at && (
+                        <span className="text-[12px] t-muted">
+                          Submitted: {new Date(sub.submitted_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      )}
+                      {sub.status === 'late' && (
+                        <span className="inline-flex items-center gap-1 bg-red-100 rounded-[6px] px-2 py-[3px] text-[11px] font-semibold text-red-600">
+                          <AlertCircle size={10} /> Late
+                        </span>
+                      )}
                       {isGraded && (
-                        <div style={styles.currentGrade}>
-                          {sub.marks}/{assignment?.max_marks ?? '?'} marks
-                          {sub.feedback && (
-                            <div style={{ ...pjs('11px', 400, '15px', '#6B7280'), marginTop: 2 }}>
-                              {sub.feedback}
-                            </div>
-                          )}
-                        </div>
+                        <span className="inline-flex items-center gap-1 bg-green-100 rounded-[6px] px-2 py-[3px] text-[11px] font-semibold text-emerald-700">
+                          <CheckCircle size={10} /> Graded
+                        </span>
                       )}
                     </div>
-
-                    {/* Inline grade form */}
-                    <div style={styles.gradeForm}>
-                      <div style={styles.gradeGroup}>
-                        <label style={styles.label}>Marks</label>
-                        <input
-                          style={styles.marksInput}
-                          type="number"
-                          min={0}
-                          max={assignment?.max_marks ?? undefined}
-                          value={gs.marks}
-                          onChange={(e) => updateGradeField(sub.id, 'marks', e.target.value)}
-                          placeholder="0"
-                        />
-                      </div>
-                      <div style={styles.gradeGroup}>
-                        <label style={styles.label}>Feedback</label>
-                        <input
-                          style={styles.feedbackInput}
-                          type="text"
-                          value={gs.feedback}
-                          onChange={(e) => updateGradeField(sub.id, 'feedback', e.target.value)}
-                          placeholder="Optional feedback for student..."
-                        />
-                      </div>
-                      <button
-                        style={styles.saveBtn(gs.saving, gs.saved)}
-                        onClick={() => handleSaveGrade(sub.id)}
-                        disabled={gs.saving || gs.marks === ''}
-                      >
-                        {gs.saving ? 'Saving...' : gs.saved ? 'Saved!' : 'Save'}
-                      </button>
-                      {gs.error && <span style={styles.errorText}>{gs.error}</span>}
-                    </div>
                   </div>
-                )
-              })
-            )}
-          </>
-        )}
-      </div>
+                  {isGraded && (
+                    <div className="text-[12px] font-medium text-brand">
+                      {sub.marks}/{assignment?.max_marks ?? '?'} marks
+                      {sub.feedback && <div className="text-[11px] t-muted mt-0.5">{sub.feedback}</div>}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-3 items-end flex-wrap pt-3.5 border-t border-slate-100">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.05em]">Marks</label>
+                    <input type="number" min={0} max={assignment?.max_marks ?? undefined}
+                      className="w-[90px] px-[10px] py-2 rounded-[8px] border-[1.5px] border-slate-200 text-[13px] font-semibold t-primary outline-none text-center focus:border-brand transition-colors"
+                      value={gs.marks} onChange={e => updateGradeField(sub.id, 'marks', e.target.value)} placeholder="0" />
+                  </div>
+                  <div className="flex flex-col gap-1.5 flex-1">
+                    <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.05em]">Feedback</label>
+                    <input type="text"
+                      className="w-full px-3 py-2 rounded-[8px] border-[1.5px] border-slate-200 text-[13px] t-primary outline-none focus:border-brand transition-colors"
+                      value={gs.feedback} onChange={e => updateGradeField(sub.id, 'feedback', e.target.value)} placeholder="Optional feedback for student..." />
+                  </div>
+                  <button onClick={() => handleSaveGrade(sub.id)} disabled={gs.saving || gs.marks === ''}
+                    className={`self-end px-5 py-2 rounded-[9px] border-0 cursor-pointer text-[13px] font-semibold transition-all ${gs.saved ? 'bg-green-100 text-emerald-700' : gs.saving ? 'bg-indigo-100 text-brand cursor-not-allowed' : 'bg-brand text-white'}`}>
+                    {gs.saving ? 'Saving...' : gs.saved ? 'Saved!' : 'Save'}
+                  </button>
+                  {gs.error && <span className="text-[12px] font-medium text-red-500 self-center">{gs.error}</span>}
+                </div>
+              </div>
+            )
+          })}
+        </>
+      )}
     </PageLayout>
   )
 }

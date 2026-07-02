@@ -13,34 +13,29 @@ const SLOT_OPTIONS = [
 
 const EMPTY_SLOT = { day: 'Monday', slot: '10:00 - 11:00', mode: 'in-person', room_or_link: '' }
 
-const modeStyle = {
-  'in-person': { bg: '#ecfdf5', color: '#059669', border: '#a7f3d0', icon: <MapPin size={13} /> },
-  'online':    { bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe', icon: <Monitor size={13} /> },
+const MODE_CLS = {
+  'in-person': { badge: 'bg-emerald-50 text-emerald-600 border border-emerald-200', icon: <MapPin size={13} /> },
+  'online':    { badge: 'bg-blue-50 text-blue-600 border border-blue-100',           icon: <Monitor size={13} /> },
 }
+
+const fieldCls = 'w-full px-[14px] py-[10px] rounded-[10px] border-[1.5px] border-slate-200 text-[14px] outline-none box-border bg-white focus:border-brand transition-colors'
 
 function Toast({ msg, type }) {
   if (!msg) return null
   return (
-    <div style={{
-      position: 'fixed', bottom: 32, right: 32, zIndex: 9999,
-      padding: '14px 22px', borderRadius: 14,
-      background: type === 'success' ? '#16a34a' : '#ef4444',
-      color: '#fff', boxShadow: '0 8px 32px rgba(0,0,0,.18)',
-      fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 600,
-      display: 'flex', alignItems: 'center', gap: 8,
-    }}>
+    <div className={`fixed bottom-8 right-8 z-[9999] px-[22px] py-3.5 rounded-[14px] text-white shadow-[0_8px_32px_rgba(0,0,0,0.18)] text-[14px] font-semibold flex items-center gap-2 ${type === 'success' ? 'bg-green-600' : 'bg-red-500'}`}>
       {type === 'success' ? <CheckCircle size={16} /> : '✕'} {msg}
     </div>
   )
 }
 
 export default function OfficeHours() {
-  const [slots, setSlots]         = useState([])
-  const [loading, setLoading]     = useState(true)
-  const [saving, setSaving]       = useState(false)
-  const [toast, setToast]         = useState({ msg: '', type: 'success' })
-  const [addForm, setAddForm]     = useState(EMPTY_SLOT)
-  const [showAdd, setShowAdd]     = useState(false)
+  const [slots, setSlots]     = useState([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving]   = useState(false)
+  const [toast, setToast]     = useState({ msg: '', type: 'success' })
+  const [addForm, setAddForm] = useState(EMPTY_SLOT)
+  const [showAdd, setShowAdd] = useState(false)
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type })
@@ -53,7 +48,7 @@ export default function OfficeHours() {
       if (res.success && res.data) {
         setSlots(res.data.office_hours || [])
       }
-    } catch { /* silent */ }
+    } catch { }
     finally { setLoading(false) }
   }, [])
 
@@ -86,7 +81,6 @@ export default function OfficeHours() {
     saveAll(next)
   }
 
-  // Group by day for display
   const grouped = DAYS.reduce((acc, day) => {
     acc[day] = slots.filter(s => s.day === day)
     return acc
@@ -98,80 +92,75 @@ export default function OfficeHours() {
     <PageLayout>
       <Toast msg={toast.msg} type={toast.type} />
 
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ width: 44, height: 44, borderRadius: 14, background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="flex justify-between items-start">
+        <div className="flex items-center gap-4">
+          <div className="w-11 h-11 rounded-[14px] bg-emerald-50 flex items-center justify-center">
             <Clock size={22} color="#059669" />
           </div>
           <div>
-            <h1 style={{ fontSize: 26, fontWeight: 700, color: '#0f172a', margin: 0 }}>Office Hours</h1>
-            <p style={{ fontSize: 14, color: '#64748b', margin: 0 }}>
+            <h1 className="text-[26px] font-bold t-primary m-0">Office Hours</h1>
+            <p className="text-[14px] t-muted m-0">
               Set when students can reach you — {totalSlots} slot{totalSlots !== 1 ? 's' : ''} active
             </p>
           </div>
         </div>
         <button
           onClick={() => setShowAdd(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 12, background: '#4f46e5', color: '#fff', border: 'none', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-[12px] bg-brand text-white border-0 text-[14px] font-bold cursor-pointer"
         >
           <Plus size={16} /> Add Slot
         </button>
       </div>
 
-      {/* Info banner */}
-      <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 14, padding: '14px 20px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-        <Monitor size={16} color="#2563eb" style={{ marginTop: 2, flexShrink: 0 }} />
-        <p style={{ margin: 0, fontSize: 13, color: '#1e40af', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      <div className="bg-blue-50 border border-blue-200 rounded-[14px] px-5 py-3.5 flex gap-2.5 items-start">
+        <Monitor size={16} color="#2563eb" className="mt-0.5 shrink-0" />
+        <p className="m-0 text-[13px] text-blue-800">
           These slots are visible to students on your professor profile page. Students will see your availability and can send you a meeting request.
         </p>
       </div>
 
-      {/* Loading */}
       {loading ? (
-        <div style={{ padding: 60, textAlign: 'center', color: '#94a3b8', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14 }}>
+        <div className="py-[60px] text-center t-muted text-[14px]">
           Loading your schedule...
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
+        <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
           {DAYS.map(day => (
-            <div key={day} style={{ background: '#fff', borderRadius: 20, padding: 20, border: '1px solid #f1f5f9', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 800, color: '#0f172a' }}>{day}</span>
+            <div key={day} className="bg-white rounded-[20px] p-5 border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
+              <div className="flex justify-between items-center mb-3.5">
+                <span className="text-[14px] font-extrabold t-primary">{day}</span>
                 {grouped[day].length > 0 && (
-                  <span style={{ background: '#eef2ff', color: '#4f46e5', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6 }}>
+                  <span className="bg-indigo-50 text-brand text-[11px] font-bold px-2 py-[2px] rounded-[6px]">
                     {grouped[day].length} slot{grouped[day].length > 1 ? 's' : ''}
                   </span>
                 )}
               </div>
 
               {grouped[day].length === 0 ? (
-                <div style={{ padding: '16px 0', textAlign: 'center', color: '#cbd5e1', fontFamily: "'Inter', sans-serif", fontSize: 13 }}>
+                <div className="py-4 text-center text-[13px] text-slate-300">
                   No availability set
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div className="flex flex-col gap-2.5">
                   {grouped[day].map((s, i) => {
                     const globalIdx = slots.findIndex(x => x === s)
-                    const ms = modeStyle[s.mode] || modeStyle['in-person']
+                    const ms = MODE_CLS[s.mode] || MODE_CLS['in-person']
                     return (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: '#f8fafc', borderRadius: 12, border: '1px solid #f1f5f9' }}>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{s.slot}</div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: ms.bg, color: ms.color, border: `1px solid ${ms.border}`, padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>
+                      <div key={i} className="flex items-center gap-2.5 px-3 py-2.5 bg-slate-50 rounded-[12px] border border-slate-100">
+                        <div className="flex-1">
+                          <div className="text-[13px] font-bold t-primary">{s.slot}</div>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span className={`inline-flex items-center gap-1 px-2 py-[2px] rounded-[6px] text-[11px] font-bold ${ms.badge}`}>
                               {ms.icon} {s.mode}
                             </span>
-                            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 120 }}>
+                            <span className="text-[11px] text-slate-500 overflow-hidden text-ellipsis whitespace-nowrap max-w-[120px]">
                               {s.room_or_link}
                             </span>
                           </div>
                         </div>
                         <button
                           onClick={() => handleDelete(globalIdx)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#fca5a5', padding: 4, borderRadius: 8, display: 'flex', alignItems: 'center' }}
-                          onMouseEnter={e => e.currentTarget.style.background = '#fef2f2'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                          className="bg-transparent border-0 cursor-pointer text-red-300 p-1 rounded-[8px] flex items-center hover:bg-red-50 transition-colors"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -185,30 +174,29 @@ export default function OfficeHours() {
         </div>
       )}
 
-      {/* Add Slot Modal */}
       {showAdd && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-          <div style={{ background: '#fff', borderRadius: 24, width: '100%', maxWidth: 440, padding: 32, position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.12)' }}>
-            <button onClick={() => setShowAdd(false)} style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#94a3b8' }}>×</button>
+        <div className="fixed inset-0 bg-slate-900/55 backdrop-blur-[4px] flex items-center justify-center z-[1000] p-5">
+          <div className="bg-white rounded-[24px] w-full max-w-[440px] p-8 relative shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
+            <button onClick={() => setShowAdd(false)} className="absolute top-5 right-5 bg-transparent border-0 cursor-pointer text-[22px] text-slate-400">×</button>
 
-            <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 20, fontWeight: 700, color: '#0f172a', margin: '0 0 24px' }}>Add Office Hour Slot</h2>
+            <h2 className="text-[20px] font-bold t-primary m-0 mb-6">Add Office Hour Slot</h2>
 
-            <form onSubmit={handleAdd} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <form onSubmit={handleAdd} className="flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6, display: 'block' }}>DAY</label>
+                  <label className="text-[12px] font-bold text-slate-600 mb-1.5 block">DAY</label>
                   <select
                     value={addForm.day} onChange={e => setAddForm(f => ({ ...f, day: e.target.value }))}
-                    style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', background: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                    className={fieldCls}
                   >
                     {DAYS.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6, display: 'block' }}>TIME SLOT</label>
+                  <label className="text-[12px] font-bold text-slate-600 mb-1.5 block">TIME SLOT</label>
                   <select
                     value={addForm.slot} onChange={e => setAddForm(f => ({ ...f, slot: e.target.value }))}
-                    style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', background: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                    className={fieldCls}
                   >
                     {SLOT_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
@@ -216,19 +204,13 @@ export default function OfficeHours() {
               </div>
 
               <div>
-                <label style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 8, display: 'block' }}>MODE</label>
-                <div style={{ display: 'flex', gap: 10 }}>
+                <label className="text-[12px] font-bold text-slate-600 mb-2 block">MODE</label>
+                <div className="flex gap-2.5">
                   {['in-person', 'online'].map(m => (
                     <button
                       key={m} type="button"
                       onClick={() => setAddForm(f => ({ ...f, mode: m }))}
-                      style={{
-                        flex: 1, padding: '10px', borderRadius: 10, cursor: 'pointer', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, fontWeight: 700,
-                        border: addForm.mode === m ? '2px solid #4f46e5' : '1.5px solid #e2e8f0',
-                        background: addForm.mode === m ? '#eef2ff' : '#fff',
-                        color: addForm.mode === m ? '#4f46e5' : '#64748b',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                      }}
+                      className={`flex-1 py-2.5 rounded-[10px] cursor-pointer text-[13px] font-bold flex items-center justify-center gap-1.5 transition-colors ${addForm.mode === m ? 'border-2 border-brand bg-indigo-50 text-brand' : 'border-[1.5px] border-slate-200 bg-white text-slate-500'}`}
                     >
                       {m === 'in-person' ? <MapPin size={14} /> : <Monitor size={14} />}
                       {m === 'in-person' ? 'In-Person' : 'Online'}
@@ -238,7 +220,7 @@ export default function OfficeHours() {
               </div>
 
               <div>
-                <label style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6, display: 'block' }}>
+                <label className="text-[12px] font-bold text-slate-600 mb-1.5 block">
                   {addForm.mode === 'online' ? 'MEETING LINK' : 'ROOM / CABIN'}
                 </label>
                 <input
@@ -246,15 +228,13 @@ export default function OfficeHours() {
                   value={addForm.room_or_link}
                   onChange={e => setAddForm(f => ({ ...f, room_or_link: e.target.value }))}
                   placeholder={addForm.mode === 'online' ? 'e.g. meet.google.com/abc-xyz' : 'e.g. Room 302, Block C'}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-                  onFocus={e => e.target.style.borderColor = '#4f46e5'}
-                  onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                  className={fieldCls}
                 />
               </div>
 
               <button
                 type="submit" disabled={saving}
-                style={{ marginTop: 4, padding: '12px', borderRadius: 12, background: '#4f46e5', color: '#fff', border: 'none', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 15, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: saving ? 0.7 : 1 }}
+                className={`mt-1 py-3 rounded-[12px] bg-brand text-white border-0 text-[15px] font-bold cursor-pointer flex items-center justify-center gap-2 transition-opacity ${saving ? 'opacity-70' : ''}`}
               >
                 <Save size={16} /> {saving ? 'Saving...' : 'Add Slot'}
               </button>

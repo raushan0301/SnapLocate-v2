@@ -4,22 +4,24 @@ import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
 import { ClipboardList, CheckCircle, Clock, AlertCircle } from 'lucide-react'
 
-const pjs = (size, weight, lh, color) => ({
-  fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: size, fontWeight: weight, lineHeight: lh, color,
-})
+const STATUS_CLS = {
+  graded:    { bg: 'bg-green-50',  text: 'text-green-700',  label: 'Graded',    Icon: CheckCircle },
+  submitted: { bg: 'bg-indigo-50', text: 'text-brand',      label: 'Submitted', Icon: CheckCircle },
+  overdue:   { bg: 'bg-red-50',    text: 'text-red-600',    label: 'Overdue',   Icon: AlertCircle },
+  pending:   { bg: 'bg-amber-50',  text: 'text-amber-600',  label: 'Pending',   Icon: Clock },
+}
 
-function statusInfo(a) {
-  if (a.my_submission?.status === 'graded') return { bg: '#f0fdf4', color: '#16a34a', label: 'Graded', icon: CheckCircle }
-  if (a.my_submission)                       return { bg: '#eef2ff', color: '#4f46e5', label: 'Submitted', icon: CheckCircle }
-  const overdue = new Date(a.due_date) < Date.now()
-  if (overdue)  return { bg: '#fee2e2', color: '#dc2626', label: 'Overdue', icon: AlertCircle }
-  return { bg: '#fef3c7', color: '#d97706', label: 'Pending', icon: Clock }
+function statusOf(a) {
+  if (a.my_submission?.status === 'graded') return STATUS_CLS.graded
+  if (a.my_submission)                       return STATUS_CLS.submitted
+  if (new Date(a.due_date) < Date.now())     return STATUS_CLS.overdue
+  return STATUS_CLS.pending
 }
 
 function dueLabel(d) {
   const diff = new Date(d).getTime() - Date.now()
   const days = Math.ceil(diff / 86400000)
-  if (days < 0)  return `${Math.abs(days)}d overdue`
+  if (days < 0)   return `${Math.abs(days)}d overdue`
   if (days === 0) return 'Due today'
   if (days === 1) return 'Due tomorrow'
   return `${days}d left`
@@ -47,7 +49,7 @@ export default function LMSAssignments() {
     finally { setLoading(false) }
   }, [])
 
-  useEffect(() => { load() }, [load] )
+  useEffect(() => { load() }, [load])
 
   const filtered = items.filter(a => {
     if (filter === 'pending')   return !a.my_submission && new Date(a.due_date) >= Date.now()
@@ -72,54 +74,48 @@ export default function LMSAssignments() {
 
   return (
     <PageLayout>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <div style={{ width: 44, height: 44, borderRadius: 14, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="flex items-center gap-4">
+        <div className="w-11 h-11 rounded-[14px] bg-amber-50 flex items-center justify-center">
           <ClipboardList size={22} color="#d97706" />
         </div>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: '#0f172a', margin: 0 }}>Assignments</h1>
-          <p style={{ fontSize: 14, color: '#64748b', margin: 0 }}>All assignments across your enrolled courses.</p>
+          <h1 className="text-[26px] font-bold t-primary m-0">Assignments</h1>
+          <p className="t-base t-muted m-0">All assignments across your enrolled courses.</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      <div className="flex gap-2 flex-wrap">
         {tabs.map(t => (
           <button key={t.key} onClick={() => setFilter(t.key)}
-            style={{ padding: '8px 16px', borderRadius: 10, border: '1.5px solid', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, fontWeight: 600, transition: 'all 0.15s',
-              borderColor: filter === t.key ? '#4f46e5' : '#e2e8f0',
-              background:  filter === t.key ? '#4f46e5' : '#fff',
-              color:       filter === t.key ? '#fff' : '#64748b',
-            }}>
+            className={`px-4 py-2 rounded-[10px] border-[1.5px] cursor-pointer text-[13px] font-semibold transition-all ${filter === t.key ? 'border-brand bg-brand text-white' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}`}>
             {t.label}
           </button>
         ))}
       </div>
 
-      <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', boxShadow: '0 4px 24px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
+      <div className="bg-white rounded-[20px] border border-slate-100 shadow-[0_4px_24px_rgba(0,0,0,0.03)] overflow-hidden">
         {loading ? (
-          <div style={{ padding: 60, textAlign: 'center', ...pjs(14, 500, '20px', '#94a3b8') }}>Loading assignments...</div>
+          <div className="py-16 text-center t-base font-medium text-slate-400">Loading assignments...</div>
         ) : filtered.length === 0 ? (
-          <div style={{ padding: '60px 24px', textAlign: 'center' }}>
-            <CheckCircle size={40} color="#e2e8f0" style={{ margin: '0 auto 12px', display: 'block' }} />
-            <div style={pjs(15, 600, '20px', '#0f172a')}>No assignments here</div>
+          <div className="py-16 px-6 text-center">
+            <CheckCircle size={40} className="text-slate-200 mx-auto mb-3 block" />
+            <div className="text-[15px] font-semibold leading-5 t-primary">No assignments here</div>
           </div>
         ) : filtered.map((a, i) => {
-          const s = statusInfo(a)
-          const Icon = s.icon
+          const s = statusOf(a)
+          const Icon = s.Icon
           return (
-            <Link key={i} to={`/lms/assignments/${a.id}`} style={{ textDecoration: 'none' }}>
-              <div style={{ padding: '16px 24px', borderBottom: '1px solid #f8fafc', display: 'flex', alignItems: 'center', gap: 16 }}
-                onMouseEnter={e => e.currentTarget.style.background = '#fafafa'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                <div style={{ width: 40, height: 40, borderRadius: 12, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Icon size={18} color={s.color} />
+            <Link key={i} to={`/lms/assignments/${a.id}`} className="no-underline">
+              <div className="px-6 py-4 border-b border-slate-50 flex items-center gap-4 hover:bg-slate-50 transition-colors">
+                <div className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center shrink-0`}>
+                  <Icon size={18} className={s.text} />
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={pjs(14, 700, '18px', '#0f172a')}>{a.title}</div>
-                  <div style={pjs(12, 400, '16px', '#94a3b8')}>{a.max_marks} marks · {dueLabel(a.due_date)}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[14px] font-bold leading-[18px] t-primary">{a.title}</div>
+                  <div className="text-[12px] font-normal leading-4 text-slate-400">{a.max_marks} marks · {dueLabel(a.due_date)}</div>
                 </div>
-                <span style={{ ...pjs(11, 700, '14px', s.color), background: s.bg, padding: '4px 10px', borderRadius: 8, flexShrink: 0 }}>
+                <span className={`text-[11px] font-bold leading-[14px] ${s.text} ${s.bg} px-2.5 py-1 rounded-lg shrink-0`}>
                   {a.my_submission?.status === 'graded' ? `${a.my_submission.marks}/${a.max_marks}` : s.label}
                 </span>
               </div>

@@ -2,9 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
-const pjs   = (size, weight, color) => ({ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: size, fontWeight: weight, color, margin: 0 })
-const inter = (size, weight, color) => ({ fontFamily: "'Inter', sans-serif", fontSize: size, fontWeight: weight, color, margin: 0 })
-
 const OTP_LENGTH = 6
 
 export default function VerifyOTP() {
@@ -12,7 +9,6 @@ export default function VerifyOTP() {
   const location  = useLocation()
   const { verifyOtp, resendOtp } = useAuth()
 
-  // email passed via navigate state or fallback
   const email   = location.state?.email   || ''
   const dev_otp = location.state?.dev_otp || ''
 
@@ -26,26 +22,22 @@ export default function VerifyOTP() {
   const [resending, setResending] = useState(false)
   const inputRefs = useRef([])
 
-  // Countdown timer for resend
   useEffect(() => {
     if (resendTimer <= 0) return
     const id = setInterval(() => setResendTimer(t => t - 1), 1000)
     return () => clearInterval(id)
   }, [resendTimer])
 
-  // Redirect if no email passed
   useEffect(() => {
     if (!email) navigate('/register', { replace: true })
   }, [email, navigate])
 
   const handleChange = (i, val) => {
-    // Only accept digits
     if (!/^\d*$/.test(val)) return
     const next = [...otp]
     next[i] = val.slice(-1)
     setOtp(next)
     setError('')
-    // Auto-focus next
     if (val && i < OTP_LENGTH - 1) inputRefs.current[i + 1]?.focus()
   }
 
@@ -99,57 +91,52 @@ export default function VerifyOTP() {
     }
   }
 
+  const isComplete = otp.join('').length === OTP_LENGTH
+
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
+    <div className="min-h-[100dvh] flex items-center justify-center bg-slate-50 font-inter p-6">
+      <div className="w-full max-w-[420px] bg-white border border-slate-100 rounded-3xl px-9 py-10 shadow-[0_4px_24px_rgba(0,0,0,0.07)]">
+
         {/* Icon */}
-        <div style={styles.iconWrap}>
-          <span style={{ fontSize: 32 }}>📧</span>
+        <div className="w-16 h-16 rounded-full bg-brand-light flex items-center justify-center mx-auto mb-5">
+          <span className="text-[32px]">📧</span>
         </div>
 
-        <h2 style={{ ...pjs(26, 700, '#0f172a'), textAlign: 'center', marginBottom: 8 }}>
+        <h2 className="font-jakarta text-[26px] font-bold text-slate-900 text-center m-0 mb-2">
           Check your email
         </h2>
-        <p style={{ ...inter(14, 400, '#64748b'), textAlign: 'center', lineHeight: '21px', marginBottom: dev_otp ? 12 : 28 }}>
+        <p className="text-[14px] text-slate-500 text-center leading-[21px] m-0 mb-7">
           We sent a 6-digit code to<br />
-          <strong style={{ color: '#0f172a' }}>{email}</strong>
+          <strong className="text-slate-900">{email}</strong>
         </p>
 
-        {/* Dev mode banner — auto-filled OTP */}
+        {/* Dev mode banner */}
         {dev_otp && (
-          <div style={{
-            background: '#fefce8', border: '1px solid #fde047', borderRadius: 10,
-            padding: '10px 14px', marginBottom: 20,
-            display: 'flex', alignItems: 'center', gap: 8,
-          }}>
+          <div className="bg-yellow-50 border border-yellow-300 rounded-[10px] px-3.5 py-2.5 mb-5 flex items-center gap-2">
             <span>🔑</span>
             <div>
-              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 12, fontWeight: 700, color: '#854d0e' }}>
-                Dev Mode — OTP Auto-filled
-              </div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#713f12', marginTop: 2 }}>
-                Code: <strong>{dev_otp}</strong> · Just click Verify Email ✓
-              </div>
+              <div className="font-jakarta text-[12px] font-bold text-amber-800">Dev Mode — OTP Auto-filled</div>
+              <div className="font-inter text-[13px] text-amber-900 mt-0.5">Code: <strong>{dev_otp}</strong> · Just click Verify Email ✓</div>
             </div>
           </div>
         )}
 
         {/* Alerts */}
         {error && (
-          <div style={styles.alert('error')}>
+          <div className="flex items-center gap-2 bg-red-50 border border-red-300 rounded-[10px] px-3.5 py-2.5 mb-4">
             <span>⚠️</span>
-            <span style={inter(13, 500, '#991b1b')}>{error}</span>
+            <span className="font-inter text-[13px] font-medium text-red-800">{error}</span>
           </div>
         )}
         {success && (
-          <div style={styles.alert('success')}>
+          <div className="flex items-center gap-2 bg-green-50 border border-green-300 rounded-[10px] px-3.5 py-2.5 mb-4">
             <span>✅</span>
-            <span style={inter(13, 500, '#166534')}>{success}</span>
+            <span className="font-inter text-[13px] font-medium text-green-800">{success}</span>
           </div>
         )}
 
         {/* OTP boxes */}
-        <div style={styles.otpRow} onPaste={handlePaste}>
+        <div className="flex gap-2.5 justify-center mb-6" onPaste={handlePaste}>
           {otp.map((digit, i) => (
             <input
               key={i}
@@ -161,8 +148,8 @@ export default function VerifyOTP() {
               value={digit}
               onChange={e => handleChange(i, e.target.value)}
               onKeyDown={e => handleKeyDown(i, e)}
+              className="w-[52px] h-[58px] text-center text-[24px] font-bold border-2 rounded-xl outline-none transition-all duration-150 font-jakarta"
               style={{
-                ...styles.otpBox,
                 borderColor: error ? '#f87171' : digit ? '#4f46e5' : '#e2e8f0',
                 background:  digit ? '#eef2ff' : '#fff',
                 color:       digit ? '#4f46e5' : '#0f172a',
@@ -175,78 +162,31 @@ export default function VerifyOTP() {
         <button
           id="verify-otp-btn"
           onClick={handleVerify}
-          disabled={loading || otp.join('').length < OTP_LENGTH}
-          style={{
-            ...styles.btnPrimary,
-            opacity: loading || otp.join('').length < OTP_LENGTH ? 0.6 : 1,
-          }}
+          disabled={loading || !isComplete}
+          className={`w-full py-3.5 bg-brand text-white border-none rounded-xl font-jakarta text-[15px] font-bold cursor-pointer transition-opacity ${loading || !isComplete ? 'opacity-60' : 'opacity-100'}`}
         >
           {loading ? 'Verifying…' : 'Verify Email ✓'}
         </button>
 
         {/* Resend */}
-        <div style={{ textAlign: 'center', marginTop: 20 }}>
-          <span style={inter(13, 400, '#64748b')}>Didn't receive it? </span>
+        <div className="text-center mt-5">
+          <span className="font-inter text-[13px] text-slate-500">Didn't receive it? </span>
           <button
             id="resend-otp-btn"
             onClick={handleResend}
             disabled={resendTimer > 0 || resending}
-            style={{
-              background: 'none', border: 'none', cursor: resendTimer > 0 ? 'default' : 'pointer',
-              ...inter(13, 600, resendTimer > 0 ? '#94a3b8' : '#4f46e5'),
-            }}
+            className={`bg-transparent border-none font-inter text-[13px] font-semibold m-0 p-0 ${resendTimer > 0 ? 'text-slate-400 cursor-default' : 'text-brand cursor-pointer'}`}
           >
             {resendTimer > 0 ? `Resend in ${resendTimer}s` : resending ? 'Sending…' : 'Resend OTP'}
           </button>
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: 16 }}>
-          <Link to="/login" style={{ ...inter(13, 500, '#64748b'), textDecoration: 'none' }}>
+        <div className="text-center mt-4">
+          <Link to="/login" className="font-inter text-[13px] font-medium text-slate-500 no-underline">
             ← Back to login
           </Link>
         </div>
       </div>
     </div>
   )
-}
-
-const styles = {
-  page: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    minHeight: '100dvh', background: '#f8fafc',
-    fontFamily: "'Inter', sans-serif", padding: 24,
-  },
-  card: {
-    width: '100%', maxWidth: 420,
-    background: '#fff', border: '1px solid #f1f5f9',
-    borderRadius: 24, padding: '40px 36px',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.07)',
-  },
-  iconWrap: {
-    width: 64, height: 64, borderRadius: 32,
-    background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    margin: '0 auto 20px',
-  },
-  alert: (type) => ({
-    display: 'flex', alignItems: 'center', gap: 8,
-    background: type === 'error' ? '#fef2f2' : '#f0fdf4',
-    border: `1px solid ${type === 'error' ? '#fca5a5' : '#86efac'}`,
-    borderRadius: 10, padding: '10px 14px', marginBottom: 16,
-  }),
-  otpRow: {
-    display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 24,
-  },
-  otpBox: {
-    width: 52, height: 58, textAlign: 'center',
-    fontSize: 24, fontWeight: 700,
-    border: '2px solid', borderRadius: 12,
-    outline: 'none', transition: 'all 0.15s',
-    fontFamily: "'Plus Jakarta Sans', sans-serif",
-  },
-  btnPrimary: {
-    width: '100%', padding: '14px',
-    background: '#4f46e5', color: '#fff', border: 'none', borderRadius: 12,
-    fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 15, fontWeight: 700,
-    cursor: 'pointer', transition: 'opacity 0.15s',
-  },
 }

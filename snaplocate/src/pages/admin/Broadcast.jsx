@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
-import { Megaphone, Trash2, AlertTriangle, Info, Zap, Plus, X } from 'lucide-react'
+import { Megaphone, Trash2, AlertTriangle, Info, Zap, X } from 'lucide-react'
 
 const TYPE_CONFIG = {
-  info:    { label: 'Info',    bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe', icon: <Info size={16} /> },
-  warning: { label: 'Warning', bg: '#fffbeb', color: '#92400e', border: '#fde68a', icon: <AlertTriangle size={16} /> },
-  urgent:  { label: 'Urgent',  bg: '#fef2f2', color: '#991b1b', border: '#fecaca', icon: <Zap size={16} /> },
+  info:    { label: 'Info',    icon: <Info size={16} />,          chipCls: 'bg-blue-50 text-blue-700',   borderCls: 'border-blue-200',  leftBorderCls: 'border-l-blue-600',  previewCls: 'bg-blue-50 border border-blue-200 text-blue-700',   btnActiveCls: 'border-blue-600 bg-blue-50 text-blue-700' },
+  warning: { label: 'Warning', icon: <AlertTriangle size={16} />, chipCls: 'bg-amber-50 text-amber-800', borderCls: 'border-amber-200', leftBorderCls: 'border-l-amber-600', previewCls: 'bg-amber-50 border border-amber-200 text-amber-800', btnActiveCls: 'border-amber-600 bg-amber-50 text-amber-800' },
+  urgent:  { label: 'Urgent',  icon: <Zap size={16} />,          chipCls: 'bg-red-50 text-red-800',     borderCls: 'border-red-200',   leftBorderCls: 'border-l-red-600',   previewCls: 'bg-red-50 border border-red-200 text-red-800',     btnActiveCls: 'border-red-600 bg-red-50 text-red-800' },
 }
+
+const fieldCls = 'w-full px-4 py-3 rounded-[12px] border-[1.5px] border-slate-200 text-[14px] outline-none box-border bg-white focus:border-brand transition-colors'
 
 function AnnouncementForm({ onCreated }) {
   const [form, setForm] = useState({ title: '', message: '', type: 'info' })
@@ -16,100 +18,68 @@ function AnnouncementForm({ onCreated }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.title.trim() || !form.message.trim()) {
-      setError('Title and message are required.')
-      return
-    }
-    setLoading(true)
-    setError('')
+    if (!form.title.trim() || !form.message.trim()) { setError('Title and message are required.'); return }
+    setLoading(true); setError('')
     try {
       const res = await api.post('/api/announcements', form)
-      if (res.success) {
-        onCreated(res.data)
-        setForm({ title: '', message: '', type: 'info' })
-      }
-    } catch (err) {
-      setError(err.message || 'Failed to send announcement.')
-    } finally {
-      setLoading(false)
-    }
+      if (res.success) { onCreated(res.data); setForm({ title: '', message: '', type: 'info' }) }
+    } catch (err) { setError(err.message || 'Failed to send announcement.') }
+    finally { setLoading(false) }
   }
 
   const tc = TYPE_CONFIG[form.type]
 
   return (
-    <div style={{ background: '#fff', borderRadius: 20, padding: 28, border: '1px solid #f1f5f9', boxShadow: '0 4px 24px rgba(0,0,0,0.03)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-        <div style={{ width: 40, height: 40, borderRadius: 12, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="bg-white rounded-[20px] p-7 border border-slate-100 shadow-[0_4px_24px_rgba(0,0,0,0.03)]">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-[12px] bg-indigo-50 flex items-center justify-center">
           <Megaphone size={20} color="#4f46e5" />
         </div>
         <div>
-          <h2 style={{ fontSize: 18, fontWeight: 800, color: '#0f172a', margin: 0 }}>New Announcement</h2>
-          <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>Broadcast a message to all campus users</p>
+          <h2 className="text-[18px] font-extrabold t-primary m-0">New Announcement</h2>
+          <p className="text-[13px] t-muted m-0">Broadcast a message to all campus users</p>
         </div>
       </div>
 
       {error && (
-        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '10px 14px', color: '#991b1b', fontSize: 13, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="bg-red-50 border border-red-200 rounded-[10px] px-3.5 py-2.5 text-red-800 text-[13px] mb-4 flex items-center gap-2">
           <X size={14} />{error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {/* Type selector */}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
-          <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 8, display: 'block' }}>ANNOUNCEMENT TYPE</label>
-          <div style={{ display: 'flex', gap: 10 }}>
+          <label className="text-[12px] font-bold text-slate-500 uppercase tracking-[0.05em] mb-2 block">Announcement Type</label>
+          <div className="flex gap-2.5">
             {Object.entries(TYPE_CONFIG).map(([key, cfg]) => (
-              <button
-                key={key} type="button" onClick={() => setForm({ ...form, type: key })}
-                style={{
-                  flex: 1, padding: '10px 0', borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s',
-                  border: `2px solid ${form.type === key ? cfg.color : '#e2e8f0'}`,
-                  background: form.type === key ? cfg.bg : '#f8fafc',
-                  color: form.type === key ? cfg.color : '#64748b',
-                  fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
-                }}
-              >
+              <button key={key} type="button" onClick={() => setForm({ ...form, type: key })}
+                className={`flex-1 py-[10px] rounded-[12px] border-2 font-bold text-[13px] flex items-center justify-center gap-1.5 cursor-pointer transition-all ${form.type === key ? cfg.btnActiveCls : 'border-slate-200 bg-slate-50 text-slate-500'}`}>
                 {cfg.icon}{cfg.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Preview strip */}
-        <div style={{ background: tc.bg, border: `1px solid ${tc.border}`, borderRadius: 12, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 8, color: tc.color, fontSize: 13, fontWeight: 600 }}>
+        <div className={`rounded-[12px] px-4 py-2.5 flex items-center gap-2 text-[13px] font-semibold ${tc.previewCls}`}>
           {tc.icon}
           <span>This will be shown as a <strong>{tc.label}</strong> announcement to all users.</span>
         </div>
 
         <div>
-          <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6, display: 'block' }}>TITLE</label>
-          <input
-            required value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
-            placeholder="e.g. Campus WiFi Maintenance on Friday"
-            style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e2e8f0', outline: 'none', fontSize: 14, boxSizing: 'border-box' }}
-            onFocus={e => e.target.style.borderColor = '#4f46e5'}
-            onBlur={e => e.target.style.borderColor = '#e2e8f0'}
-          />
+          <label className="text-[12px] font-bold text-slate-500 uppercase tracking-[0.05em] mb-1.5 block">Title</label>
+          <input required value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
+            placeholder="e.g. Campus WiFi Maintenance on Friday" className={fieldCls} />
         </div>
 
         <div>
-          <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6, display: 'block' }}>MESSAGE</label>
-          <textarea
-            required value={form.message} onChange={e => setForm({ ...form, message: e.target.value })}
-            placeholder="Enter the full announcement text..."
-            rows={4}
-            style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e2e8f0', outline: 'none', fontSize: 14, resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }}
-            onFocus={e => e.target.style.borderColor = '#4f46e5'}
-            onBlur={e => e.target.style.borderColor = '#e2e8f0'}
-          />
+          <label className="text-[12px] font-bold text-slate-500 uppercase tracking-[0.05em] mb-1.5 block">Message</label>
+          <textarea required value={form.message} onChange={e => setForm({ ...form, message: e.target.value })}
+            placeholder="Enter the full announcement text..." rows={4}
+            className={`${fieldCls} resize-y font-[inherit]`} />
         </div>
 
-        <button
-          type="submit" disabled={loading}
-          style={{ padding: '13px', borderRadius: 12, border: 'none', background: loading ? '#c7d2fe' : '#4f46e5', color: '#fff', fontWeight: 700, fontSize: 15, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'background 0.2s' }}
-        >
+        <button type="submit" disabled={loading}
+          className={`py-[13px] rounded-[12px] border-none text-white font-bold text-[15px] flex items-center justify-center gap-2 transition-colors ${loading ? 'bg-indigo-200 cursor-not-allowed' : 'bg-brand cursor-pointer'}`}>
           {loading ? 'Publishing...' : <><Megaphone size={18} /> Publish Announcement</>}
         </button>
       </form>
@@ -131,9 +101,7 @@ export default function Broadcast() {
     } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
-  const handleCreated = (newItem) => {
-    setAnnouncements(prev => [newItem, ...prev])
-  }
+  const handleCreated = (newItem) => setAnnouncements(prev => [newItem, ...prev])
 
   const handleDelete = async (item) => {
     if (!window.confirm(`Delete "${item.title}"?`)) return
@@ -146,56 +114,51 @@ export default function Broadcast() {
   return (
     <PageLayout>
       <div>
-        <h1 style={{ fontSize: 26, fontWeight: 700, color: '#0f172a', margin: 0 }}>Broadcast & Announcements</h1>
-        <p style={{ fontSize: 14, color: '#64748b', marginTop: 4, marginBottom: 0 }}>Send campus-wide announcements visible to all students and faculty.</p>
+        <h1 className="text-[26px] font-bold t-primary m-0">Broadcast & Announcements</h1>
+        <p className="text-[14px] t-muted mt-1 mb-0">Send campus-wide announcements visible to all students and faculty.</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, alignItems: 'start' }}>
-        {/* Create form */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         <AnnouncementForm onCreated={handleCreated} />
 
-        {/* Announcements list */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', margin: 0 }}>Recent Announcements</h3>
-            <span style={{ fontSize: 13, color: '#64748b', background: '#f1f5f9', padding: '4px 12px', borderRadius: 20, fontWeight: 600 }}>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-[16px] font-bold t-primary m-0">Recent Announcements</h3>
+            <span className="text-[13px] t-muted bg-slate-100 px-3 py-1 rounded-[20px] font-semibold">
               {announcements.length} total
             </span>
           </div>
 
           {loading ? (
-            <div style={{ background: '#fff', borderRadius: 16, padding: 32, textAlign: 'center', color: '#64748b', border: '1px solid #f1f5f9' }}>Loading...</div>
+            <div className="bg-white rounded-[16px] p-8 text-center t-muted border border-slate-100">Loading...</div>
           ) : announcements.length === 0 ? (
-            <div style={{ background: '#fff', borderRadius: 16, padding: 40, textAlign: 'center', border: '1px solid #f1f5f9' }}>
-              <Megaphone size={32} color="#cbd5e1" style={{ margin: '0 auto 12px' }} />
-              <p style={{ color: '#94a3b8', margin: 0, fontWeight: 500 }}>No announcements yet.<br />Create one using the form.</p>
+            <div className="bg-white rounded-[16px] p-10 text-center border border-slate-100">
+              <Megaphone size={32} className="text-slate-300 mx-auto mb-3 block" />
+              <p className="text-slate-400 m-0 font-medium">No announcements yet.<br />Create one using the form.</p>
             </div>
           ) : announcements.map(ann => {
             const tc = TYPE_CONFIG[ann.type] || TYPE_CONFIG.info
             return (
-              <div key={ann.id} style={{ background: '#fff', borderRadius: 16, padding: 20, border: `1px solid ${tc.border}`, borderLeft: `4px solid ${tc.color}`, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                      <span style={{ background: tc.bg, color: tc.color, padding: '3px 10px', borderRadius: 50, fontSize: 10, fontWeight: 800, letterSpacing: '0.05em', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <div key={ann.id}
+                className={`bg-white rounded-[16px] p-5 border border-l-[4px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] ${tc.borderCls} ${tc.leftBorderCls}`}>
+                <div className="flex justify-between items-start gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-[3px] rounded-full text-[10px] font-extrabold tracking-[0.05em] ${tc.chipCls}`}>
                         {tc.icon}{tc.label.toUpperCase()}
                       </span>
-                      <span style={{ fontSize: 11, color: '#94a3b8' }}>
+                      <span className="text-[11px] text-slate-400">
                         {new Date(ann.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
-                    <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 14, marginBottom: 4 }}>{ann.title}</div>
-                    <div style={{ fontSize: 13, color: '#475569', lineHeight: 1.5 }}>{ann.message}</div>
+                    <div className="font-bold t-primary text-[14px] mb-1">{ann.title}</div>
+                    <div className="text-[13px] text-slate-500 leading-relaxed">{ann.message}</div>
                     {ann.author?.full_name && (
-                      <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 8 }}>By {ann.author.full_name}</div>
+                      <div className="text-[11px] text-slate-400 mt-2">By {ann.author.full_name}</div>
                     )}
                   </div>
-                  <button
-                    onClick={() => handleDelete(ann)}
-                    style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 4, flexShrink: 0, display: 'flex', alignItems: 'center' }}
-                    onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
-                    onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
-                  >
+                  <button onClick={() => handleDelete(ann)}
+                    className="text-slate-400 bg-transparent border-0 cursor-pointer p-1 shrink-0 flex items-center hover:text-red-500 transition-colors">
                     <Trash2 size={16} />
                   </button>
                 </div>

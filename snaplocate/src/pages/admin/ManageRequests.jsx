@@ -5,20 +5,27 @@ import { Search, Clock, CheckCircle2, XCircle, AlertCircle, ArrowRight, RefreshC
 
 const STATUS_FILTERS = ['all', 'pending', 'accepted', 'rejected']
 
-const statusStyle = (s) => {
-  if (s === 'pending')  return { bg: '#fffbeb', color: '#92400e', border: '#fde68a', label: 'PENDING' }
-  if (s === 'accepted') return { bg: '#ecfdf5', color: '#047857', border: '#a7f3d0', label: 'ACCEPTED' }
-  if (s === 'rejected') return { bg: '#fef2f2', color: '#991b1b', border: '#fecaca', label: 'REJECTED' }
-  return                       { bg: '#f8fafc', color: '#64748b', border: '#e2e8f0', label: s?.toUpperCase() }
+const STATUS_CLS = {
+  pending:  { cls: 'bg-amber-50 text-amber-800 border border-amber-200',   label: 'PENDING' },
+  accepted: { cls: 'bg-green-50 text-emerald-800 border border-green-200', label: 'ACCEPTED' },
+  rejected: { cls: 'bg-red-50 text-red-800 border border-red-200',         label: 'REJECTED' },
+}
+const defaultStatus = { cls: 'bg-slate-50 text-slate-600 border border-slate-200', label: '' }
+
+const TYPE_CLS = {
+  'office hour':    'bg-indigo-50 text-brand',
+  'attendance':     'bg-purple-50 text-purple-700',
+  'grade review':   'bg-orange-50 text-orange-700',
+  'extension':      'bg-green-50 text-green-700',
+  'research query': 'bg-teal-50 text-teal-700',
 }
 
-const TYPE_COLORS = {
-  'office hour':   { bg: '#eef2ff', color: '#4f46e5' },
-  'attendance':    { bg: '#fdf4ff', color: '#7e22ce' },
-  'grade review':  { bg: '#fff7ed', color: '#c2410c' },
-  'extension':     { bg: '#f0fdf4', color: '#15803d' },
-  'research query':{ bg: '#ecfdf5', color: '#0d9488' },
-}
+const STAT_ITEMS = [
+  { key: 'total',    label: 'Total Requests', icon: <ArrowRight size={20} />, iconCls: 'bg-indigo-50 text-brand' },
+  { key: 'pending',  label: 'Pending',         icon: <Clock size={20} />,        iconCls: 'bg-amber-50 text-amber-600' },
+  { key: 'accepted', label: 'Accepted',        icon: <CheckCircle2 size={20} />, iconCls: 'bg-green-50 text-emerald-600' },
+  { key: 'rejected', label: 'Rejected',        icon: <XCircle size={20} />,      iconCls: 'bg-red-50 text-red-500' },
+]
 
 export default function ManageRequests() {
   const [data, setData] = useState([])
@@ -40,13 +47,8 @@ export default function ManageRequests() {
     if (!window.confirm('Are you sure you want to delete this request?')) return
     try {
       const res = await api.delete(`/api/admin/requests/${id}`)
-      if (res.success) {
-        setData(prev => prev.filter(req => req.id !== id))
-      }
-    } catch (err) {
-      console.error(err)
-      alert('Failed to delete request')
-    }
+      if (res.success) setData(prev => prev.filter(req => req.id !== id))
+    } catch (err) { console.error(err); alert('Failed to delete request') }
   }
 
   const filtered = data.filter(d => {
@@ -62,123 +64,98 @@ export default function ManageRequests() {
 
   const stats = {
     total: data.length,
-    pending: data.filter(d => d.status === 'pending').length,
+    pending:  data.filter(d => d.status === 'pending').length,
     accepted: data.filter(d => d.status === 'accepted').length,
     rejected: data.filter(d => d.status === 'rejected').length,
   }
 
   return (
     <PageLayout>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <div className="flex justify-between items-start">
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: '#0f172a', margin: 0 }}>Requests Overview</h1>
-          <p style={{ fontSize: 14, color: '#64748b', marginTop: 4, marginBottom: 0 }}>Monitor all student-to-faculty requests across the campus. Read-only view.</p>
+          <h1 className="text-[26px] font-bold t-primary m-0">Requests Overview</h1>
+          <p className="text-[14px] t-muted mt-1 mb-0">Monitor all student-to-faculty requests across the campus. Read-only view.</p>
         </div>
-        <button onClick={fetchData} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+        <button onClick={fetchData} className="flex items-center gap-1.5 px-4 py-[9px] rounded-[10px] border-[1.5px] border-slate-200 bg-white text-slate-600 text-[13px] font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
           <RefreshCw size={14} /> Refresh
         </button>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-        {[
-          { label: 'Total Requests', value: stats.total, icon: <ArrowRight size={20} />, color: '#4f46e5', bg: '#eef2ff' },
-          { label: 'Pending', value: stats.pending, icon: <Clock size={20} />, color: '#f59e0b', bg: '#fffbeb' },
-          { label: 'Accepted', value: stats.accepted, icon: <CheckCircle2 size={20} />, color: '#10b981', bg: '#ecfdf5' },
-          { label: 'Rejected', value: stats.rejected, icon: <XCircle size={20} />, color: '#ef4444', bg: '#fef2f2' },
-        ].map((s, idx) => (
-          <div key={idx} style={{ background: '#fff', padding: '20px', borderRadius: 20, border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: s.bg, color: s.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.icon}</div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {STAT_ITEMS.map(s => (
+          <div key={s.key} className="bg-white py-5 px-5 rounded-[20px] border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex items-center gap-4">
+            <div className={`w-11 h-11 rounded-[12px] flex items-center justify-center shrink-0 ${s.iconCls}`}>{s.icon}</div>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#64748b', marginBottom: 2 }}>{s.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a' }}>{s.value}</div>
+              <div className="text-[12px] font-semibold t-muted mb-0.5">{s.label}</div>
+              <div className="text-[22px] font-extrabold t-primary">{stats[s.key]}</div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Table card */}
-      <div style={{ background: '#fff', borderRadius: 20, padding: 24, border: '1px solid #f1f5f9', boxShadow: '0 4px 24px rgba(0,0,0,0.03)' }}>
-        <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ position: 'relative', width: '300px', flexShrink: 0 }}>
-            <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-            <input
-              type="text" placeholder="Search by student, faculty, or type..." value={search}
+      <div className="bg-white rounded-[20px] p-6 border border-slate-100 shadow-[0_4px_24px_rgba(0,0,0,0.03)]">
+        <div className="flex gap-3 mb-5 flex-wrap items-center justify-between">
+          <div className="relative w-[300px] shrink-0">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input type="text" placeholder="Search by student, faculty, or type..." value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{ width: '100%', padding: '10px 16px 10px 34px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: "'Inter', sans-serif", transition: '0.2s' }}
-              onFocus={e => e.target.style.borderColor = '#4f46e5'}
-              onBlur={e => e.target.style.borderColor = '#e2e8f0'}
-            />
+              className="w-full py-[10px] pl-[34px] pr-4 rounded-[10px] border-[1.5px] border-slate-200 text-[14px] outline-none box-border focus:border-brand transition-colors" />
           </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={{
-              padding: '10px 36px 10px 16px', borderRadius: 10, border: '1.5px solid #e2e8f0',
-              fontSize: 14, fontWeight: 500, color: '#0f172a', background: '#fff',
-              outline: 'none', cursor: 'pointer', appearance: 'none', fontFamily: "'Inter', sans-serif",
-              transition: '0.2s', backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%2364748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>')`,
-              backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center',
-            }}
-            onFocus={e => e.target.style.borderColor = '#4f46e5'}
-            onBlur={e => e.target.style.borderColor = '#e2e8f0'}
-          >
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
+            className="py-[10px] pl-4 pr-9 rounded-[10px] border-[1.5px] border-slate-200 text-[14px] font-medium t-primary bg-white outline-none cursor-pointer focus:border-brand transition-colors">
             {STATUS_FILTERS.map(s => (
               <option value={s} key={s}>{s === 'all' ? 'All Status' : s.charAt(0).toUpperCase() + s.slice(1)}</option>
             ))}
           </select>
         </div>
 
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ minWidth: '100%', borderCollapse: 'collapse' }}>
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-collapse">
             <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+              <tr className="bg-slate-50 border-b border-slate-200">
                 {['Student', 'Faculty', 'Type', 'Status', 'Conversation', 'Date', ''].map((h, i) => (
-                  <th key={i} style={{ padding: '14px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>{h}</th>
+                  <th key={i} className="px-4 py-3.5 text-left text-[12px] font-semibold text-slate-500 uppercase tracking-[0.5px] whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} style={{ padding: '40px 0', textAlign: 'center', color: '#64748b' }}>Loading...</td></tr>
+                <tr><td colSpan={7} className="py-10 text-center t-muted">Loading...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={7} style={{ padding: '40px 0', textAlign: 'center', color: '#64748b' }}>No requests found.</td></tr>
+                <tr><td colSpan={7} className="py-10 text-center t-muted">No requests found.</td></tr>
               ) : filtered.map(req => {
-                const st = statusStyle(req.status)
-                const typeColor = TYPE_COLORS[req.type?.toLowerCase()] || { bg: '#f1f5f9', color: '#475569' }
+                const st = STATUS_CLS[req.status] || { ...defaultStatus, label: req.status?.toUpperCase() }
+                const typeCls = TYPE_CLS[req.type?.toLowerCase()] || 'bg-slate-100 text-slate-600'
                 return (
-                  <tr key={req.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '16px' }}>
-                      <div style={{ fontWeight: 600, color: '#0f172a', fontSize: 14 }}>{req.student?.full_name || '—'}</div>
-                      <div style={{ fontSize: 12, color: '#64748b' }}>{req.student?.email || ''}</div>
+                  <tr key={req.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-4">
+                      <div className="font-semibold t-primary text-[14px]">{req.student?.full_name || '—'}</div>
+                      <div className="text-[12px] t-muted">{req.student?.email || ''}</div>
                     </td>
-                    <td style={{ padding: '16px', fontSize: 14, color: '#334155', fontWeight: 500 }}>{req.faculty_profile?.users?.full_name || '—'}</td>
-                    <td style={{ padding: '16px' }}>
-                      <span style={{ background: typeColor.bg, color: typeColor.color, padding: '4px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700, textTransform: 'capitalize' }}>
-                        {req.type || '—'}
-                      </span>
+                    <td className="px-4 py-4 text-[14px] text-slate-700 font-medium">{req.faculty_profile?.users?.full_name || '—'}</td>
+                    <td className="px-4 py-4">
+                      <span className={`px-3 py-1 rounded-[8px] text-[11px] font-bold capitalize ${typeCls}`}>{req.type || '—'}</span>
                     </td>
-                    <td style={{ padding: '16px' }}>
-                      <span style={{ background: st.bg, color: st.color, border: `1px solid ${st.border}`, padding: '4px 12px', borderRadius: 50, fontSize: 10, fontWeight: 800, letterSpacing: '0.05em' }}>
-                        {st.label}
-                      </span>
+                    <td className="px-4 py-4">
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-extrabold tracking-[0.05em] ${st.cls}`}>{st.label}</span>
                     </td>
-                    <td style={{ padding: '16px', fontSize: 13, color: '#334155', maxWidth: 320, lineHeight: '1.5', whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                    <td className="px-4 py-4 text-[13px] text-slate-700 max-w-[320px] leading-relaxed break-words whitespace-normal">
                       {req.detail && (
-                        <div style={{ marginBottom: req.notes ? 8 : 0 }}>
-                          <span style={{ fontWeight: 600, color: '#475569' }}>Student:</span> {req.detail}
+                        <div className={req.notes ? 'mb-2' : ''}>
+                          <span className="font-semibold text-slate-600">Student:</span> {req.detail}
                         </div>
                       )}
                       {req.notes && (
-                        <div style={{ padding: '8px 12px', background: '#f1f5f9', borderRadius: 8, borderLeft: '3px solid #cbd5e1' }}>
-                          <span style={{ fontWeight: 600, color: '#475569' }}>Faculty:</span> {req.notes}
+                        <div className="px-3 py-2 bg-slate-100 rounded-[8px] border-l-[3px] border-slate-300">
+                          <span className="font-semibold text-slate-600">Faculty:</span> {req.notes}
                         </div>
                       )}
-                      {!req.detail && !req.notes && <span style={{ color: '#94a3b8' }}>—</span>}
+                      {!req.detail && !req.notes && <span className="t-muted">—</span>}
                     </td>
-                    <td style={{ padding: '16px', fontSize: 13, color: '#64748b' }}>{new Date(req.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-                    <td style={{ padding: '16px', textAlign: 'right' }}>
-                      <button onClick={() => handleDelete(req.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 8, borderRadius: 8, transition: '0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#fef2f2'} onMouseLeave={e => e.currentTarget.style.background = 'none'} title="Delete Request">
+                    <td className="px-4 py-4 text-[13px] t-muted">{new Date(req.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                    <td className="px-4 py-4 text-right">
+                      <button onClick={() => handleDelete(req.id)} title="Delete Request"
+                        className="text-slate-400 bg-transparent border-0 cursor-pointer p-2 rounded-[8px] flex items-center justify-center hover:text-red-500 hover:bg-red-50 transition-colors">
                         <Trash2 size={16} />
                       </button>
                     </td>

@@ -9,13 +9,34 @@ import {
 import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
 
-// ─── Style helper ────────────────────────────────────────────────
-const pjs = (size, weight, lh, color) => ({
-  fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: size, fontWeight: weight, lineHeight: lh, color,
-})
+const DEPT_GRADIENTS = {
+  CSE: 'linear-gradient(135deg, #1e1b4b 0%, #3730a3 50%, #4f46e5 100%)',
+  ECE: 'linear-gradient(135deg, #065f46 0%, #059669 50%, #10b981 100%)',
+  EEE: 'linear-gradient(135deg, #713f12 0%, #b45309 50%, #f59e0b 100%)',
+  ME:  'linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 50%, #3b82f6 100%)',
+  CIVIL: 'linear-gradient(135deg, #1a1a2e 0%, #374151 50%, #6b7280 100%)',
+  CHEM: 'linear-gradient(135deg, #4c0519 0%, #9f1239 50%, #e11d48 100%)',
+  BIO:  'linear-gradient(135deg, #064e3b 0%, #065f46 50%, #16a34a 100%)',
+  MATH: 'linear-gradient(135deg, #312e81 0%, #4338ca 50%, #6366f1 100%)',
+  PHY:  'linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0ea5e9 100%)',
+  MGMT: 'linear-gradient(135deg, #3b0764 0%, #6d28d9 50%, #8b5cf6 100%)',
+  DEFAULT: 'linear-gradient(135deg, #0f172a 0%, #334155 50%, #475569 100%)',
+}
+function getDeptGrad(dept = '') {
+  const u = dept.toUpperCase()
+  if (u.includes('COMPUTER'))   return DEPT_GRADIENTS.CSE
+  if (u.includes('ELECTRONICS'))return DEPT_GRADIENTS.ECE
+  if (u.includes('ELECTRICAL')) return DEPT_GRADIENTS.EEE
+  if (u.includes('MECHANICAL')) return DEPT_GRADIENTS.ME
+  if (u.includes('CIVIL'))      return DEPT_GRADIENTS.CIVIL
+  if (u.includes('CHEM'))       return DEPT_GRADIENTS.CHEM
+  if (u.includes('BIO'))        return DEPT_GRADIENTS.BIO
+  if (u.includes('MATH'))       return DEPT_GRADIENTS.MATH
+  if (u.includes('PHYSICS'))    return DEPT_GRADIENTS.PHY
+  if (u.includes('MANAGEMENT')) return DEPT_GRADIENTS.MGMT
+  return DEPT_GRADIENTS.DEFAULT
+}
 
-// ─── Clean Moodle course display name ────────────────────────────
-// "THEORY OF COMPUTATION-UCS701-2526EVESEM" → "Theory of Computation"
 function cleanDisplayName(raw = '') {
   const s = raw
     .replace(/-\d{4}(?:EVE|ODD|EVEN)SEM\s*$/i, '')
@@ -24,125 +45,11 @@ function cleanDisplayName(raw = '') {
     .trim()
   return s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
 }
-
 function cleanCode(raw = '') {
   return raw.replace(/-\d{4}(?:EVE|ODD|EVEN)SEM$/i, '').trim()
 }
 
-// ─── Dept gradient map (mirrored from LMSDashboard) ──────────────
-const DEPT_GRADIENTS = {
-  CSE: 'linear-gradient(135deg, #1e1b4b 0%, #3730a3 50%, #4f46e5 100%)',
-  ECE: 'linear-gradient(135deg, #065f46 0%, #059669 50%, #10b981 100%)',
-  EEE: 'linear-gradient(135deg, #713f12 0%, #b45309 50%, #f59e0b 100%)',
-  ME: 'linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 50%, #3b82f6 100%)',
-  CIVIL: 'linear-gradient(135deg, #1a1a2e 0%, #374151 50%, #6b7280 100%)',
-  CHEM: 'linear-gradient(135deg, #4c0519 0%, #9f1239 50%, #e11d48 100%)',
-  BIO: 'linear-gradient(135deg, #064e3b 0%, #065f46 50%, #16a34a 100%)',
-  MATH: 'linear-gradient(135deg, #312e81 0%, #4338ca 50%, #6366f1 100%)',
-  PHY: 'linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0ea5e9 100%)',
-  MGMT: 'linear-gradient(135deg, #3b0764 0%, #6d28d9 50%, #8b5cf6 100%)',
-  DEFAULT: 'linear-gradient(135deg, #0f172a 0%, #334155 50%, #475569 100%)',
-}
-function getDeptGrad(dept = '') {
-  const u = dept.toUpperCase()
-  if (u.includes('COMPUTER')) return DEPT_GRADIENTS.CSE
-  if (u.includes('ELECTRONICS')) return DEPT_GRADIENTS.ECE
-  if (u.includes('ELECTRICAL')) return DEPT_GRADIENTS.EEE
-  if (u.includes('MECHANICAL')) return DEPT_GRADIENTS.ME
-  if (u.includes('CIVIL')) return DEPT_GRADIENTS.CIVIL
-  if (u.includes('CHEM')) return DEPT_GRADIENTS.CHEM
-  if (u.includes('BIO')) return DEPT_GRADIENTS.BIO
-  if (u.includes('MATH')) return DEPT_GRADIENTS.MATH
-  if (u.includes('PHYSICS')) return DEPT_GRADIENTS.PHY
-  if (u.includes('MANAGEMENT')) return DEPT_GRADIENTS.MGMT
-  // Catch-all — always return a valid dark gradient
-  return DEPT_GRADIENTS.DEFAULT
-}
-
-// ─── Due date chip ───────────────────────────────────────────────
-function DueChip({ dueDate }) {
-  if (!dueDate) return null
-  const diff = new Date(dueDate).getTime() - Date.now()
-  const days = Math.ceil(diff / 86400000)
-  const overdue = days < 0
-  const bg = overdue ? '#fee2e2' : days === 0 ? '#fef3c7' : '#f0fdf4'
-  const color = overdue ? '#dc2626' : days === 0 ? '#d97706' : '#16a34a'
-  const label = overdue ? 'Overdue' : days === 0 ? 'Due today' : days === 1 ? 'Due tomorrow' : `${days}d left`
-  return (
-    <span style={{ background: bg, color, borderRadius: 6, padding: '3px 10px', ...pjs(11, 700, '16px', color) }}>
-      <Clock size={10} style={{ marginRight: 4, verticalAlign: 'middle' }} />{label}
-    </span>
-  )
-}
-
-// ─── Attendance badge ────────────────────────────────────────────
-function AttBadge({ status }) {
-  const map = {
-    present: { bg: '#f0fdf4', color: '#16a34a', label: 'Present' },
-    absent: { bg: '#fee2e2', color: '#dc2626', label: 'Absent' },
-    late: { bg: '#fef3c7', color: '#d97706', label: 'Late' },
-    excused: { bg: '#eff6ff', color: '#3b82f6', label: 'Excused' },
-  }
-  const s = map[status?.toLowerCase()] ?? map.absent
-  return <span style={{ ...pjs(11, 700, '16px', s.color), background: s.bg, padding: '3px 12px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.label}</span>
-}
-
-// ─── Empty state ─────────────────────────────────────────────────
-function EmptyState({ Icon, title, sub }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', gap: 12 }}>
-      <div style={{ width: 64, height: 64, borderRadius: 20, background: '#f8fafc', border: '1.5px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Icon size={28} color="#cbd5e1" />
-      </div>
-      <div style={{ ...pjs(15, 600, '22px', '#94a3b8'), textAlign: 'center' }}>{title}</div>
-      {sub && <div style={{ ...pjs(13, 400, '18px', '#cbd5e1'), textAlign: 'center', maxWidth: 280 }}>{sub}</div>}
-    </div>
-  )
-}
-
-// ─── Module icon map ─────────────────────────────────────────────
-const moduleIcon = (type) => {
-  switch (type) {
-    case 'url': return { Icon: Link2, bg: '#f0fdf4', color: '#16a34a' }
-    case 'resource': return { Icon: FileText, bg: '#fef3c7', color: '#d97706' }
-    case 'page': return { Icon: File, bg: '#eef2ff', color: '#4f46e5' }
-    case 'folder': return { Icon: FolderOpen, bg: '#fdf4ff', color: '#a855f7' }
-    case 'folder_file': return { Icon: FileText, bg: '#fff7ed', color: '#ea580c' }
-    default: return { Icon: File, bg: '#f8fafc', color: '#64748b' }
-  }
-}
-
-// ─── API base URL (same env var the api.js client uses) ──────────────────────
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001'
-
-// ─── Build the URL to open/download a material ───────────────────────────────
-// PDFs open natively in browser — direct link works fine.
-// All other files (PPTX, DOCX, ZIP…) go through the backend proxy so the
-// browser gets a proper Content-Disposition filename instead of a random UUID.
-function buildFileUrl(mat) {
-  const rawUrl = mat.file_url || mat.external_url
-  if (!rawUrl) return null
-
-  // External/URL module: open directly (no proxy needed)
-  if (mat.module_type === 'url') return rawUrl
-
-  // Not an internal Moodle file? Open directly
-  if (!rawUrl.includes('pluginfile.php')) return rawUrl
-
-  // Detect if this is a PDF by extension or MIME hint in URL
-  const title = (mat.title || '').toLowerCase()
-  const isPdf = title.endsWith('.pdf') || rawUrl.toLowerCase().includes('.pdf')
-  if (isPdf) return rawUrl  // Browser can render PDFs natively without proxy
-
-  // Route everything else through proxy to get a proper filename and handle auth
-  const fname = mat.title || 'download'
-  const snapTok = localStorage.getItem('snaplocate_token') || ''
-  const isPage = mat.module_type === 'page' || mat.module_type === 'label'
-  const inlineParam = isPage ? '&inline=1' : ''
-  return `${API_BASE}/api/lms/materials/file-proxy?url=${encodeURIComponent(rawUrl)}&filename=${encodeURIComponent(fname)}&snap_token=${encodeURIComponent(snapTok)}${inlineParam}`
-}
-
-// ─── Section accent colors ───────────────────────────────────────
+// ─── Section accent colors (data-driven, kept as objects) ────────
 const sectionColors = [
   { bg: '#eef2ff', border: '#c7d2fe', accent: '#4f46e5' },
   { bg: '#f0fdf4', border: '#bbf7d0', accent: '#16a34a' },
@@ -152,35 +59,96 @@ const sectionColors = [
   { bg: '#fffbeb', border: '#fde68a', accent: '#d97706' },
 ]
 
-// ─── Tab config ──────────────────────────────────────────────────
 const TABS = [
-  { key: 'content', label: 'Content', Icon: FolderOpen },
-  { key: 'announcements', label: 'Announcements', Icon: Megaphone },
-  { key: 'assignments', label: 'Assignments', Icon: ClipboardList },
-  { key: 'grades', label: 'Grades', Icon: BarChart2 },
-  { key: 'attendance', label: 'Attendance', Icon: CalendarCheck },
+  { key: 'content',       label: 'Content',       Icon: FolderOpen },
+  { key: 'announcements', label: 'Announcements',  Icon: Megaphone },
+  { key: 'assignments',   label: 'Assignments',    Icon: ClipboardList },
+  { key: 'grades',        label: 'Grades',         Icon: BarChart2 },
+  { key: 'attendance',    label: 'Attendance',     Icon: CalendarCheck },
 ]
+
+const moduleIcon = (type) => {
+  switch (type) {
+    case 'url':         return { Icon: Link2,    bg: '#f0fdf4', color: '#16a34a' }
+    case 'resource':    return { Icon: FileText, bg: '#fef3c7', color: '#d97706' }
+    case 'page':        return { Icon: File,     bg: '#eef2ff', color: '#4f46e5' }
+    case 'folder':      return { Icon: FolderOpen, bg: '#fdf4ff', color: '#a855f7' }
+    case 'folder_file': return { Icon: FileText, bg: '#fff7ed', color: '#ea580c' }
+    default:            return { Icon: File,     bg: '#f8fafc', color: '#64748b' }
+  }
+}
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001'
+function buildFileUrl(mat) {
+  const rawUrl = mat.file_url || mat.external_url
+  if (!rawUrl) return null
+  if (mat.module_type === 'url') return rawUrl
+  if (!rawUrl.includes('pluginfile.php')) return rawUrl
+  const title = (mat.title || '').toLowerCase()
+  const isPdf = title.endsWith('.pdf') || rawUrl.toLowerCase().includes('.pdf')
+  if (isPdf) return rawUrl
+  const fname = mat.title || 'download'
+  const snapTok = localStorage.getItem('snaplocate_token') || ''
+  const isPage = mat.module_type === 'page' || mat.module_type === 'label'
+  return `${API_BASE}/api/lms/materials/file-proxy?url=${encodeURIComponent(rawUrl)}&filename=${encodeURIComponent(fname)}&snap_token=${encodeURIComponent(snapTok)}${isPage ? '&inline=1' : ''}`
+}
+
+function DueChip({ dueDate }) {
+  if (!dueDate) return null
+  const diff  = new Date(dueDate).getTime() - Date.now()
+  const days  = Math.ceil(diff / 86400000)
+  const overdue = days < 0
+  const label = overdue ? 'Overdue' : days === 0 ? 'Due today' : days === 1 ? 'Due tomorrow' : `${days}d left`
+  const cls   = overdue ? 'bg-danger-light text-danger' : days === 0 ? 'bg-warning-light text-warning' : 'bg-success-light text-success'
+  return (
+    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold ${cls}`}>
+      <Clock size={10} />{label}
+    </span>
+  )
+}
+
+function AttBadge({ status }) {
+  const map = {
+    present: 'bg-success-light text-success',
+    absent:  'bg-danger-light text-danger',
+    late:    'bg-warning-light text-warning',
+    excused: 'bg-blue-50 text-blue-600',
+  }
+  const labels = { present: 'Present', absent: 'Absent', late: 'Late', excused: 'Excused' }
+  const key = status?.toLowerCase() ?? 'absent'
+  return <span className={`text-[11px] font-bold px-3 py-0.5 rounded-full uppercase tracking-[0.06em] ${map[key] ?? map.absent}`}>{labels[key] ?? 'Absent'}</span>
+}
+
+function EmptyState({ Icon, title, sub }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 px-6 gap-3">
+      <div className="w-16 h-16 rounded-[20px] bg-surface border border-slate-100 flex items-center justify-center">
+        <Icon size={28} className="text-slate-300" />
+      </div>
+      <div className="t-lg font-semibold t-subtle text-center">{title}</div>
+      {sub && <div className="t-md t-subtle text-center max-w-[280px]">{sub}</div>}
+    </div>
+  )
+}
 
 // ═══════════════════════════════════════════════════════════════════
 export default function LMSCourse() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('content')
-  const [course, setCourse] = useState(null)
+  const { id }    = useParams()
+  const navigate  = useNavigate()
+  const [activeTab, setActiveTab]   = useState('content')
+  const [course, setCourse]         = useState(null)
   const [announcements, setAnnouncements] = useState([])
-  const [assignments, setAssignments] = useState([])
-  const [materials, setMaterials] = useState([])
-  const [grades, setGrades] = useState([])
-  const [attendance, setAttendance] = useState([])
+  const [assignments, setAssignments]     = useState([])
+  const [materials, setMaterials]         = useState([])
+  const [grades, setGrades]               = useState([])
+  const [attendance, setAttendance]       = useState([])
   const [loadingCourse, setLoadingCourse] = useState(true)
-  const [loadingTab, setLoadingTab] = useState(false)
+  const [loadingTab, setLoadingTab]       = useState(false)
   const [collapsedSections, setCollapsedSections] = useState({})
-  const [expandedFolders, setExpandedFolders] = useState({}) // track open folders
+  const [expandedFolders, setExpandedFolders]     = useState({})
   const [viewHtmlModal, setViewHtmlModal] = useState({ open: false, title: '', src: '', description: '' })
-  // Eagerly-loaded stat counts for the stats strip (always visible regardless of active tab)
   const [statCounts, setStatCounts] = useState({ materials: null, announcements: null, assignments: null })
 
-  // Fetch course detail
   useEffect(() => {
     if (!id) return
     setLoadingCourse(true)
@@ -189,24 +157,13 @@ export default function LMSCourse() {
         if (res.success) {
           const c = res.data
           setCourse(c)
-
-          // ── Auto-Correction for Stale/Duplicate Records ──
-          // If this record has no semester, but a "better" one exists (same code + semester), 
-          // we should redirect the user to the correct record.
           if (!c.semester) {
             api.get('/api/lms/courses').then(allRes => {
               if (allRes.success) {
-                const better = allRes.data
-                  .map(e => e.courses || e)
-                  .find(other =>
-                    other.id !== c.id &&
-                    (other.code === c.code || (c.code && other.code?.startsWith(c.code))) &&
-                    other.semester
-                  )
-                if (better) {
-                  console.log('Redirecting to better course record:', better.id)
-                  navigate(`/lms/courses/${better.id}`, { replace: true })
-                }
+                const better = allRes.data.map(e => e.courses || e).find(other =>
+                  other.id !== c.id && (other.code === c.code || (c.code && other.code?.startsWith(c.code))) && other.semester
+                )
+                if (better) navigate(`/lms/courses/${better.id}`, { replace: true })
               }
             })
           }
@@ -215,7 +172,6 @@ export default function LMSCourse() {
       .finally(() => setLoadingCourse(false))
   }, [id])
 
-  // Eagerly fetch stats (counts) on mount — runs once, independent of active tab
   useEffect(() => {
     if (!id) return
     Promise.allSettled([
@@ -227,7 +183,6 @@ export default function LMSCourse() {
       const anns = annRes.status === 'fulfilled' && annRes.value?.success ? (annRes.value.data ?? []) : []
       const asns = asnRes.status === 'fulfilled' && asnRes.value?.success ? (asnRes.value.data ?? []) : []
       setStatCounts({ materials: mats.length, announcements: anns.length, assignments: asns.length })
-      // Pre-populate the content/announcements/assignments state so switching is instant
       setMaterials(mats)
       setAnnouncements([...anns].sort((a, b) => {
         if (a.is_pinned && !b.is_pinned) return -1
@@ -238,27 +193,23 @@ export default function LMSCourse() {
     })
   }, [id])
 
-  // Fetch tab data (grades, attendance only — others are pre-loaded above)
   useEffect(() => {
     if (!id) return
     const fetchers = {
-      content: null,   // pre-loaded on mount
-      announcements: null,   // pre-loaded on mount
-      assignments: null,   // pre-loaded on mount
-      grades: () => api.get(`/api/lms/grades?course_id=${id}`).then(r => { if (r.success) setGrades(r.data ?? []) }),
+      content: null, announcements: null, assignments: null,
+      grades:     () => api.get(`/api/lms/grades?course_id=${id}`).then(r => { if (r.success) setGrades(r.data ?? []) }),
       attendance: () => api.get(`/api/attendance?course_id=${id}`).then(r => {
         if (r.success) setAttendance([...(r.data ?? [])].sort((a, b) => new Date(b.date) - new Date(a.date)))
       }),
     }
     const fn = fetchers[activeTab]
-    if (!fn) return   // already loaded
+    if (!fn) return
     setLoadingTab(true)
-    fn().catch(() => { }).finally(() => setLoadingTab(false))
-    // Scroll to top of page so hero is always visible when switching tabs
+    fn().catch(() => {}).finally(() => setLoadingTab(false))
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [id, activeTab])
 
-  // Group materials by section — with folder hierarchy
+  // Group materials into sections with folder hierarchy
   const sections = (() => {
     const map = {}
     for (const mat of materials) {
@@ -266,101 +217,72 @@ export default function LMSCourse() {
       if (!map[key]) map[key] = { name: key, num: mat.section_num ?? 999, items: [] }
       map[key].items.push(mat)
     }
-
-    // Within each section, build folder hierarchy:
-    // folder_file items (description = '📁 FolderName') are nested under their parent folder
     for (const sec of Object.values(map)) {
-      const foldersByName = {} // folderTitle → item (with _children)
-
-      // First pass: index all folder items
+      const foldersByName = {}
       for (const item of sec.items) {
-        if (item.module_type === 'folder') {
-          foldersByName[item.title] = { ...item, _children: [] }
-        }
+        if (item.module_type === 'folder') foldersByName[item.title] = { ...item, _children: [] }
       }
-
-      // Second pass: assign folder_files to their parent
       for (const item of sec.items) {
         if (item.module_type === 'folder_file') {
           const parentName = (item.description || '').replace(/^📁\s*/, '').trim()
-          if (foldersByName[parentName]) {
-            foldersByName[parentName]._children.push(item)
-          }
+          if (foldersByName[parentName]) foldersByName[parentName]._children.push(item)
         }
       }
-
-      // Third pass: rebuild the items list preserving original order,
-      // replacing folder placeholders with enriched folder objects,
-      // and dropping folder_file items (they appear under their parent folder)
       const seen = new Set()
       sec.items = sec.items
         .filter(item => {
-          if (item.module_type === 'folder_file') return false // handled inside folder
-          if (item.module_type === 'folder') {
-            if (seen.has(item.title)) return false
-            seen.add(item.title)
-          }
+          if (item.module_type === 'folder_file') return false
+          if (item.module_type === 'folder') { if (seen.has(item.title)) return false; seen.add(item.title) }
           return true
         })
-        .map(item => {
-          if (item.module_type === 'folder' && foldersByName[item.title]) {
-            return foldersByName[item.title] // enriched with _children
-          }
-          return item
-        })
+        .map(item => item.module_type === 'folder' && foldersByName[item.title] ? foldersByName[item.title] : item)
     }
-
     return Object.values(map).sort((a, b) => a.num - b.num)
   })()
 
   const toggleSection = (name) => setCollapsedSections(p => ({ ...p, [name]: !p[name] }))
-  const toggleFolder = (folderId) => setExpandedFolders(p => ({ ...p, [folderId]: !p[folderId] }))
+  const toggleFolder  = (id)   => setExpandedFolders(p => ({ ...p, [id]: !p[id] }))
 
-  // Attendance summary
   const attSummary = (() => {
     if (!attendance.length) return null
-    const total = attendance.length
+    const total   = attendance.length
     const present = attendance.filter(a => a.status === 'present').length
-    const late = attendance.filter(a => a.status === 'late').length
-    const absent = attendance.filter(a => a.status === 'absent').length
-    const pct = Math.round(((present + late * 0.5) / total) * 100)
+    const late    = attendance.filter(a => a.status === 'late').length
+    const absent  = attendance.filter(a => a.status === 'absent').length
+    const pct     = Math.round(((present + late * 0.5) / total) * 100)
     return { total, present, late, absent, pct }
   })()
 
-  // Derived values
-  const fp = course?.faculty_profiles
+  const fp          = course?.faculty_profiles
   const facultyName = fp?.users?.full_name
   const displayName = cleanDisplayName(course?.name || '')
   const displayCode = cleanCode(course?.code || '')
-  const grad = getDeptGrad(course?.dept || '')
-  const progress = course?.progress ?? 0
-
-  // Tab badge counts — use pre-loaded statCounts for reliability
-  const tabBadges = {
+  const grad        = getDeptGrad(course?.dept || '')
+  const progress    = course?.progress ?? 0
+  const tabBadges   = {
     announcements: statCounts.announcements ?? announcements.length,
-    assignments: statCounts.assignments ?? assignments.length,
-    grades: grades.length,
+    assignments:   statCounts.assignments   ?? assignments.length,
+    grades:        grades.length,
   }
 
   if (loadingCourse) return (
     <PageLayout>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 48, height: 48, borderRadius: 14, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <BookOpen size={22} color="#4f46e5" style={{ animation: 'pulse 1.5s ease-in-out infinite' }} />
+      <div className="flex items-center justify-center h-[300px]">
+        <div className="flex flex-col items-center gap-3.5">
+          <div className="w-12 h-12 rounded-[14px] bg-brand-light flex items-center justify-center">
+            <BookOpen size={22} className="text-brand animate-pulse" />
           </div>
-          <span style={pjs(14, 500, '20px', '#94a3b8')}>Loading course…</span>
+          <span className="t-md font-medium t-subtle">Loading course…</span>
         </div>
       </div>
-      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
     </PageLayout>
   )
 
   if (!course) return (
     <PageLayout>
-      <div style={{ padding: 40, textAlign: 'center' }}>
+      <div className="p-10 text-center">
         <EmptyState Icon={AlertCircle} title="Course not found" sub="This course may have been removed or you don't have access." />
-        <button onClick={() => navigate('/lms')} style={{ padding: '10px 24px', borderRadius: 12, background: '#4f46e5', border: 'none', cursor: 'pointer', ...pjs(14, 700, '20px', '#fff'), marginTop: 16 }}>
+        <button onClick={() => navigate('/lms')} className="mt-4 px-6 py-2.5 rounded-xl bg-brand text-white border-none cursor-pointer t-heading-md">
           Back to My Courses
         </button>
       </div>
@@ -369,151 +291,81 @@ export default function LMSCourse() {
 
   return (
     <PageLayout>
-      <style>{`
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: translateY(0) } }
-        @keyframes spin   { to { transform: rotate(360deg) } }
-        @keyframes pulse  { 0%,100%{opacity:1} 50%{opacity:0.5} }
-        .lms-tab-btn:hover  { background: #f1f5f9 !important; }
-        .lms-mat-row:hover  { background: #f8fafc !important; }
-        .lms-asgn-card:hover { box-shadow: 0 8px 30px rgba(79,70,229,0.12) !important; transform: translateY(-2px) !important; }
-        .lms-bc-link { color: #94a3b8 !important; text-decoration: none; transition: color 0.15s; }
-        .lms-bc-link:hover { color: #4f46e5 !important; }
-      `}</style>
-
-      {/* ── Breadcrumb: Dashboard › My Courses › Course Name ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 22, flexWrap: 'wrap' }}>
-        <Link to="/dashboard" className="lms-bc-link" style={pjs(13, 500, '18px', '#94a3b8')}>Dashboard</Link>
-        <span style={{ color: '#e2e8f0', fontSize: 15, lineHeight: 1 }}>›</span>
-        <Link to="/lms" className="lms-bc-link" style={pjs(13, 500, '18px', '#94a3b8')}>My Courses</Link>
-        <span style={{ color: '#e2e8f0', fontSize: 15, lineHeight: 1 }}>›</span>
-        <span style={{ ...pjs(13, 700, '18px', '#4f46e5') }}>{displayName || displayCode || 'Course'}</span>
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-1.5 mb-6 flex-wrap">
+        <Link to="/dashboard" className="t-md font-medium t-subtle no-underline hover:text-brand transition-colors">Dashboard</Link>
+        <span className="text-slate-200 text-base">›</span>
+        <Link to="/lms" className="t-md font-medium t-subtle no-underline hover:text-brand transition-colors">My Courses</Link>
+        <span className="text-slate-200 text-base">›</span>
+        <span className="t-md font-bold text-brand">{displayName || displayCode || 'Course'}</span>
       </div>
 
-      {/* ── Hero Header Card ─────────────────────────────────── */}
-      <div
-        key={`hero-${id}`}
-        style={{
-          borderRadius: 24,
-          overflow: 'hidden',
-          marginBottom: 24,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-          background: '#fff', // Base background
-          display: 'flex',
-          flexDirection: 'column',
-          flexShrink: 0, // CRITICAL: Prevent flex compression from content below
-        }}
-      >
+      {/* ── Hero Header Card ── */}
+      <div className="rounded-3xl overflow-hidden mb-6 shadow-[0_8px_32px_rgba(0,0,0,0.1)] bg-white flex flex-col shrink-0">
         {/* Gradient banner */}
-        <div style={{
-          background: `${grad} #1e1b4b`, // Brute-force background with fallback
-          padding: '40px 32px 32px',
-          minHeight: 160,
-          position: 'relative',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-end'
-        }}>
-          {/* Decorative circles */}
-          <div style={{ position: 'absolute', top: -40, right: -40, width: 180, height: 180, borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
-          <div style={{ position: 'absolute', bottom: -30, right: 80, width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
+        <div
+          className="px-6 sm:px-8 pt-10 pb-8 min-h-[160px] relative overflow-hidden flex flex-col justify-end"
+          style={{ background: `${grad}, #1e1b4b` }}
+        >
+          <div className="absolute -top-10 -right-10 w-[180px] h-[180px] rounded-full bg-white/[0.06]" />
+          <div className="absolute -bottom-7 right-20 w-[120px] h-[120px] rounded-full bg-white/[0.04]" />
 
-          <div style={{ position: 'relative', zIndex: 2 }}>
-            {/* Dept badge */}
+          <div className="relative z-[2]">
             {course.dept && (
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(6px)',
-                border: '1px solid rgba(255,255,255,0.2)',
-                borderRadius: 8, padding: '4px 12px', marginBottom: 12,
-              }}>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg mb-3 backdrop-blur-sm bg-white/[0.12] border border-white/20">
                 <GraduationCap size={12} color="rgba(255,255,255,0.9)" />
-                <span style={pjs(11, 700, '16px', 'rgba(255,255,255,0.9)')}>{course.dept.toUpperCase()}</span>
+                <span className="text-[11px] font-bold text-white/90">{course.dept.toUpperCase()}</span>
               </div>
             )}
-
-            {/* Course name */}
-            <h1 style={{ ...pjs(30, 800, '38px', '#fff'), margin: '0 0 8px', letterSpacing: '-0.02em' }}>
+            <h1 className="text-[30px] font-extrabold text-white m-0 mb-2 tracking-[-0.02em] leading-[38px]">
               {displayName || 'Loading...'}
             </h1>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <span style={{ ...pjs(14, 600, '20px', 'rgba(255,255,255,0.7)') }}>{displayCode}</span>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span className="text-[14px] font-semibold text-white/70">{displayCode}</span>
               {course.semester && (
-                <>
-                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>·</span>
-                  <span style={pjs(14, 500, '20px', 'rgba(255,255,255,0.6)')}>{course.semester}</span>
-                </>
+                <><span className="text-white/30">·</span><span className="text-[14px] font-medium text-white/60">{course.semester}</span></>
               )}
               {facultyName && (
-                <>
-                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>·</span>
-                  <span style={pjs(14, 500, '20px', 'rgba(255,255,255,0.6)')}>
-                    <Users size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />{facultyName}
-                  </span>
-                </>
+                <><span className="text-white/30">·</span>
+                <span className="text-[14px] font-medium text-white/60 flex items-center gap-1">
+                  <Users size={12} />{facultyName}
+                </span></>
               )}
             </div>
           </div>
         </div>
 
         {/* Stats strip */}
-        <div style={{
-          background: '#fff',
-          padding: '20px 32px',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          borderTop: '1px solid #f1f5f9',
-          minHeight: 80
-        }}>
+        <div className="bg-white px-6 sm:px-8 py-5 grid grid-cols-4 border-t border-slate-100 min-h-[80px]">
           {[
-            { label: 'Progress', value: `${progress}%`, icon: <TrendingUp size={15} color="#4f46e5" />, color: '#4f46e5' },
-            { label: 'Assignments', value: statCounts.assignments != null ? statCounts.assignments : '…', icon: <ClipboardList size={15} color="#d97706" />, color: '#d97706' },
-            { label: 'Materials', value: statCounts.materials != null ? statCounts.materials : '…', icon: <FolderOpen size={15} color="#16a34a" />, color: '#16a34a' },
-            { label: 'Attendance', value: attSummary ? `${attSummary.pct}%` : '—', icon: <CalendarCheck size={15} color="#0891b2" />, color: '#0891b2' },
+            { label: 'Progress',    value: `${progress}%`,                                         icon: <TrendingUp size={15} />,    color: '#4f46e5' },
+            { label: 'Assignments', value: statCounts.assignments != null ? statCounts.assignments : '…', icon: <ClipboardList size={15} />, color: '#d97706' },
+            { label: 'Materials',   value: statCounts.materials   != null ? statCounts.materials   : '…', icon: <FolderOpen size={15} />,   color: '#16a34a' },
+            { label: 'Attendance',  value: attSummary ? `${attSummary.pct}%` : '—',               icon: <CalendarCheck size={15} />, color: '#0891b2' },
           ].map((s, i) => (
-            <div key={i} style={{ textAlign: 'center', padding: '4px 0', borderRight: i < 3 ? '1px solid #f1f5f9' : 'none' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, marginBottom: 4 }}>
-                {s.icon}
-                <span style={pjs(11, 700, '16px', '#94a3b8')}>{s.label.toUpperCase()}</span>
+            <div key={i} className={`text-center py-1 ${i < 3 ? 'border-r border-slate-100' : ''}`}>
+              <div className="flex items-center justify-center gap-1 mb-1" style={{ color: s.color }}>{s.icon}
+                <span className="text-[11px] font-bold text-ink-subtle">{s.label.toUpperCase()}</span>
               </div>
-              <div style={{ ...pjs(22, 800, '28px', s.color) }}>{s.value}</div>
+              <div className="text-[22px] font-extrabold" style={{ color: s.color }}>{s.value}</div>
             </div>
           ))}
         </div>
 
-        {/* ── Tabs Strip ──────────────────── */}
-        <div style={{
-          background: '#f8fafc',
-          borderTop: '1px solid #f1f5f9',
-          padding: '6px 12px',
-          display: 'flex',
-          gap: 6,
-          overflowX: 'auto',
-          minHeight: 52
-        }}>
+        {/* Tabs strip */}
+        <div className="bg-surface border-t border-slate-100 px-3 py-1.5 flex gap-1.5 overflow-x-auto min-h-[52px]">
           {TABS.map(({ key, label, Icon }) => {
             const active = activeTab === key
             const badgeN = tabBadges[key]
             return (
               <button key={key} onClick={() => setActiveTab(key)}
-                className="lms-tab-btn"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 7,
-                  padding: '10px 18px', borderRadius: 12, border: 'none',
-                  background: active ? '#4f46e5' : 'transparent',
-                  cursor: 'pointer', whiteSpace: 'nowrap',
-                  transition: 'background 0.2s, color 0.2s',
-                  ...pjs(13, active ? 700 : 500, '18px', active ? '#fff' : '#64748b'),
-                }}>
+                className={`inline-flex items-center gap-1.5 px-[18px] py-2.5 rounded-xl border-none cursor-pointer whitespace-nowrap transition-colors t-md ${active ? 'bg-brand text-white font-bold' : 'bg-transparent font-medium t-secondary hover:bg-surface-muted'}`}>
                 <Icon size={14} />
                 {label}
                 {badgeN > 0 && (
-                  <span style={{
-                    ...pjs(10, 700, '14px', active ? '#4f46e5' : '#64748b'),
-                    background: active ? '#fff' : '#f1f5f9',
-                    borderRadius: 20, padding: '1px 6px', minWidth: 18, textAlign: 'center',
-                  }}>{badgeN}</span>
+                  <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center ${active ? 'bg-white text-brand' : 'bg-surface-muted t-secondary'}`}>
+                    {badgeN}
+                  </span>
                 )}
               </button>
             )
@@ -521,22 +373,22 @@ export default function LMSCourse() {
         </div>
       </div>
 
-      {/* ── Tab Content ──────────────────────────────────────── */}
+      {/* ── Tab Content ── */}
       <div>
         {loadingTab ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 0' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 40, height: 40, border: '3px solid #e2e8f0', borderTopColor: '#4f46e5', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-              <span style={pjs(13, 500, '18px', '#94a3b8')}>Loading…</span>
+          <div className="flex items-center justify-center py-16">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-10 h-10 rounded-full border-[3px] border-slate-200 border-t-brand animate-spin" />
+              <span className="t-md font-medium t-subtle">Loading…</span>
             </div>
           </div>
         ) : (
           <>
-            {/* ── COURSE CONTENT ─────────────────────────────── */}
+            {/* ── CONTENT tab ── */}
             {activeTab === 'content' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="flex flex-col gap-3">
                 {sections.length === 0 && (
-                  <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9' }}>
+                  <div className="bg-white rounded-[20px] border border-slate-100">
                     <EmptyState Icon={FolderOpen} title="No materials yet" sub="Course materials will appear here after syncing from Moodle." />
                   </div>
                 )}
@@ -544,113 +396,71 @@ export default function LMSCourse() {
                   const sc = sectionColors[si % sectionColors.length]
                   const isCollapsed = collapsedSections[sec.name]
                   return (
-                    <div key={sec.name} style={{
-                      background: '#fff', borderRadius: 16,
-                      border: `1px solid #f1f5f9`, overflow: 'hidden',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                      transition: 'all 0.2s ease',
-                    }}>
+                    <div key={sec.name} className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
                       {/* Section header */}
-                      <button onClick={() => toggleSection(sec.name)} style={{
-                        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '16px 22px', background: sc.bg,
-                        border: 'none', borderBottom: isCollapsed ? 'none' : `1px solid ${sc.border}`,
-                        cursor: 'pointer',
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <div style={{ width: 4, height: 18, borderRadius: 4, background: sc.accent }} />
-                          <span style={pjs(14, 700, '20px', '#0f172a')}>{sec.name}</span>
-                          <span style={{ ...pjs(11, 700, '14px', sc.accent), background: '#fff', padding: '2px 9px', borderRadius: 20, border: `1px solid ${sc.border}` }}>
+                      <button onClick={() => toggleSection(sec.name)}
+                        className="w-full flex items-center justify-between px-5 py-4 border-none cursor-pointer"
+                        style={{ background: sc.bg, borderBottom: isCollapsed ? 'none' : `1px solid ${sc.border}` }}>
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-1 h-[18px] rounded" style={{ background: sc.accent }} />
+                          <span className="t-md font-bold t-primary">{sec.name}</span>
+                          <span className="text-[11px] font-bold bg-white px-2.5 py-0.5 rounded-full border" style={{ color: sc.accent, borderColor: sc.border }}>
                             {sec.items.length} {sec.items.length === 1 ? 'item' : 'items'}
                           </span>
                         </div>
-                        <ChevronDown size={16} color={sc.accent} style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'none', transition: 'transform 0.2s' }} />
+                        <ChevronDown size={16} style={{ color: sc.accent, transform: isCollapsed ? 'rotate(-90deg)' : 'none', transition: 'transform 0.2s' }} />
                       </button>
 
                       {/* Section items */}
                       {!isCollapsed && (
                         <div>
                           {sec.items.map((mat, i) => {
-                            const isFolder = mat.module_type === 'folder'
+                            const isFolder    = mat.module_type === 'folder'
                             const isFolderOpen = expandedFolders[mat.id]
                             const mi = moduleIcon(mat.module_type)
-                            const link = mat.file_url || mat.external_url
 
-                            // ── FOLDER with nested children ──────────────────
+                            // Folder with children
                             if (isFolder && mat._children?.length > 0) {
                               return (
                                 <div key={mat.id}>
-                                  {/* Folder row — click to expand */}
                                   <div
-                                    className="lms-mat-row"
                                     onClick={() => toggleFolder(mat.id)}
-                                    style={{
-                                      padding: '12px 20px',
-                                      borderBottom: (!isFolderOpen && i < sec.items.length - 1) ? '1px solid #f8fafc' : 'none',
-                                      display: 'flex', alignItems: 'center', gap: 14,
-                                      cursor: 'pointer', transition: 'background 0.15s',
-                                      background: isFolderOpen ? '#fdf4ff' : 'transparent',
-                                    }}
+                                    className={`px-5 py-3 flex items-center gap-3.5 cursor-pointer transition-colors hover:bg-surface ${isFolderOpen ? 'bg-[#fdf4ff]' : ''} ${!isFolderOpen && i < sec.items.length - 1 ? 'border-b border-slate-50' : ''}`}
                                   >
-                                    <div style={{ width: 36, height: 36, borderRadius: 10, background: mi.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                      <mi.Icon size={16} color={mi.color} />
+                                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: mi.bg }}>
+                                      <mi.Icon size={16} style={{ color: mi.color }} />
                                     </div>
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                      <div style={{ ...pjs(13, 700, '18px', '#0f172a'), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mat.title}</div>
-                                      <div style={{ ...pjs(11, 400, '16px', '#94a3b8'), marginTop: 2 }}>
-                                        {mat._children.length} file{mat._children.length !== 1 ? 's' : ''} inside
-                                      </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="t-md font-bold t-primary truncate">{mat.title}</div>
+                                      <div className="t-xs t-subtle mt-0.5">{mat._children.length} file{mat._children.length !== 1 ? 's' : ''} inside</div>
                                     </div>
-                                    <span style={{ ...pjs(10, 600, '14px', '#a855f7'), textTransform: 'uppercase', letterSpacing: '0.06em', flexShrink: 0 }}>
-                                      FOLDER
-                                    </span>
-                                    <div style={{
-                                      width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                      background: isFolderOpen ? '#a855f7' : '#f1f5f9',
-                                      transition: 'all 0.2s',
-                                    }}>
-                                      <ChevronDown size={14} color={isFolderOpen ? '#fff' : '#64748b'} style={{ transform: isFolderOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                                    <span className="text-[10px] font-bold uppercase tracking-[0.06em] shrink-0 text-purple-500">FOLDER</span>
+                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all ${isFolderOpen ? 'bg-purple-500' : 'bg-slate-100'}`}>
+                                      <ChevronDown size={14} color={isFolderOpen ? '#fff' : '#64748b'} className={`transition-transform duration-200 ${isFolderOpen ? 'rotate-180' : ''}`} />
                                     </div>
                                   </div>
 
-                                  {/* Nested files — visible when folder is expanded */}
                                   {isFolderOpen && (
-                                    <div style={{
-                                      borderLeft: '3px solid #f0abfc',
-                                      marginLeft: 32,
-                                      background: 'linear-gradient(to right, #fdf4ff, #fff)',
-                                      borderBottom: i < sec.items.length - 1 ? '1px solid #f8fafc' : 'none',
-                                    }}>
+                                    <div className="ml-8 bg-gradient-to-r from-[#fdf4ff] to-white border-b border-slate-50 border-l-[3px] border-l-fuchsia-200">
                                       {mat._children.map((child, ci) => {
-                                        const cmi = moduleIcon('folder_file')
+                                        const cmi  = moduleIcon('folder_file')
                                         const clink = buildFileUrl(child)
                                         return (
-                                          <div key={child.id} className="lms-mat-row" style={{
-                                            padding: '10px 18px 10px 20px',
-                                            borderBottom: ci < mat._children.length - 1 ? '1px solid #fce7ff' : 'none',
-                                            display: 'flex', alignItems: 'center', gap: 12,
-                                            transition: 'background 0.15s',
-                                          }}>
-                                            <div style={{ width: 30, height: 30, borderRadius: 8, background: cmi.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                              <cmi.Icon size={13} color={cmi.color} />
+                                          <div key={child.id} className={`px-[18px] py-2.5 flex items-center gap-3 transition-colors hover:bg-white/80 ${ci < mat._children.length - 1 ? 'border-b border-[#fce7ff]' : ''}`}>
+                                            <div className="w-[30px] h-[30px] rounded-lg flex items-center justify-center shrink-0" style={{ background: cmi.bg }}>
+                                              <cmi.Icon size={13} style={{ color: cmi.color }} />
                                             </div>
-                                            <div style={{ flex: 1, minWidth: 0 }}>
-                                              <div style={{ ...pjs(12, 600, '17px', '#1e293b'), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{child.title}</div>
+                                            <div className="flex-1 min-w-0">
+                                              <div className="text-[12px] font-semibold t-primary truncate">{child.title}</div>
                                             </div>
-                                            <span style={{ ...pjs(9, 700, '14px', '#ea580c'), textTransform: 'uppercase', letterSpacing: '0.06em', flexShrink: 0 }}>FILE</span>
+                                            <span className="text-[9px] font-bold uppercase tracking-[0.06em] shrink-0 text-orange-600">FILE</span>
                                             {clink ? (
-                                              <a href={clink} target="_blank" rel="noopener noreferrer" style={{
-                                                display: 'inline-flex', alignItems: 'center', gap: 4,
-                                                padding: '5px 12px', borderRadius: 8, flexShrink: 0,
-                                                background: '#fff7ed', color: '#ea580c', fontWeight: 700, fontSize: 11,
-                                                textDecoration: 'none', fontFamily: "'Plus Jakarta Sans', sans-serif",
-                                                border: '1px solid #fed7aa',
-                                              }}>
+                                              <a href={clink} target="_blank" rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-[11px] font-bold no-underline shrink-0 bg-orange-50 text-orange-600 border border-orange-200">
                                                 <ExternalLink size={11} /> Open
                                               </a>
                                             ) : (
-                                              <span style={{ ...pjs(10, 500, '14px', '#cbd5e1'), flexShrink: 0 }}>No link</span>
+                                              <span className="text-[10px] font-medium t-subtle shrink-0">No link</span>
                                             )}
                                           </div>
                                         )
@@ -661,56 +471,33 @@ export default function LMSCourse() {
                               )
                             }
 
-                            // ── Regular item (resource / url / page / label) ─
-                            const mi2 = moduleIcon(mat.module_type)
-                            const lnk = buildFileUrl(mat)
+                            // Regular item
+                            const mi2  = moduleIcon(mat.module_type)
+                            const lnk  = buildFileUrl(mat)
+                            const isPageType = mat.module_type === 'page' || mat.module_type === 'label'
                             return (
-                              <div key={mat.id} className="lms-mat-row" style={{
-                                padding: '12px 20px',
-                                borderBottom: i < sec.items.length - 1 ? '1px solid #f8fafc' : 'none',
-                                display: 'flex', alignItems: 'center', gap: 14,
-                                transition: 'background 0.15s',
-                              }}>
-                                <div style={{ width: 36, height: 36, borderRadius: 10, background: mi2.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                  <mi2.Icon size={16} color={mi2.color} />
+                              <div key={mat.id}
+                                className={`px-5 py-3 flex items-center gap-3.5 transition-colors hover:bg-surface ${i < sec.items.length - 1 ? 'border-b border-slate-50' : ''}`}>
+                                <div className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: mi2.bg }}>
+                                  <mi2.Icon size={16} style={{ color: mi2.color }} />
                                 </div>
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                  <div style={{ ...pjs(13, 600, '18px', '#0f172a'), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mat.title}</div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="t-md font-semibold t-primary truncate">{mat.title}</div>
                                   {mat.description && (
-                                    <div 
-                                      style={{ ...pjs(11, 400, '16px', '#94a3b8'), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 2 }}
-                                      dangerouslySetInnerHTML={{ __html: mat.description.replace(/<[^>]+>/g, ' ').slice(0, 150) }}
-                                    />
+                                    <div className="text-[11px] t-subtle truncate mt-0.5"
+                                      dangerouslySetInnerHTML={{ __html: mat.description.replace(/<[^>]+>/g, ' ').slice(0, 150) }} />
                                   )}
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                                  <div style={{ ...pjs(10, 700, '1', '#94a3b8'), textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                    {mat.module_type}
-                                  </div>
-                                  {mat.module_type === 'page' || mat.module_type === 'label' ? (
-                                    (!lnk || lnk.includes('file-proxy')) ? (
-                                      <button onClick={() => setViewHtmlModal({ open: true, title: mat.title, src: lnk && lnk.includes('file-proxy') ? lnk : null, description: mat.description })} style={{
-                                          display: 'flex', alignItems: 'center', gap: 6,
-                                          padding: '8px 16px', background: '#eef2ff', color: '#4f46e5',
-                                          borderRadius: 10, border: 'none', cursor: 'pointer', ...pjs(13, 600, '1')
-                                        }}>
-                                        <FileText size={16} /> View
-                                      </button>
-                                    ) : (
-                                      <a href={lnk} target="_blank" rel="noreferrer" style={{
-                                        display: 'flex', alignItems: 'center', gap: 6,
-                                        padding: '8px 16px', background: '#eef2ff', color: '#4f46e5',
-                                        borderRadius: 10, textDecoration: 'none', ...pjs(13, 600, '1')
-                                      }}>
-                                        <ExternalLink size={16} /> Open
-                                      </a>
-                                    )
+                                <div className="flex flex-col items-end gap-1">
+                                  <div className="text-[10px] font-bold t-subtle uppercase tracking-[0.05em]">{mat.module_type}</div>
+                                  {isPageType && (!lnk || lnk.includes('file-proxy')) ? (
+                                    <button onClick={() => setViewHtmlModal({ open: true, title: mat.title, src: lnk?.includes('file-proxy') ? lnk : null, description: mat.description })}
+                                      className="flex items-center gap-1.5 px-4 py-2 bg-brand-light text-brand rounded-[10px] border-none cursor-pointer t-md font-semibold">
+                                      <FileText size={16} /> View
+                                    </button>
                                   ) : (
-                                    <a href={lnk} target="_blank" rel="noreferrer" style={{
-                                      display: 'flex', alignItems: 'center', gap: 6,
-                                      padding: '8px 16px', background: '#eef2ff', color: '#4f46e5',
-                                      borderRadius: 10, textDecoration: 'none', ...pjs(13, 600, '1')
-                                    }}>
+                                    <a href={lnk} target="_blank" rel="noreferrer"
+                                      className="flex items-center gap-1.5 px-4 py-2 bg-brand-light text-brand rounded-[10px] no-underline t-md font-semibold">
                                       <ExternalLink size={16} /> Open
                                     </a>
                                   )}
@@ -726,43 +513,31 @@ export default function LMSCourse() {
               </div>
             )}
 
-            {/* ── ANNOUNCEMENTS ──────────────────────────────── */}
+            {/* ── ANNOUNCEMENTS tab ── */}
             {activeTab === 'announcements' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="flex flex-col gap-3">
                 {announcements.length === 0 && (
-                  <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9' }}>
+                  <div className="bg-white rounded-[20px] border border-slate-100">
                     <EmptyState Icon={Megaphone} title="No announcements" sub="Your instructor hasn't posted any announcements yet." />
                   </div>
                 )}
                 {announcements.map(ann => (
-                  <div key={ann.id} style={{
-                    background: '#fff', borderRadius: 16,
-                    border: ann.is_pinned ? '1.5px solid #fde68a' : '1px solid #f1f5f9',
-                    padding: '18px 22px',
-                    boxShadow: ann.is_pinned ? '0 4px 16px rgba(217,119,6,0.08)' : '0 2px 8px rgba(0,0,0,0.03)',
-                    transition: 'all 0.25s ease',
-                    cursor: 'default',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-                      <div style={{
-                        width: 38, height: 38, borderRadius: 10, flexShrink: 0,
-                        background: ann.is_pinned ? '#fffbeb' : '#eef2ff',
-                        border: `1px solid ${ann.is_pinned ? '#fde68a' : '#c7d2fe'}`,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
+                  <div key={ann.id}
+                    className={`bg-white rounded-2xl px-5 py-[18px] transition-all duration-300 ${ann.is_pinned ? 'border-[1.5px] border-amber-200 shadow-[0_4px_16px_rgba(217,119,6,0.08)]' : 'border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.03)]'}`}>
+                    <div className="flex items-start gap-3.5">
+                      <div className={`w-[38px] h-[38px] rounded-[10px] shrink-0 flex items-center justify-center ${ann.is_pinned ? 'bg-warning-light border border-[#fde68a]' : 'bg-brand-light border border-brand-border'}`}>
                         <Megaphone size={16} color={ann.is_pinned ? '#d97706' : '#4f46e5'} />
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-                          <span style={pjs(15, 700, '20px', '#0f172a')}>{ann.title}</span>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                          <span className="t-base font-bold t-primary">{ann.title}</span>
                           {ann.is_pinned && (
-                            <span style={{ ...pjs(10, 700, '14px', '#d97706'), background: '#fef3c7', padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.06em' }}>📌 Pinned</span>
+                            <span className="text-[10px] font-bold text-warning bg-warning-light px-2 py-0.5 rounded-full uppercase tracking-[0.06em]">📌 Pinned</span>
                           )}
                         </div>
-                        <p style={{ ...pjs(13, 400, '20px', '#475569'), margin: '0 0 10px' }}>{ann.message}</p>
-                        {/* Use posted_at (real Moodle time) with created_at as fallback */}
+                        <p className="t-md t-muted m-0 mb-2.5 leading-[20px]">{ann.message}</p>
                         {(ann.posted_at || ann.created_at) && (
-                          <span style={{ ...pjs(11, 500, '16px', '#94a3b8'), display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span className="text-[11px] font-medium t-subtle flex items-center gap-1">
                             <Clock size={11} />
                             {new Date(ann.posted_at || ann.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                           </span>
@@ -774,73 +549,64 @@ export default function LMSCourse() {
               </div>
             )}
 
-            {/* ── ASSIGNMENTS ────────────────────────────────── */}
+            {/* ── ASSIGNMENTS tab ── */}
             {activeTab === 'assignments' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div className="flex flex-col gap-2.5">
                 {assignments.length === 0 && (
-                  <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9' }}>
+                  <div className="bg-white rounded-[20px] border border-slate-100">
                     <EmptyState Icon={ClipboardList} title="No assignments" sub="Assignments posted by your instructor will appear here." />
                   </div>
                 )}
                 {assignments.map(asgn => (
-                  <Link key={asgn.id} to={`/lms/assignments/${asgn.id}`} style={{ textDecoration: 'none' }}>
-                    <div className="lms-asgn-card" style={{
-                      background: '#fff', borderRadius: 16,
-                      border: '1px solid #f1f5f9', padding: '18px 22px',
-                      cursor: 'pointer', transition: 'all 0.25s ease',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                      display: 'flex', alignItems: 'center', gap: 16,
-                    }}>
-                      <div style={{ width: 42, height: 42, borderRadius: 12, background: '#fffbeb', border: '1px solid #fde68a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Link key={asgn.id} to={`/lms/assignments/${asgn.id}`} className="no-underline block">
+                    <div className="bg-white rounded-2xl border border-slate-100 px-5 py-[18px] cursor-pointer transition-all duration-300 shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex items-center gap-4 hover:shadow-[0_8px_30px_rgba(79,70,229,0.12)] hover:-translate-y-0.5">
+                      <div className="w-[42px] h-[42px] rounded-xl bg-warning-light border border-[#fde68a] flex items-center justify-center shrink-0">
                         <FileText size={18} color="#d97706" />
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 5 }}>
-                          <span style={pjs(15, 700, '20px', '#0f172a')}>{asgn.title}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="t-base font-bold t-primary">{asgn.title}</span>
                           <DueChip dueDate={asgn.due_date} />
                           {asgn.my_submission && (
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, ...pjs(11, 700, '16px', '#16a34a'), background: '#f0fdf4', padding: '3px 10px', borderRadius: 20 }}>
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-success bg-success-light px-2.5 py-0.5 rounded-full">
                               <CheckCircle size={11} /> Submitted
                             </span>
                           )}
                         </div>
                         {asgn.description && (
-                          <p style={{ ...pjs(12, 400, '18px', '#64748b'), margin: '0 0 4px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                            {asgn.description}
-                          </p>
+                          <p className="t-xs t-secondary m-0 mb-1 line-clamp-2">{asgn.description}</p>
                         )}
-                        {asgn.max_marks != null && <span style={pjs(12, 500, '16px', '#94a3b8')}>Max marks: {asgn.max_marks}</span>}
+                        {asgn.max_marks != null && <span className="t-xs font-medium t-subtle">Max marks: {asgn.max_marks}</span>}
                       </div>
-                      <ExternalLink size={16} color="#c7d2fe" style={{ flexShrink: 0 }} />
+                      <ExternalLink size={16} className="text-brand-border shrink-0" />
                     </div>
                   </Link>
                 ))}
               </div>
             )}
 
-            {/* ── GRADES ─────────────────────────────────────── */}
+            {/* ── GRADES tab ── */}
             {activeTab === 'grades' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="flex flex-col gap-3">
                 {grades.length === 0 ? (
-                  <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9' }}>
+                  <div className="bg-white rounded-[20px] border border-slate-100">
                     <EmptyState Icon={BarChart2} title="No grades yet" sub="Grades will appear here once your instructor releases them." />
                   </div>
                 ) : (
                   <>
-                    {/* Grade summary */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
+                    <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
                       {grades.map((g, i) => {
                         const pct = g.max_marks && g.marks != null ? Math.round((g.marks / g.max_marks) * 100) : null
                         const col = pct == null ? '#94a3b8' : pct >= 75 ? '#16a34a' : pct >= 50 ? '#d97706' : '#dc2626'
-                        const bg = pct == null ? '#f8fafc' : pct >= 75 ? '#f0fdf4' : pct >= 50 ? '#fffbeb' : '#fee2e2'
+                        const bg  = pct == null ? '#f8fafc' : pct >= 75 ? '#f0fdf4' : pct >= 50 ? '#fffbeb' : '#fee2e2'
                         return (
-                          <div key={i} style={{ background: bg, borderRadius: 16, padding: '18px 20px', border: '1px solid #f1f5f9', textAlign: 'center' }}>
-                            <div style={{ ...pjs(11, 700, '14px', '#94a3b8'), textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{g.exam_type}</div>
-                            <div style={{ ...pjs(32, 800, '38px', col), marginBottom: 4 }}>{pct != null ? `${pct}%` : '—'}</div>
-                            <div style={pjs(12, 500, '16px', '#94a3b8')}>{g.marks ?? '—'} / {g.max_marks ?? '—'}</div>
+                          <div key={i} className="rounded-2xl px-5 py-[18px] border border-slate-100 text-center" style={{ background: bg }}>
+                            <div className="text-[11px] font-bold t-subtle uppercase tracking-[0.08em] mb-2">{g.exam_type}</div>
+                            <div className="text-[32px] font-extrabold mb-1" style={{ color: col }}>{pct != null ? `${pct}%` : '—'}</div>
+                            <div className="t-xs font-medium t-subtle">{g.marks ?? '—'} / {g.max_marks ?? '—'}</div>
                             {pct != null && (
-                              <div style={{ marginTop: 10, height: 5, borderRadius: 5, background: 'rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-                                <div style={{ height: '100%', width: `${pct}%`, background: col, borderRadius: 5 }} />
+                              <div className="mt-2.5 h-1.5 rounded-full bg-black/[0.06] overflow-hidden">
+                                <div className="h-full rounded-full" style={{ width: `${pct}%`, background: col }} />
                               </div>
                             )}
                           </div>
@@ -848,13 +614,12 @@ export default function LMSCourse() {
                       })}
                     </div>
 
-                    {/* Grade table */}
-                    <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', overflow: 'hidden' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', ...pjs(14, 400, '20px', '#0f172a') }}>
+                    <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+                      <table className="w-full border-collapse t-base t-primary">
                         <thead>
-                          <tr style={{ background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
+                          <tr className="bg-surface border-b border-slate-100">
                             {['Assessment', 'Marks Obtained', 'Max Marks', 'Percentage'].map(h => (
-                              <th key={h} style={{ textAlign: 'left', padding: '12px 20px', ...pjs(11, 700, '14px', '#64748b'), textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{h}</th>
+                              <th key={h} className="text-left px-5 py-3 text-[11px] font-bold t-secondary uppercase tracking-[0.06em] whitespace-nowrap">{h}</th>
                             ))}
                           </tr>
                         </thead>
@@ -863,24 +628,21 @@ export default function LMSCourse() {
                             const pct = g.max_marks && g.marks != null ? Math.round((g.marks / g.max_marks) * 100) : null
                             const col = pct == null ? '#94a3b8' : pct >= 75 ? '#16a34a' : pct >= 50 ? '#d97706' : '#dc2626'
                             return (
-                              <tr key={g.id ?? i} style={{ borderBottom: i < grades.length - 1 ? '1px solid #f8fafc' : 'none' }}>
-                                <td style={{ padding: '14px 20px', ...pjs(14, 600, '20px', '#0f172a') }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <Award size={15} color="#d97706" />
-                                    {g.exam_type}
-                                  </div>
+                              <tr key={g.id ?? i} className={i < grades.length - 1 ? 'border-b border-slate-50' : ''}>
+                                <td className="px-5 py-3.5 t-md font-semibold t-primary">
+                                  <div className="flex items-center gap-2.5"><Award size={15} color="#d97706" />{g.exam_type}</div>
                                 </td>
-                                <td style={{ padding: '14px 20px', ...pjs(14, 700, '20px', '#0f172a') }}>{g.marks ?? '—'}</td>
-                                <td style={{ padding: '14px 20px', ...pjs(14, 400, '20px', '#64748b') }}>{g.max_marks ?? '—'}</td>
-                                <td style={{ padding: '14px 20px' }}>
+                                <td className="px-5 py-3.5 t-md font-bold t-primary">{g.marks ?? '—'}</td>
+                                <td className="px-5 py-3.5 t-md t-secondary">{g.max_marks ?? '—'}</td>
+                                <td className="px-5 py-3.5">
                                   {pct != null ? (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                      <div style={{ width: 72, height: 5, borderRadius: 99, background: '#f1f5f9', overflow: 'hidden' }}>
-                                        <div style={{ height: '100%', width: `${pct}%`, background: col, borderRadius: 99 }} />
+                                    <div className="flex items-center gap-2.5">
+                                      <div className="w-[72px] h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                                        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: col }} />
                                       </div>
-                                      <span style={pjs(13, 700, '18px', col)}>{pct}%</span>
+                                      <span className="t-md font-bold" style={{ color: col }}>{pct}%</span>
                                     </div>
-                                  ) : <span style={pjs(14, 400, '20px', '#94a3b8')}>—</span>}
+                                  ) : <span className="t-md t-subtle">—</span>}
                                 </td>
                               </tr>
                             )
@@ -893,65 +655,60 @@ export default function LMSCourse() {
               </div>
             )}
 
-            {/* ── ATTENDANCE ─────────────────────────────────── */}
+            {/* ── ATTENDANCE tab ── */}
             {activeTab === 'attendance' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {/* Summary card */}
+              <div className="flex flex-col gap-3.5">
                 {attSummary && (
-                  <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', padding: '24px 28px', boxShadow: '0 2px 12px rgba(0,0,0,0.03)' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1px 1fr 1px 1fr 1px 1fr', gap: 0, alignItems: 'center' }}>
-                      {/* Overall % */}
-                      <div style={{ textAlign: 'center', padding: '0 16px' }}>
-                        <div style={{ ...pjs(40, 800, '46px', attSummary.pct >= 75 ? '#16a34a' : attSummary.pct >= 60 ? '#d97706' : '#dc2626') }}>{attSummary.pct}%</div>
-                        <div style={{ ...pjs(11, 700, '16px', '#94a3b8'), textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 4 }}>OVERALL</div>
-                        {/* Mini bar */}
-                        <div style={{ height: 4, background: '#f1f5f9', borderRadius: 4, marginTop: 10, overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${attSummary.pct}%`, background: attSummary.pct >= 75 ? '#16a34a' : attSummary.pct >= 60 ? '#d97706' : '#dc2626', borderRadius: 4 }} />
+                  <div className="bg-white rounded-[20px] border border-slate-100 px-7 py-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
+                    <div className="grid items-center" style={{ gridTemplateColumns: '1fr 1px 1fr 1px 1fr 1px 1fr', gap: 0 }}>
+                      <div className="text-center px-4">
+                        <div className={`text-[40px] font-extrabold leading-[46px] ${attSummary.pct >= 75 ? 'text-green-600' : attSummary.pct >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
+                          {attSummary.pct}%
+                        </div>
+                        <div className="text-[11px] font-bold t-subtle uppercase tracking-[0.08em] mt-1">OVERALL</div>
+                        <div className="h-1 bg-slate-100 rounded-full mt-2.5 overflow-hidden">
+                          <div className="h-full rounded-full" style={{ width: `${attSummary.pct}%`, background: attSummary.pct >= 75 ? '#16a34a' : attSummary.pct >= 60 ? '#d97706' : '#dc2626' }} />
                         </div>
                       </div>
-                      <div style={{ height: 60, background: '#f1f5f9' }} />
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={pjs(28, 800, '34px', '#0f172a')}>{attSummary.total}</div>
-                        <div style={pjs(11, 600, '16px', '#94a3b8')}>Total Classes</div>
+                      <div className="h-[60px] bg-slate-100" />
+                      <div className="text-center">
+                        <div className="text-[28px] font-extrabold t-primary">{attSummary.total}</div>
+                        <div className="text-[11px] font-semibold t-subtle">Total Classes</div>
                       </div>
-                      <div style={{ height: 60, background: '#f1f5f9' }} />
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={pjs(28, 800, '34px', '#16a34a')}>{attSummary.present + attSummary.late}</div>
-                        <div style={pjs(11, 600, '16px', '#94a3b8')}>Present / Late</div>
+                      <div className="h-[60px] bg-slate-100" />
+                      <div className="text-center">
+                        <div className="text-[28px] font-extrabold text-success">{attSummary.present + attSummary.late}</div>
+                        <div className="text-[11px] font-semibold t-subtle">Present / Late</div>
                       </div>
-                      <div style={{ height: 60, background: '#f1f5f9' }} />
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={pjs(28, 800, '34px', '#dc2626')}>{attSummary.absent}</div>
-                        <div style={pjs(11, 600, '16px', '#94a3b8')}>Absent</div>
+                      <div className="h-[60px] bg-slate-100" />
+                      <div className="text-center">
+                        <div className="text-[28px] font-extrabold text-danger">{attSummary.absent}</div>
+                        <div className="text-[11px] font-semibold t-subtle">Absent</div>
                       </div>
                     </div>
                     {attSummary.pct < 75 && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 18, padding: '12px 16px', borderRadius: 10, background: '#fee2e2', border: '1px solid #fecaca' }}>
-                        <AlertCircle size={16} color="#dc2626" />
-                        <span style={pjs(13, 600, '18px', '#dc2626')}>Attendance below 75% — attend classes regularly to avoid detainment.</span>
+                      <div className="flex items-center gap-2.5 mt-[18px] px-4 py-3 rounded-[10px] bg-danger-light border border-danger-border">
+                        <AlertCircle size={16} className="text-danger shrink-0" />
+                        <span className="t-md font-semibold text-danger">Attendance below 75% — attend classes regularly to avoid detainment.</span>
                       </div>
                     )}
                   </div>
                 )}
 
-                {/* Attendance log */}
                 {attendance.length === 0 ? (
-                  <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9' }}>
+                  <div className="bg-white rounded-[20px] border border-slate-100">
                     <EmptyState Icon={CalendarCheck} title="No records yet" sub="Your attendance will appear here once it's been marked." />
                   </div>
                 ) : (
-                  <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', overflow: 'hidden' }}>
+                  <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
                     {attendance.map((rec, i) => (
-                      <div key={rec.id ?? i} style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '13px 20px',
-                        borderBottom: i < attendance.length - 1 ? '1px solid #f8fafc' : 'none',
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                          <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <CalendarCheck size={15} color="#94a3b8" />
+                      <div key={rec.id ?? i}
+                        className={`flex items-center justify-between px-5 py-3 ${i < attendance.length - 1 ? 'border-b border-slate-50' : ''}`}>
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-[10px] bg-surface flex items-center justify-center">
+                            <CalendarCheck size={15} className="t-subtle" />
                           </div>
-                          <span style={pjs(14, 500, '20px', '#0f172a')}>
+                          <span className="t-base font-medium t-primary">
                             {new Date(rec.date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
                           </span>
                         </div>
@@ -966,61 +723,36 @@ export default function LMSCourse() {
         )}
       </div>
 
+      {/* HTML content modal */}
       {viewHtmlModal.open && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999,
-          background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
-        }}>
-          <div style={{
-            background: '#fff', borderRadius: 20, width: '100%', maxWidth: 800,
-            maxHeight: '90vh', display: 'flex', flexDirection: 'column',
-            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)'
-          }}>
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, ...pjs(18, 700, '24px', '#0f172a') }}>{viewHtmlModal.title}</h3>
-              <button 
-                onClick={() => setViewHtmlModal({ open: false, title: '', src: '', description: '' })} 
-                style={{ background: '#f8fafc', border: 'none', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}
-              >
+        <div className="fixed inset-0 z-[99999] bg-ink/60 backdrop-blur-sm flex items-center justify-center p-5"
+          onClick={() => setViewHtmlModal({ open: false, title: '', src: '', description: '' })}>
+          <div className="bg-white rounded-[20px] w-full max-w-[800px] max-h-[90vh] flex flex-col shadow-[0_25px_50px_rgba(0,0,0,0.25)]"
+            onClick={e => e.stopPropagation()}>
+            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
+              <h3 className="m-0 t-heading-lg t-primary">{viewHtmlModal.title}</h3>
+              <button onClick={() => setViewHtmlModal({ open: false, title: '', src: '', description: '' })}
+                className="w-9 h-9 rounded-full bg-surface border-none flex items-center justify-center cursor-pointer t-secondary">
                 <X size={20} />
               </button>
             </div>
-            <div style={{ flex: 1, padding: 0, overflowY: 'auto', borderRadius: '0 0 20px 20px', display: 'flex', flexDirection: 'column' }}>
+            <div className="flex-1 overflow-y-auto rounded-b-[20px] flex flex-col">
               {viewHtmlModal.description && (
-                <div 
-                  className="moodle-html-content"
-                  style={{ padding: '24px', background: '#fff', borderBottom: viewHtmlModal.src ? '1px solid #f1f5f9' : 'none', ...pjs(15, 400, '1.6', '#334155') }}
-                  dangerouslySetInnerHTML={{ __html: viewHtmlModal.description }}
-                />
+                <div className={`moodle-html-content p-6 bg-white t-base t-muted leading-[1.6] ${viewHtmlModal.src ? 'border-b border-slate-100' : ''}`}
+                  dangerouslySetInnerHTML={{ __html: viewHtmlModal.description }} />
               )}
               {viewHtmlModal.src && (
-                <iframe 
-                  src={viewHtmlModal.src} 
-                  width="100%" 
-                  style={{ border: 'none', background: '#fff', minHeight: '60vh', flex: 1 }} 
-                  title={viewHtmlModal.title} 
-                  sandbox="allow-same-origin allow-scripts"
+                <iframe src={viewHtmlModal.src} width="100%" className="border-none bg-white flex-1" style={{ minHeight: '60vh' }}
+                  title={viewHtmlModal.title} sandbox="allow-same-origin allow-scripts"
                   onLoad={(e) => {
                     try {
-                      const doc = e.target.contentDocument || e.target.contentWindow?.document;
-                      if (!doc) return;
-                      const style = doc.createElement('style');
-                      style.innerHTML = `
-                        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; padding: 24px !important; margin: 0 !important; color: #334155 !important; font-size: 15px !important; line-height: 1.6 !important; }
-                        * { max-width: 100% !important; word-wrap: break-word !important; white-space: normal !important; overflow-wrap: break-word !important; }
-                        table { width: 100% !important; table-layout: auto !important; }
-                        img, video { max-width: 100% !important; height: auto !important; }
-                        /* Restore list styles */
-                        ul { list-style-type: disc !important; padding-left: 1.5rem !important; margin: 0.5rem 0 !important; }
-                        ol { list-style-type: decimal !important; padding-left: 1.5rem !important; margin: 0.5rem 0 !important; }
-                      `;
-                      doc.head.appendChild(style);
-                      // Give it a brief moment to render the new styles before measuring height
-                      setTimeout(() => {
-                        e.target.style.height = (doc.documentElement.scrollHeight + 50) + 'px';
-                      }, 50);
-                    } catch(err) { }
+                      const doc = e.target.contentDocument || e.target.contentWindow?.document
+                      if (!doc) return
+                      const style = doc.createElement('style')
+                      style.innerHTML = `body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; padding: 24px !important; margin: 0 !important; color: #334155 !important; font-size: 15px !important; line-height: 1.6 !important; } * { max-width: 100% !important; word-wrap: break-word !important; white-space: normal !important; overflow-wrap: break-word !important; } table { width: 100% !important; table-layout: auto !important; } img, video { max-width: 100% !important; height: auto !important; } ul { list-style-type: disc !important; padding-left: 1.5rem !important; margin: 0.5rem 0 !important; } ol { list-style-type: decimal !important; padding-left: 1.5rem !important; margin: 0.5rem 0 !important; }`
+                      doc.head.appendChild(style)
+                      setTimeout(() => { e.target.style.height = (doc.documentElement.scrollHeight + 50) + 'px' }, 50)
+                    } catch {}
                   }}
                 />
               )}

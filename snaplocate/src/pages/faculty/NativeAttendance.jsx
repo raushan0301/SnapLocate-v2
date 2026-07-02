@@ -1,29 +1,27 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Link } from 'react-router-dom'
 import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
-import { ClipboardList, Plus, Check, X, Clock, ChevronDown, ChevronRight, Users, CalendarDays, Search } from 'lucide-react'
+import { ClipboardList, Plus, Check, Search } from 'lucide-react'
 
-const pjs = (sz, fw, lh, col) => ({ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: sz, fontWeight: fw, lineHeight: lh, color: col })
-const inp = { width: '100%', marginTop: 4, padding: '9px 12px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, fontFamily: "'Plus Jakarta Sans',sans-serif", outline: 'none', boxSizing: 'border-box' }
+const STATUS_CLS = {
+  P: { label: 'Present', activeCls: 'border-green-200 bg-green-50 text-green-600 font-bold',  badge: 'text-green-600 bg-green-50 border border-green-200' },
+  A: { label: 'Absent',  activeCls: 'border-red-200 bg-red-50 text-red-600 font-bold',         badge: 'text-red-600 bg-red-50 border border-red-200'   },
+  L: { label: 'Late',    activeCls: 'border-amber-200 bg-amber-50 text-amber-600 font-bold',   badge: 'text-amber-600 bg-amber-50 border border-amber-200' },
+}
+
+const fieldCls = 'w-full mt-1 px-3 py-[9px] rounded-[10px] border-[1.5px] border-slate-200 text-[14px] outline-none box-border focus:border-brand transition-colors'
 
 function Toast({ msg, type }) {
   if (!msg) return null
-  return <div style={{ position: 'fixed', bottom: 24, right: 24, background: type === 'error' ? '#dc2626' : '#0f172a', color: '#fff', padding: '12px 20px', borderRadius: 12, zIndex: 999, fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 600 }}>{msg}</div>
-}
-
-const STATUS_CONFIG = {
-  P: { label: 'Present', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
-  A: { label: 'Absent', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
-  L: { label: 'Late', color: '#d97706', bg: '#fffbeb', border: '#fde68a' },
+  return <div className={`fixed bottom-6 right-6 z-[999] px-5 py-3 rounded-[12px] text-white text-[14px] font-semibold ${type === 'error' ? 'bg-red-600' : 'bg-slate-900'}`}>{msg}</div>
 }
 
 function StatusBtn({ status, current, onClick }) {
-  const cfg = STATUS_CONFIG[status]
+  const cfg = STATUS_CLS[status]
   const active = current === status
   return (
     <button onClick={() => onClick(status)}
-      style={{ padding: '5px 12px', borderRadius: 8, border: `1.5px solid ${active ? cfg.border : '#e2e8f0'}`, background: active ? cfg.bg : '#fff', cursor: 'pointer', ...pjs(12, active ? 700 : 500, '16px', active ? cfg.color : '#94a3b8'), transition: 'all 0.15s' }}>
+      className={`px-3 py-[5px] rounded-[8px] border-[1.5px] text-[12px] cursor-pointer transition-all ${active ? cfg.activeCls : 'border-slate-200 bg-white text-slate-400 font-medium'}`}>
       {cfg.label}
     </button>
   )
@@ -34,7 +32,7 @@ export default function FacultyNativeAttendance() {
   const [selSection, setSelSection] = useState(null)
   const [sessions, setSessions] = useState([])
   const [students, setStudents] = useState([])
-  const [marks, setMarks] = useState({})  // { student_id: 'P'|'A'|'L' }
+  const [marks, setMarks] = useState({})
   const [selSession, setSelSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -45,7 +43,6 @@ export default function FacultyNativeAttendance() {
 
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3000) }
 
-  // Load faculty's sections from native LMS
   const loadSections = useCallback(async () => {
     try {
       const res = await api.get('/api/lms/native/faculty/my-sections')
@@ -60,7 +57,6 @@ export default function FacultyNativeAttendance() {
 
   useEffect(() => { loadSections() }, [loadSections])
 
-  // Load sessions + students when section changes
   useEffect(() => {
     if (!selSection) return
     loadSessions()
@@ -81,7 +77,6 @@ export default function FacultyNativeAttendance() {
       const res = await api.get(`/api/lms/native/admin/sections/${selSection.id}/enrollments`)
       if (res.success) {
         setStudents(res.data || [])
-        // Default all to Present
         const m = {}
         for (const s of res.data || []) m[s.student_id] = 'P'
         setMarks(m)
@@ -96,7 +91,6 @@ export default function FacultyNativeAttendance() {
       if (res.success) {
         const m = {}
         for (const r of res.data || []) m[r.student_id] = r.status
-        // fill any missing students with P
         for (const s of students) if (!m[s.student_id]) m[s.student_id] = 'P'
         setMarks(m)
       }
@@ -144,91 +138,90 @@ export default function FacultyNativeAttendance() {
   })
 
   const presentCount = Object.values(marks).filter(v => v === 'P').length
-  const absentCount = Object.values(marks).filter(v => v === 'A').length
-  const lateCount = Object.values(marks).filter(v => v === 'L').length
+  const absentCount  = Object.values(marks).filter(v => v === 'A').length
+  const lateCount    = Object.values(marks).filter(v => v === 'L').length
 
   return (
     <PageLayout>
       <Toast msg={toast?.msg} type={toast?.type} />
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+      <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 style={{ ...pjs(28, 800, '34px', '#0f172a'), margin: 0, letterSpacing: '-0.02em' }}>Attendance Register</h1>
-          <p style={{ ...pjs(13, 500, '18px', '#64748b'), marginTop: 4 }}>Native LMS · Mark daily class attendance</p>
+          <h1 className="text-[28px] font-extrabold t-primary m-0 tracking-[-0.02em]">Attendance Register</h1>
+          <p className="text-[13px] font-medium t-muted mt-1">Native LMS · Mark daily class attendance</p>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: 20, alignItems: 'start' }}>
+      <div className="grid gap-5 items-start" style={{ gridTemplateColumns: '240px 1fr' }}>
         {/* Left: Section picker */}
-        <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-          <div style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9', ...pjs(12, 700, '16px', '#94a3b8'), letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+        <div className="bg-white rounded-[20px] border border-slate-100 overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+          <div className="px-4 py-3.5 border-b border-slate-100 text-[12px] font-bold text-slate-400 uppercase tracking-[0.08em]">
             Your Sections
           </div>
           {loading ? (
-            <div style={{ padding: 24, ...pjs(13, 400, '18px', '#94a3b8'), textAlign: 'center' }}>Loading...</div>
+            <div className="p-6 text-[13px] t-muted text-center">Loading...</div>
           ) : sections.length === 0 ? (
-            <div style={{ padding: 20, ...pjs(13, 400, '18px', '#94a3b8'), textAlign: 'center' }}>No sections found</div>
+            <div className="p-5 text-[13px] t-muted text-center">No sections found</div>
           ) : sections.map(sec => {
             const active = selSection?.id === sec.id
             return (
               <div key={sec.id} onClick={() => { setSelSection(sec); setSelSession(null) }}
-                style={{ padding: '12px 16px', cursor: 'pointer', borderBottom: '1px solid #f8fafc', background: active ? '#eef2ff' : 'transparent', borderLeft: `3px solid ${active ? '#4f46e5' : 'transparent'}`, transition: 'all 0.15s' }}>
-                <div style={pjs(13, active ? 700 : 500, '18px', active ? '#4f46e5' : '#334155')}>{sec.course?.title}</div>
-                <div style={{ ...pjs(11, 400, '14px', '#94a3b8'), marginTop: 2 }}>Section {sec.section_name} · {sec.course?.code}</div>
+                className={`px-4 py-3 cursor-pointer border-b border-slate-50 transition-all ${active ? 'bg-indigo-50 border-l-[3px] border-l-brand' : 'bg-transparent border-l-[3px] border-l-transparent'}`}>
+                <div className={`text-[13px] leading-[18px] ${active ? 'font-bold text-brand' : 'font-medium text-slate-700'}`}>{sec.course?.title}</div>
+                <div className="text-[11px] t-muted mt-0.5">Section {sec.section_name} · {sec.course?.code}</div>
               </div>
             )
           })}
         </div>
 
         {/* Right: Attendance area */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="flex flex-col gap-4">
           {!selSection ? (
-            <div style={{ background: '#fff', borderRadius: 20, border: '1.5px dashed #e2e8f0', padding: '60px 24px', textAlign: 'center' }}>
-              <ClipboardList size={40} color="#e2e8f0" style={{ margin: '0 auto 12px', display: 'block' }} />
-              <div style={pjs(15, 600, '20px', '#0f172a')}>Select a section to start</div>
+            <div className="bg-white rounded-[20px] border-2 border-dashed border-slate-200 py-[60px] px-6 text-center">
+              <ClipboardList size={40} color="#e2e8f0" className="mx-auto mb-3 block" />
+              <div className="text-[15px] font-semibold t-primary">Select a section to start</div>
             </div>
           ) : (
             <>
               {/* Session selector */}
-              <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', padding: '16px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <div style={pjs(14, 700, '18px', '#0f172a')}>Class Sessions</div>
+              <div className="bg-white rounded-[20px] border border-slate-100 px-5 py-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-[14px] font-bold t-primary">Class Sessions</div>
                   <button onClick={() => setShowNewSession(s => !s)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: 'none', background: '#4f46e5', cursor: 'pointer', ...pjs(12, 700, '16px', '#fff') }}>
+                    className="flex items-center gap-1.5 px-3.5 py-[7px] rounded-[10px] border-0 bg-brand cursor-pointer text-[12px] font-bold text-white">
                     <Plus size={13} /> New Session
                   </button>
                 </div>
 
                 {showNewSession && (
-                  <div style={{ background: '#f8fafc', borderRadius: 12, padding: 14, marginBottom: 12, display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                    <div style={{ flex: 1, minWidth: 160 }}>
-                      <div style={pjs(12, 600, '16px', '#374151')}>Date</div>
-                      <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} style={{ ...inp, marginTop: 4 }} />
+                  <div className="bg-slate-50 rounded-[12px] p-3.5 mb-3 flex gap-2.5 items-end flex-wrap">
+                    <div className="flex-1 min-w-[160px]">
+                      <div className="text-[12px] font-semibold text-slate-700">Date</div>
+                      <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} className={fieldCls} />
                     </div>
                     <button onClick={handleCreateSession}
-                      style={{ padding: '9px 18px', borderRadius: 10, border: 'none', background: '#16a34a', cursor: 'pointer', ...pjs(13, 700, '18px', '#fff') }}>
+                      className="px-[18px] py-[9px] rounded-[10px] border-0 bg-green-600 cursor-pointer text-[13px] font-bold text-white">
                       Create
                     </button>
                     <button onClick={() => setShowNewSession(false)}
-                      style={{ padding: '9px 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', ...pjs(13, 600, '18px', '#64748b') }}>
+                      className="px-3.5 py-[9px] rounded-[10px] border-[1.5px] border-slate-200 bg-white cursor-pointer text-[13px] font-semibold t-muted">
                       Cancel
                     </button>
                   </div>
                 )}
 
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                <div className="flex flex-wrap gap-2">
                   {sessions.length === 0 ? (
-                    <span style={pjs(13, 400, '18px', '#94a3b8')}>No sessions yet. Create one above.</span>
+                    <span className="text-[13px] t-muted">No sessions yet. Create one above.</span>
                   ) : sessions.slice(0, 10).map(s => {
                     const active = selSession?.id === s.id
                     const pCount = (s.lms_attendance_records || []).filter(r => r.status === 'P').length
-                    const total = (s.lms_attendance_records || []).length
+                    const total  = (s.lms_attendance_records || []).length
                     return (
                       <button key={s.id} onClick={() => loadSessionRecords(s)}
-                        style={{ padding: '6px 14px', borderRadius: 10, border: `1.5px solid ${active ? '#4f46e5' : '#e2e8f0'}`, background: active ? '#eef2ff' : '#fff', cursor: 'pointer', textAlign: 'left' }}>
-                        <div style={pjs(12, 700, '16px', active ? '#4f46e5' : '#334155')}>{new Date(s.date + 'T12:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</div>
-                        {total > 0 && <div style={pjs(10, 400, '14px', '#94a3b8')}>{pCount}/{total}</div>}
+                        className={`px-3.5 py-1.5 rounded-[10px] border-[1.5px] cursor-pointer text-left ${active ? 'border-brand bg-indigo-50' : 'border-slate-200 bg-white'}`}>
+                        <div className={`text-[12px] font-bold ${active ? 'text-brand' : 'text-slate-700'}`}>{new Date(s.date + 'T12:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</div>
+                        {total > 0 && <div className="text-[10px] t-muted">{pCount}/{total}</div>}
                       </button>
                     )
                   })}
@@ -237,61 +230,58 @@ export default function FacultyNativeAttendance() {
 
               {/* Live stats */}
               {students.length > 0 && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10 }}>
+                <div className="grid grid-cols-4 gap-2.5">
                   {[
-                    { label: 'Total', val: students.length, col: '#4f46e5', bg: '#eef2ff' },
-                    { label: 'Present', val: presentCount, col: '#16a34a', bg: '#f0fdf4' },
-                    { label: 'Absent', val: absentCount, col: '#dc2626', bg: '#fef2f2' },
-                    { label: 'Late', val: lateCount, col: '#d97706', bg: '#fffbeb' },
-                  ].map(({ label, val, col, bg }) => (
-                    <div key={label} style={{ background: bg, borderRadius: 14, padding: '12px 16px', textAlign: 'center' }}>
-                      <div style={{ ...pjs(26, 800, '30px', col), fontVariantNumeric: 'tabular-nums' }}>{val}</div>
-                      <div style={pjs(11, 500, '14px', '#94a3b8')}>{label}</div>
+                    { label: 'Total',   val: students.length, cls: 'bg-indigo-50 text-brand' },
+                    { label: 'Present', val: presentCount,    cls: 'bg-green-50 text-green-600' },
+                    { label: 'Absent',  val: absentCount,     cls: 'bg-red-50 text-red-600' },
+                    { label: 'Late',    val: lateCount,       cls: 'bg-amber-50 text-amber-600' },
+                  ].map(({ label, val, cls }) => (
+                    <div key={label} className={`${cls} rounded-[14px] px-4 py-3 text-center`}>
+                      <div className="text-[26px] font-extrabold leading-[30px] tabular-nums">{val}</div>
+                      <div className="text-[11px] font-medium text-slate-400 mt-0.5">{label}</div>
                     </div>
                   ))}
                 </div>
               )}
 
               {/* Student list */}
-              <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-                <div style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-                  <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-                    <Search size={13} color="#94a3b8" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)' }} />
+              <div className="bg-white rounded-[20px] border border-slate-100 overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+                <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between gap-3 flex-wrap">
+                  <div className="relative flex-1 min-w-[200px]">
+                    <Search size={13} color="#94a3b8" className="absolute left-[11px] top-1/2 -translate-y-1/2" />
                     <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search student..."
-                      style={{ width: '100%', padding: '7px 10px 7px 30px', borderRadius: 9, border: '1.5px solid #e2e8f0', fontSize: 13, fontFamily: "'Plus Jakarta Sans',sans-serif", outline: 'none', boxSizing: 'border-box' }} />
+                      className="w-full py-[7px] pl-[30px] pr-2.5 rounded-[9px] border-[1.5px] border-slate-200 text-[13px] outline-none box-border focus:border-brand transition-colors" />
                   </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => markAll('P')} style={{ padding: '6px 12px', borderRadius: 8, border: '1.5px solid #bbf7d0', background: '#f0fdf4', cursor: 'pointer', ...pjs(12, 700, '16px', '#16a34a') }}>All Present</button>
-                    <button onClick={() => markAll('A')} style={{ padding: '6px 12px', borderRadius: 8, border: '1.5px solid #fecaca', background: '#fef2f2', cursor: 'pointer', ...pjs(12, 700, '16px', '#dc2626') }}>All Absent</button>
+                  <div className="flex gap-1.5">
+                    <button onClick={() => markAll('P')} className="px-3 py-1.5 rounded-[8px] border-[1.5px] border-green-200 bg-green-50 cursor-pointer text-[12px] font-bold text-green-600">All Present</button>
+                    <button onClick={() => markAll('A')} className="px-3 py-1.5 rounded-[8px] border-[1.5px] border-red-200 bg-red-50 cursor-pointer text-[12px] font-bold text-red-600">All Absent</button>
                   </div>
                 </div>
 
                 {students.length === 0 ? (
-                  <div style={{ padding: 40, textAlign: 'center', ...pjs(13, 400, '18px', '#94a3b8') }}>
+                  <div className="p-10 text-center text-[13px] t-muted">
                     No students enrolled in this section yet.
                   </div>
                 ) : filtered.map((s, i) => {
                   const name = s.users?.full_name || 'Unknown'
                   const roll = s.roll_number || '—'
-                  const cur = marks[s.student_id] || 'P'
-                  const cfg = STATUS_CONFIG[cur]
+                  const cur  = marks[s.student_id] || 'P'
+                  const cfg  = STATUS_CLS[cur]
                   return (
                     <div key={s.student_id}
-                      style={{ padding: '12px 20px', borderBottom: i < filtered.length - 1 ? '1px solid #f8fafc' : 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
-                      {/* Avatar */}
-                      <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#eef2ff,#e0e7ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <span style={pjs(13, 700, '16px', '#4f46e5')}>{name.charAt(0)}</span>
+                      className={`px-5 py-3 flex items-center gap-3 ${i < filtered.length - 1 ? 'border-b border-slate-50' : ''}`}>
+                      <div className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg,#eef2ff,#e0e7ff)' }}>
+                        <span className="text-[13px] font-bold text-brand">{name.charAt(0)}</span>
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={pjs(13, 600, '18px', '#0f172a')}>{name}</div>
-                        <div style={pjs(11, 400, '14px', '#94a3b8')}>Roll: {roll}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[13px] font-semibold t-primary">{name}</div>
+                        <div className="text-[11px] t-muted">Roll: {roll}</div>
                       </div>
-                      {/* Status badge */}
-                      <div style={{ ...pjs(11, 700, '14px', cfg.color), background: cfg.bg, border: `1px solid ${cfg.border}`, padding: '3px 8px', borderRadius: 6, minWidth: 56, textAlign: 'center' }}>
+                      <div className={`text-[11px] font-bold px-2 py-[3px] rounded-[6px] min-w-[56px] text-center ${cfg.badge}`}>
                         {cfg.label}
                       </div>
-                      {/* Buttons */}
-                      <div style={{ display: 'flex', gap: 4 }}>
+                      <div className="flex gap-1">
                         {['P', 'A', 'L'].map(st => (
                           <StatusBtn key={st} status={st} current={cur} onClick={v => setMarks(m => ({ ...m, [s.student_id]: v }))} />
                         ))}
@@ -300,14 +290,14 @@ export default function FacultyNativeAttendance() {
                   )
                 })}
 
-                {/* Submit bar */}
                 {students.length > 0 && (
-                  <div style={{ padding: '14px 20px', borderTop: '1.5px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fafafa' }}>
-                    <span style={pjs(13, 500, '18px', '#64748b')}>
+                  <div className="px-5 py-3.5 border-t-[1.5px] border-slate-100 flex items-center justify-between bg-slate-50">
+                    <span className="text-[13px] font-medium t-muted">
                       {selSession ? `Session: ${new Date(selSession.date + 'T12:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}` : '⚠️ Select or create a session first'}
                     </span>
                     <button onClick={handleSubmit} disabled={submitting || !selSession}
-                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 22px', borderRadius: 12, border: 'none', background: submitting || !selSession ? '#e2e8f0' : 'linear-gradient(135deg,#4f46e5,#6366f1)', color: '#fff', cursor: submitting || !selSession ? 'not-allowed' : 'pointer', ...pjs(14, 700, '20px', '#fff') }}>
+                      className={`flex items-center gap-2 px-[22px] py-2.5 rounded-[12px] border-0 text-white text-[14px] font-bold ${submitting || !selSession ? 'bg-slate-200 cursor-not-allowed' : 'cursor-pointer'}`}
+                      style={submitting || !selSession ? {} : { background: 'linear-gradient(135deg,#4f46e5,#6366f1)' }}>
                       <Check size={16} /> {submitting ? 'Saving...' : 'Submit Attendance'}
                     </button>
                   </div>

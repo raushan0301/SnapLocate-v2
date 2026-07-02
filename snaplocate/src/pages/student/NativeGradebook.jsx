@@ -1,14 +1,9 @@
 import { useState, useEffect } from 'react'
 import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
-import { BarChart2, TrendingUp, Award, BookOpen, ChevronDown } from 'lucide-react'
+import { BarChart2, Award, BookOpen, ChevronDown } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
-const pjs = (sz, fw, lh, col) => ({
-  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: sz, fontWeight: fw, lineHeight: lh, color: col
-})
-
-// Thapar 10-pt grading scale
 const GRADE_SCALE = [
   { min: 90, grade: 'A+', points: 10, color: '#16a34a' },
   { min: 80, grade: 'A',  points: 9,  color: '#22c55e' },
@@ -28,8 +23,8 @@ function getGrade(pct) {
 function ScoreBar({ obtained, max, color }) {
   const pct = max > 0 ? Math.min(100, Math.round((obtained / max) * 100)) : 0
   return (
-    <div style={{ position: 'relative', height: 6, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden', margin: '6px 0 2px' }}>
-      <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${pct}%`, background: color || '#4f46e5', borderRadius: 4, transition: 'width 0.6s ease' }} />
+    <div className="relative h-1.5 bg-slate-100 rounded-full overflow-hidden my-1.5">
+      <div className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-500" style={{ width: `${pct}%`, background: color || '#4f46e5' }} />
     </div>
   )
 }
@@ -37,91 +32,80 @@ function ScoreBar({ obtained, max, color }) {
 function CourseCard({ courseData }) {
   const [open, setOpen] = useState(false)
   const { course, section_name, components, final_percentage } = courseData
-  const grade = getGrade(final_percentage)
+  const grade      = getGrade(final_percentage)
   const hasAnyMark = components.some(c => c.marks_obtained != null)
 
   return (
-    <div style={{ background: '#fff', borderRadius: 20, border: `1.5px solid ${open ? '#c7d2fe' : '#f1f5f9'}`, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', overflow: 'hidden', transition: 'border-color 0.2s' }}>
-      {/* Header row */}
-      <div onClick={() => setOpen(o => !o)} style={{ padding: '18px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg,#eef2ff,#e0e7ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <BookOpen size={20} color="#4f46e5" />
+    <div className={`bg-white rounded-[20px] border-[1.5px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden transition-colors ${open ? 'border-indigo-200' : 'border-slate-100'}`}>
+      <div onClick={() => setOpen(o => !o)} className="px-5 py-[18px] cursor-pointer flex items-center gap-3.5">
+        <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br from-indigo-50 to-indigo-100">
+          <BookOpen size={20} className="text-brand" />
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ ...pjs(14, 700, '20px', '#0f172a'), whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {course.title}
-          </div>
-          <div style={{ ...pjs(11, 500, '14px', '#94a3b8'), marginTop: 2 }}>
-            {course.code} · Section {section_name} · Sem {course.semester}
-          </div>
+        <div className="flex-1 min-w-0">
+          <div className="t-base font-bold t-primary truncate">{course.title}</div>
+          <div className="text-[11px] font-medium t-subtle mt-0.5">{course.code} · Section {section_name} · Sem {course.semester}</div>
         </div>
-
-        {/* Grade badge */}
         {grade && hasAnyMark ? (
-          <div style={{ display: 'flex', flex: 0, flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: grade.color, fontFamily: "'Plus Jakarta Sans',sans-serif", lineHeight: 1 }}>{grade.grade}</div>
-            <div style={{ ...pjs(10, 600, '12px', '#94a3b8') }}>{final_percentage}%</div>
+          <div className="flex flex-col items-center gap-0.5">
+            <div className="text-[22px] font-extrabold leading-none" style={{ color: grade.color }}>{grade.grade}</div>
+            <div className="text-[10px] font-semibold t-subtle">{final_percentage}%</div>
           </div>
         ) : (
-          <div style={{ ...pjs(12, 500, '16px', '#94a3b8') }}>—</div>
+          <div className="t-md font-medium t-subtle">—</div>
         )}
-        <ChevronDown size={15} color="#94a3b8" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }} />
+        <ChevronDown size={15} className={`text-slate-400 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
       </div>
 
-      {/* Expanded: component breakdown */}
       {open && (
-        <div style={{ padding: '0 20px 20px', borderTop: '1px solid #f8fafc' }}>
-          {/* Component grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 10, marginTop: 16 }}>
+        <div className="px-5 pb-5 border-t border-slate-50">
+          <div className="grid gap-2.5 mt-4" style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))' }}>
             {components.map(comp => {
               const pct = comp.percentage
-              const g = getGrade(pct)
+              const g   = getGrade(pct)
+              const isInternal = comp.type === 'internal'
               return (
-                <div key={comp.id} style={{ background: '#f8fafc', borderRadius: 14, padding: '14px 16px', border: '1px solid #f1f5f9' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ ...pjs(11, 700, '14px', '#94a3b8'), textTransform: 'uppercase', letterSpacing: '0.06em' }}>{comp.name}</div>
-                    <span style={{ ...pjs(10, 600, '12px', comp.type === 'internal' ? '#4f46e5' : '#d97706'), background: comp.type === 'internal' ? '#eef2ff' : '#fffbeb', border: `1px solid ${comp.type === 'internal' ? '#c7d2fe' : '#fde68a'}`, padding: '2px 7px', borderRadius: 5 }}>
+                <div key={comp.id} className="bg-surface rounded-2xl px-4 py-3.5 border border-slate-100">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <div className="text-[11px] font-bold t-subtle uppercase tracking-[0.06em]">{comp.name}</div>
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${isInternal ? 'text-brand bg-brand-light border-brand-border' : 'text-amber-600 bg-amber-50 border-amber-200'}`}>
                       {comp.type}
                     </span>
                   </div>
                   {comp.marks_obtained != null ? (
                     <>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 8 }}>
-                        <span style={{ ...pjs(22, 800, '26px', g?.color || '#0f172a'), fontVariantNumeric: 'tabular-nums' }}>{comp.marks_obtained}</span>
-                        <span style={{ ...pjs(13, 400, '18px', '#94a3b8') }}>/ {comp.max_marks}</span>
+                      <div className="flex items-baseline gap-1 mt-2">
+                        <span className="text-[22px] font-extrabold tabular-nums" style={{ color: g?.color || '#0f172a' }}>{comp.marks_obtained}</span>
+                        <span className="text-[13px] t-subtle">/ {comp.max_marks}</span>
                       </div>
                       <ScoreBar obtained={comp.marks_obtained} max={comp.max_marks} color={g?.color} />
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ ...pjs(11, 600, '14px', '#94a3b8') }}>{pct}%</span>
-                        {g && <span style={{ ...pjs(12, 700, '14px', g.color) }}>{g.grade}</span>}
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-semibold t-subtle">{pct}%</span>
+                        {g && <span className="text-[12px] font-bold" style={{ color: g.color }}>{g.grade}</span>}
                       </div>
                       {comp.weightage_percent && (
-                        <div style={{ ...pjs(10, 400, '14px', '#94a3b8'), marginTop: 4 }}>Weight: {comp.weightage_percent}%</div>
+                        <div className="text-[10px] t-subtle mt-1">Weight: {comp.weightage_percent}%</div>
                       )}
                     </>
                   ) : (
-                    <div style={{ ...pjs(13, 400, '18px', '#94a3b8'), marginTop: 10 }}>Not graded yet</div>
+                    <div className="t-md t-subtle mt-2.5">Not graded yet</div>
                   )}
                 </div>
               )
             })}
           </div>
 
-          {/* Weighted total footer */}
           {hasAnyMark && (
-            <div style={{ marginTop: 14, background: 'linear-gradient(135deg,#eef2ff,#e0e7ff)', borderRadius: 14, padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div className="mt-3.5 rounded-2xl px-4 sm:px-5 py-3.5 flex items-center justify-between bg-gradient-to-br from-indigo-50 to-indigo-100">
               <div>
-                <div style={pjs(12, 600, '16px', '#4f46e5')}>Weighted Score</div>
-                <div style={{ ...pjs(11, 400, '14px', '#6366f1'), marginTop: 2 }}>Based on components with weightage</div>
+                <div className="text-[12px] font-semibold text-brand">Weighted Score</div>
+                <div className="text-[11px] text-indigo-400 mt-0.5">Based on components with weightage</div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ ...pjs(28, 800, '32px', '#4f46e5'), fontVariantNumeric: 'tabular-nums' }}>{final_percentage ?? '—'}%</div>
-                </div>
+              <div className="flex items-center gap-4">
+                <div className="text-[28px] font-extrabold text-brand tabular-nums">{final_percentage ?? '—'}%</div>
                 {grade && (
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ ...pjs(28, 800, '32px', grade.color) }}>{grade.grade}</div>
-                    <div style={{ ...pjs(11, 600, '14px', '#94a3b8') }}>{grade.points}/10</div>
+                  <div className="text-center">
+                    <div className="text-[28px] font-extrabold" style={{ color: grade.color }}>{grade.grade}</div>
+                    <div className="text-[11px] font-semibold t-subtle">{grade.points}/10</div>
                   </div>
                 )}
               </div>
@@ -145,67 +129,62 @@ export default function NativeGradebook() {
       .finally(() => setLoading(false))
   }, [user?.id])
 
-  // Estimated SGPA
   const gradedCourses = courses.filter(c => c.final_percentage != null)
   const sgpa = gradedCourses.length > 0
     ? (gradedCourses.reduce((s, c) => s + (getGrade(c.final_percentage)?.points || 0), 0) / gradedCourses.length).toFixed(2)
     : null
 
-  const stats = [
-    { label: 'Enrolled Courses', val: courses.length, color: '#4f46e5', bg: '#eef2ff' },
-    { label: 'Graded Courses',   val: gradedCourses.length, color: '#16a34a', bg: '#f0fdf4' },
-    { label: 'Est. SGPA',        val: sgpa ?? '—', color: '#d97706', bg: '#fffbeb' },
-    { label: 'Components Total', val: courses.reduce((s, c) => s + c.components.length, 0), color: '#0284c7', bg: '#f0f9ff' },
+  const STATS = [
+    { label: 'Enrolled Courses',  val: courses.length,                                         cls: 'bg-brand-light',   valCls: 'text-brand'     },
+    { label: 'Graded Courses',    val: gradedCourses.length,                                   cls: 'bg-green-50',      valCls: 'text-green-600' },
+    { label: 'Est. SGPA',         val: sgpa ?? '—',                                            cls: 'bg-amber-50',      valCls: 'text-amber-600' },
+    { label: 'Components Total',  val: courses.reduce((s, c) => s + c.components.length, 0),   cls: 'bg-sky-50',        valCls: 'text-sky-600'   },
   ]
 
   return (
     <PageLayout>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-        <div style={{ width: 46, height: 46, borderRadius: 14, background: 'linear-gradient(135deg,#fffbeb,#fef3c7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Award size={22} color="#d97706" />
+      <div className="flex items-start gap-3.5 mb-6">
+        <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 bg-amber-50">
+          <Award size={22} className="text-amber-600" />
         </div>
         <div>
-          <h1 style={{ ...pjs(26, 800, '32px', '#0f172a'), margin: 0, letterSpacing: '-0.02em' }}>Native Gradebook</h1>
-          <p style={{ ...pjs(13, 400, '18px', '#64748b'), margin: '4px 0 0' }}>Thapar 10-point grading scale · Internal & External components</p>
+          <h1 className="t-heading-xl t-primary m-0 tracking-tight">Native Gradebook</h1>
+          <p className="t-md t-muted mt-1 m-0">Thapar 10-point grading scale · Internal &amp; External components</p>
         </div>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
-        {stats.map(({ label, val, color, bg }) => (
-          <div key={label} style={{ background: bg, borderRadius: 16, padding: '14px 18px' }}>
-            <div style={{ ...pjs(26, 800, '30px', color), fontVariantNumeric: 'tabular-nums' }}>{val}</div>
-            <div style={{ ...pjs(11, 500, '14px', '#94a3b8'), marginTop: 2 }}>{label}</div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {STATS.map(({ label, val, cls, valCls }) => (
+          <div key={label} className={`${cls} rounded-2xl px-4 sm:px-5 py-3.5`}>
+            <div className={`text-[26px] font-extrabold tabular-nums ${valCls}`}>{val}</div>
+            <div className="text-[11px] font-medium t-subtle mt-0.5">{label}</div>
           </div>
         ))}
       </div>
 
-      {/* Thapar grade scale legend */}
-      <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #f1f5f9', padding: '16px 20px' }}>
-        <div style={{ ...pjs(11, 700, '14px', '#94a3b8'), letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>Thapar Grade Scale</div>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      <div className="bg-white rounded-[18px] border border-slate-100 px-5 py-4">
+        <div className="text-[11px] font-bold t-subtle uppercase tracking-[0.08em] mb-3">Thapar Grade Scale</div>
+        <div className="flex gap-1.5 flex-wrap">
           {GRADE_SCALE.map(g => (
-            <div key={g.grade} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 8, background: '#f8fafc', border: '1px solid #f1f5f9' }}>
-              <span style={{ ...pjs(13, 800, '16px', g.color) }}>{g.grade}</span>
-              <span style={{ ...pjs(11, 400, '14px', '#94a3b8') }}>{g.points}/10</span>
-              <span style={{ ...pjs(10, 400, '12px', '#cbd5e1') }}>≥{g.min}%</span>
+            <div key={g.grade} className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface border border-slate-100">
+              <span className="text-[13px] font-extrabold" style={{ color: g.color }}>{g.grade}</span>
+              <span className="text-[11px] t-subtle">{g.points}/10</span>
+              <span className="text-[10px] text-slate-300">≥{g.min}%</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Course cards */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 60, ...pjs(14, 400, '20px', '#94a3b8') }}>Loading gradebook...</div>
+        <div className="py-16 text-center t-base t-subtle">Loading gradebook…</div>
       ) : courses.length === 0 ? (
-        <div style={{ background: '#fff', borderRadius: 20, border: '1.5px dashed #e2e8f0', padding: '60px 24px', textAlign: 'center' }}>
-          <BarChart2 size={40} color="#e2e8f0" style={{ margin: '0 auto 12px', display: 'block' }} />
-          <div style={pjs(15, 600, '20px', '#0f172a')}>No graded courses yet</div>
-          <div style={{ ...pjs(13, 400, '18px', '#94a3b8'), marginTop: 4 }}>Marks will appear here once your faculty posts grades.</div>
+        <div className="bg-white rounded-[20px] border-[1.5px] border-dashed border-slate-200 py-16 px-6 text-center">
+          <BarChart2 size={40} className="text-slate-200 mx-auto mb-3" />
+          <div className="t-base font-semibold t-primary">No graded courses yet</div>
+          <div className="t-md t-subtle mt-1">Marks will appear here once your faculty posts grades.</div>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="flex flex-col gap-2.5">
           {courses.map(c => <CourseCard key={c.course.id} courseData={c} />)}
         </div>
       )}

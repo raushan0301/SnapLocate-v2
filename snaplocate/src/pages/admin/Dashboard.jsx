@@ -3,98 +3,48 @@ import PageLayout from '../../components/PageLayout'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../lib/api'
 import {
-  Users,
-  UserCheck,
-  MapPin,
-  LifeBuoy,
-  Activity,
-  ShieldCheck,
-  ArrowRight,
-  Bell,
-  Calendar,
-  FileText,
-  MousePointerClick,
-  Megaphone,
+  Users, UserCheck, MapPin, LifeBuoy, Activity, ShieldCheck,
+  ArrowRight, Bell, Calendar, FileText, MousePointerClick, Megaphone,
 } from 'lucide-react'
 
-// ─── Typography helpers ───────────────────────────────────────
-const pjs = (size, weight, lh, color) => ({
-  fontFamily: "'Plus Jakarta Sans', sans-serif",
-  fontSize: size, fontWeight: weight, lineHeight: lh, color, margin: 0,
-})
-const inter = (size, weight, lh, color) => ({
-  fontFamily: "'Inter', sans-serif",
-  fontSize: size, fontWeight: weight, lineHeight: lh, color, margin: 0,
-})
+const ACTIVITY_CLS = {
+  Warning: 'bg-rose-50 text-rose-600 border border-rose-200',
+  Success: 'bg-green-50 text-green-700 border border-green-200',
+  Info:    'bg-blue-50 text-blue-600 border border-blue-200',
+}
 
-// ─── Stat Card ────────────────────────────────────────────────
 const StatCard = ({ title, value, subtitle, icon: Icon, color, alert }) => (
-  <div style={{
-    background: '#fff', borderRadius: 20, padding: 24,
-    border: '1px solid #f1f5f9', boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-    display: 'flex', flexDirection: 'column', gap: 14,
-  }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-      <div style={{
-        width: 44, height: 44, borderRadius: 12, background: `${color}15`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', color,
-      }}>
+  <div className="bg-white rounded-[20px] p-6 border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex flex-col gap-3.5">
+    <div className="flex justify-between items-start">
+      <div className="w-11 h-11 rounded-[12px] flex items-center justify-center shrink-0" style={{ background: `${color}15`, color }}>
         <Icon size={22} />
       </div>
       {alert && (
-        <span style={{
-          ...inter(11, 700, '14px', '#dc2626'),
-          background: '#fef2f2', padding: '3px 8px', borderRadius: 6,
-          border: '1px solid #fecaca',
-        }}>
-          {alert}
-        </span>
+        <span className="text-[11px] font-bold text-red-600 bg-red-50 px-2 py-[3px] rounded-[6px] border border-red-200">{alert}</span>
       )}
     </div>
     <div>
-      <div style={pjs(13, 600, '18px', '#64748b')}>{title}</div>
-      <div style={{ ...pjs(30, 800, '38px', '#0f172a'), marginTop: 4 }}>{value}</div>
-      <div style={{ ...pjs(12, 500, '16px', '#94a3b8'), marginTop: 4 }}>{subtitle}</div>
+      <div className="text-[13px] font-semibold t-muted">{title}</div>
+      <div className="text-[30px] font-extrabold t-primary mt-1">{value}</div>
+      <div className="text-[12px] text-slate-400 mt-1">{subtitle}</div>
     </div>
   </div>
 )
 
-// ─── Quick Action Row ─────────────────────────────────────────
 const QuickAction = ({ icon: Icon, label, sub, color, onClick }) => (
-  <div
-    onClick={onClick}
-    style={{
-      display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
-      background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: 12,
-      cursor: 'pointer', transition: 'all 0.18s',
-    }}
-    onMouseEnter={e => {
-      e.currentTarget.style.background = '#fff'
-      e.currentTarget.style.borderColor = color
-      e.currentTarget.style.boxShadow = `0 4px 12px ${color}18`
-    }}
-    onMouseLeave={e => {
-      e.currentTarget.style.background = '#f8fafc'
-      e.currentTarget.style.borderColor = '#f1f5f9'
-      e.currentTarget.style.boxShadow = 'none'
-    }}
-  >
-    <div style={{
-      width: 36, height: 36, borderRadius: 10, background: `${color}15`,
-      display: 'flex', alignItems: 'center', justifyContent: 'center', color,
-      flexShrink: 0,
-    }}>
+  <div onClick={onClick}
+    className="flex items-center gap-3 px-3.5 py-3 bg-slate-50 border border-slate-100 rounded-[12px] cursor-pointer transition-all hover:bg-white hover:shadow-md">
+    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: `${color}15`, color }}>
       <Icon size={18} />
     </div>
-    <div style={{ flex: 1, minWidth: 0 }}>
-      <div style={pjs(13, 700, '18px', '#0f172a')}>{label}</div>
-      <div style={{ ...pjs(11, 400, '15px', '#94a3b8'), marginTop: 2 }}>{sub}</div>
+    <div className="flex-1 min-w-0">
+      <div className="text-[13px] font-bold t-primary">{label}</div>
+      <div className="text-[11px] text-slate-400 mt-0.5">{sub}</div>
     </div>
     <ArrowRight size={15} color="#cbd5e1" />
   </div>
 )
 
-// ─── Main Component ───────────────────────────────────────────
 export default function AdminDashboard() {
   const { user } = useAuth()
   const [stats, setStats] = useState(null)
@@ -118,163 +68,73 @@ export default function AdminDashboard() {
     return () => clearInterval(timer)
   }, [])
 
-  const activityColors = {
-    Warning: { bg: '#fff1f2', text: '#e11d48', border: '#fda4af' },
-    Success: { bg: '#f0fdf4', text: '#16a34a', border: '#86efac' },
-    Info:    { bg: '#eff6ff', text: '#2563eb', border: '#93c5fd' },
-  }
-
   const firstName = user?.full_name?.split(' ')[0] || 'Admin'
 
   return (
     <PageLayout>
-      <style>{`
-        .dash-stats   { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-        .dash-middle  { display: grid; grid-template-columns: 3fr 2fr;       gap: 24px; }
-        .dash-bottom  { display: grid; grid-template-columns: 1fr 1fr;       gap: 24px; }
-        .dash-time    { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-        @media (max-width: 1100px) {
-          .dash-middle { grid-template-columns: 1fr; }
-        }
-        @media (max-width: 900px) {
-          .dash-stats  { grid-template-columns: repeat(2, 1fr); }
-          .dash-bottom { grid-template-columns: 1fr; }
-        }
-        @media (max-width: 640px) {
-          .dash-stats  { grid-template-columns: 1fr 1fr; gap: 14px; }
-          .dash-time   { display: none; }
-        }
-        @media (max-width: 480px) {
-          .dash-stats  { grid-template-columns: 1fr; }
-        }
-      `}</style>
-
-      {/* ── 1. Page Header ───────────────────────────────────── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Header */}
+      <div className="flex justify-between items-center">
         <div>
-          <span style={{
-            ...pjs(11, 700, '15px', '#4f46e5'),
-            background: '#eef2ff', padding: '4px 10px', borderRadius: 6,
-            textTransform: 'uppercase', letterSpacing: '0.06em',
-          }}>
+          <span className="text-[11px] font-bold text-brand bg-indigo-50 px-2.5 py-1 rounded-[6px] uppercase tracking-[0.06em]">
             System Administrator
           </span>
-          <h1 style={{ ...pjs(28, 800, '36px', '#0f172a'), marginTop: 10 }}>
+          <h1 className="text-[28px] font-extrabold t-primary mt-2.5 mb-0">
             Good {time.getHours() < 12 ? 'morning' : time.getHours() < 17 ? 'afternoon' : 'evening'}, {firstName}
           </h1>
-          <p style={{ ...pjs(14, 400, '22px', '#64748b'), marginTop: 4 }}>
-            Here's what's happening on campus right now.
-          </p>
+          <p className="text-[14px] t-muted mt-1 mb-0">Here's what's happening on campus right now.</p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div className="dash-time">
-            <div style={pjs(16, 700, '22px', '#0f172a')}>
-              {time.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
-            </div>
-            <div style={pjs(12, 500, '16px', '#94a3b8')}>
-              {time.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-            </div>
+        <div className="flex items-center gap-4">
+          <div className="hidden sm:flex flex-col items-end gap-0.5">
+            <div className="text-[16px] font-bold t-primary">{time.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</div>
+            <div className="text-[12px] text-slate-400">{time.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
           </div>
-          <button
-            onClick={fetchStats}
-            title="Refresh stats"
-            style={{
-              width: 40, height: 40, borderRadius: 10,
-              border: '1px solid #e2e8f0', background: '#fff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', color: '#64748b', transition: 'all 0.2s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.borderColor = '#4f46e5'; e.currentTarget.style.color = '#4f46e5' }}
-            onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.color = '#64748b' }}
-          >
+          <button onClick={fetchStats} title="Refresh stats"
+            className="w-10 h-10 rounded-[10px] border border-slate-200 bg-white flex items-center justify-center cursor-pointer text-slate-500 transition-all hover:bg-slate-50 hover:border-brand hover:text-brand">
             <Activity size={18} />
           </button>
         </div>
       </div>
 
-      {/* ── 2. Stats Grid (4 cards) ───────────────────────────── */}
-      <div className="dash-stats">
-        <StatCard
-          title="Total Students"
-          value={loading ? '—' : (stats?.total_students ?? 0).toLocaleString()}
-          subtitle="Registered accounts"
-          icon={Users} color="#4f46e5"
-        />
-        <StatCard
-          title="Active Faculty"
-          value={loading ? '—' : (stats?.total_faculty ?? 0).toLocaleString()}
-          subtitle="Faculty accounts"
-          icon={UserCheck} color="#0891b2"
-        />
-        <StatCard
-          title="Classrooms"
-          value={loading ? '—' : (stats?.total_classrooms ?? 0).toLocaleString()}
-          subtitle="Rooms & labs"
-          icon={MapPin} color="#d97706"
-        />
-        <StatCard
-          title="Open Tickets"
-          value={loading ? '—' : (stats?.open_tickets ?? 0).toLocaleString()}
-          subtitle="Requiring attention"
-          icon={LifeBuoy} color="#ef4444"
-          alert={!loading && (stats?.open_tickets ?? 0) > 5 ? 'Action Needed' : null}
-        />
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+        <StatCard title="Total Students" value={loading ? '—' : (stats?.total_students ?? 0).toLocaleString()} subtitle="Registered accounts" icon={Users} color="#4f46e5" />
+        <StatCard title="Active Faculty" value={loading ? '—' : (stats?.total_faculty ?? 0).toLocaleString()} subtitle="Faculty accounts" icon={UserCheck} color="#0891b2" />
+        <StatCard title="Classrooms" value={loading ? '—' : (stats?.total_classrooms ?? 0).toLocaleString()} subtitle="Rooms & labs" icon={MapPin} color="#d97706" />
+        <StatCard title="Open Tickets" value={loading ? '—' : (stats?.open_tickets ?? 0).toLocaleString()} subtitle="Requiring attention" icon={LifeBuoy} color="#ef4444"
+          alert={!loading && (stats?.open_tickets ?? 0) > 5 ? 'Action Needed' : null} />
       </div>
 
-      {/* ── 3. Middle Row ─────────────────────────────────────── */}
-      <div className="dash-middle">
+      {/* Middle Row */}
+      <div className="grid grid-cols-1 xl:grid-cols-[3fr_2fr] gap-6">
 
         {/* Activity Log */}
-        <div style={{
-          background: '#fff', borderRadius: 20, padding: 24,
-          border: '1px solid #f1f5f9', boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#4f46e5' }} />
-              <h2 style={pjs(16, 700, '22px', '#0f172a')}>Real-Time Campus Log</h2>
+        <div className="bg-white rounded-[20px] p-6 border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+          <div className="flex justify-between items-center mb-5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-2 h-2 rounded-full bg-brand" />
+              <h2 className="text-[16px] font-bold t-primary m-0">Real-Time Campus Log</h2>
             </div>
-            <button
-              onClick={() => window.location.href = '/admin/support'}
-              style={{ ...inter(13, 600, '18px', '#4f46e5'), background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 8px', borderRadius: 6 }}
-              onMouseEnter={e => e.currentTarget.style.background = '#eef2ff'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-            >
+            <button onClick={() => window.location.href = '/admin/support'}
+              className="text-[13px] font-semibold text-brand bg-transparent border-0 cursor-pointer px-2 py-1 rounded-[6px] hover:bg-indigo-50 transition-colors">
               View All →
             </button>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="flex flex-col">
             {loading ? (
-              <div style={{ padding: '48px 0', textAlign: 'center', ...pjs(14, 500, '20px', '#94a3b8') }}>
-                Aggregating system logs...
-              </div>
+              <div className="py-12 text-center text-[14px] t-muted">Aggregating system logs...</div>
             ) : (stats?.recent_activity || []).map((log, i, arr) => {
-              const theme = activityColors[log.type] || activityColors.Info
+              const chipCls = ACTIVITY_CLS[log.type] || ACTIVITY_CLS.Info
               return (
-                <div key={i} style={{
-                  display: 'flex', gap: 16, padding: '16px 0',
-                  borderBottom: i < arr.length - 1 ? '1px solid #f8fafc' : 'none',
-                }}>
-                  <div style={{
-                    width: 72, flexShrink: 0, ...pjs(11, 700, '16px', '#94a3b8'),
-                    paddingTop: 3, textAlign: 'right',
-                  }}>
-                    {log.time}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
-                      <span style={pjs(14, 700, '20px', '#0f172a')}>{log.title}</span>
-                      <span style={{
-                        padding: '2px 7px', borderRadius: 5, fontSize: 10, fontWeight: 700,
-                        background: theme.bg, color: theme.text, border: `1px solid ${theme.border}`,
-                        textTransform: 'uppercase', letterSpacing: '0.04em',
-                      }}>
-                        {log.type}
-                      </span>
+                <div key={i} className={`flex gap-4 py-4 ${i < arr.length - 1 ? 'border-b border-slate-50' : ''}`}>
+                  <div className="w-[72px] shrink-0 text-[11px] font-bold text-slate-400 pt-[3px] text-right">{log.time}</div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="text-[14px] font-bold t-primary">{log.title}</span>
+                      <span className={`px-[7px] py-[2px] rounded-[5px] text-[10px] font-bold uppercase tracking-[0.04em] ${chipCls}`}>{log.type}</span>
                     </div>
-                    <div style={pjs(12, 400, '18px', '#64748b')}>{log.desc}</div>
+                    <div className="text-[12px] t-muted">{log.desc}</div>
                   </div>
                 </div>
               )
@@ -282,66 +142,45 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Right column: Quick Actions + System Health */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {/* Right column */}
+        <div className="flex flex-col gap-5">
 
           {/* Quick Actions */}
-          <div style={{
-            background: '#fff', borderRadius: 20, padding: 24,
-            border: '1px solid #f1f5f9', boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-          }}>
-            <h3 style={{ ...pjs(15, 700, '20px', '#0f172a'), marginBottom: 16 }}>Quick Actions</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <QuickAction
-                icon={ShieldCheck} label="Manage Faculty" sub="Approve or update staff"
-                color="#4f46e5" onClick={() => window.location.href = '/admin/faculty'}
-              />
-              <QuickAction
-                icon={Calendar} label="Update Schedule" sub="Manage campus timetable"
-                color="#0891b2" onClick={() => window.location.href = '/admin/calendar'}
-              />
-              <QuickAction
-                icon={Megaphone} label="Broadcast" sub="Send campus-wide alert"
-                color="#f59e0b" onClick={() => window.location.href = '/admin/broadcast'}
-              />
-              <QuickAction
-                icon={FileText} label="Support Contacts" sub="Manage campus helplines"
-                color="#10b981" onClick={() => window.location.href = '/admin/support-contacts'}
-              />
+          <div className="bg-white rounded-[20px] p-6 border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+            <h3 className="text-[15px] font-bold t-primary mb-4">Quick Actions</h3>
+            <div className="flex flex-col gap-2.5">
+              <QuickAction icon={ShieldCheck} label="Manage Faculty" sub="Approve or update staff" color="#4f46e5" onClick={() => window.location.href = '/admin/faculty'} />
+              <QuickAction icon={Calendar}    label="Update Schedule" sub="Manage campus timetable" color="#0891b2" onClick={() => window.location.href = '/admin/calendar'} />
+              <QuickAction icon={Megaphone}   label="Broadcast" sub="Send campus-wide alert" color="#f59e0b" onClick={() => window.location.href = '/admin/broadcast'} />
+              <QuickAction icon={FileText}    label="Support Contacts" sub="Manage campus helplines" color="#10b981" onClick={() => window.location.href = '/admin/support-contacts'} />
             </div>
           </div>
 
           {/* System Health */}
-          <div style={{
-            background: '#0f172a', borderRadius: 20, padding: 24,
-            position: 'relative', overflow: 'hidden',
-          }}>
-            {/* Decorative blobs */}
-            <div style={{ position: 'absolute', top: -24, right: -24, width: 96, height: 96, borderRadius: '50%', background: 'rgba(79,70,229,0.15)' }} />
-            <div style={{ position: 'absolute', bottom: -16, left: -16, width: 64, height: 64, borderRadius: '50%', background: 'rgba(16,185,129,0.1)' }} />
+          <div className="bg-slate-900 rounded-[20px] p-6 relative overflow-hidden">
+            <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-brand/15" />
+            <div className="absolute -bottom-4 -left-4 w-16 h-16 rounded-full bg-emerald-500/10" />
 
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
-                <span style={inter(11, 700, '14px', '#64748b')}>SYSTEM OPERATIONAL</span>
+            <div className="relative z-[1]">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.05em]">SYSTEM OPERATIONAL</span>
               </div>
-              <h4 style={{ ...pjs(16, 700, '22px', '#fff'), marginBottom: 20 }}>
-                All Campus Services Live
-              </h4>
+              <h4 className="text-[16px] font-bold text-white mb-5">All Campus Services Live</h4>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div className="flex flex-col gap-3.5">
                 {[
                   { label: 'Database',   status: 'Connected',   color: '#10b981' },
                   { label: 'API Server', status: 'Operational', color: '#10b981' },
                   { label: 'Auth',       status: 'Active',      color: '#10b981' },
                 ].map((row, i) => (
                   <div key={i}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={inter(12, 500, '16px', '#94a3b8')}>{row.label}</span>
-                      <span style={inter(12, 700, '16px', row.color)}>{row.status}</span>
+                    <div className="flex justify-between mb-1.5">
+                      <span className="text-[12px] text-slate-400">{row.label}</span>
+                      <span className="text-[12px] font-bold" style={{ color: row.color }}>{row.status}</span>
                     </div>
-                    <div style={{ height: 3, background: '#1e293b', borderRadius: 2 }}>
-                      <div style={{ height: '100%', width: '100%', background: row.color, borderRadius: 2, opacity: 0.8 }} />
+                    <div className="h-[3px] bg-slate-800 rounded-[2px]">
+                      <div className="h-full w-full rounded-[2px] opacity-80" style={{ background: row.color }} />
                     </div>
                   </div>
                 ))}
@@ -351,87 +190,57 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* ── 4. Bottom Row ─────────────────────────────────────── */}
-      <div className="dash-bottom">
+      {/* Bottom Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-        {/* Personal Workspace / Schedule */}
-        <div style={{
-          background: '#fff', borderRadius: 20, padding: 24,
-          border: '1px solid #f1f5f9', boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+        {/* Today's Schedule */}
+        <div className="bg-white rounded-[20px] p-6 border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+          <div className="flex items-center gap-2.5 mb-5">
             <MousePointerClick size={18} color="#4f46e5" />
-            <h3 style={pjs(15, 700, '20px', '#0f172a')}>Today's Schedule</h3>
+            <h3 className="text-[15px] font-bold t-primary m-0">Today's Schedule</h3>
           </div>
 
           {loading ? (
-            <div style={{ ...pjs(13, 500, '18px', '#94a3b8'), padding: '24px 0', textAlign: 'center' }}>Syncing...</div>
+            <div className="py-6 text-center text-[13px] t-muted">Syncing...</div>
           ) : (stats?.admin_personal_schedule || []).length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="flex flex-col">
               {stats.admin_personal_schedule.map((item, i, arr) => (
-                <div key={i} style={{
-                  display: 'flex', gap: 14, padding: '12px 0',
-                  borderBottom: i < arr.length - 1 ? '1px solid #f8fafc' : 'none',
-                }}>
-                  <div style={{
-                    flexShrink: 0, ...pjs(11, 700, '15px', '#6366f1'),
-                    background: '#eef2ff', padding: '4px 8px', borderRadius: 8,
-                    height: 'fit-content', textAlign: 'center', minWidth: 56,
-                  }}>
+                <div key={i} className={`flex gap-3.5 py-3 ${i < arr.length - 1 ? 'border-b border-slate-50' : ''}`}>
+                  <div className="shrink-0 text-[11px] font-bold text-brand bg-indigo-50 px-2 py-1 rounded-[8px] h-fit text-center min-w-[56px]">
                     {item.time_slot?.split('-')[0]}
                   </div>
                   <div>
-                    <div style={pjs(13, 700, '18px', '#0f172a')}>{item.course}</div>
-                    <div style={{ ...pjs(12, 400, '16px', '#94a3b8'), marginTop: 2 }}>{item.location} · {item.type}</div>
+                    <div className="text-[13px] font-bold t-primary">{item.course}</div>
+                    <div className="text-[12px] t-muted mt-0.5">{item.location} · {item.type}</div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div style={{ padding: '28px 0', textAlign: 'center' }}>
-              <div style={pjs(13, 500, '18px', '#94a3b8')}>No tasks scheduled for today.</div>
-            </div>
+            <div className="py-7 text-center text-[13px] t-muted">No tasks scheduled for today.</div>
           )}
         </div>
 
         {/* Platform Overview */}
-        <div style={{
-          background: '#fff', borderRadius: 20, padding: 24,
-          border: '1px solid #f1f5f9', boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-        }}>
-          <h3 style={{ ...pjs(15, 700, '20px', '#0f172a'), marginBottom: 20 }}>Platform Overview</h3>
+        <div className="bg-white rounded-[20px] p-6 border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+          <h3 className="text-[15px] font-bold t-primary mb-5">Platform Overview</h3>
 
           {loading ? (
-            <div style={{ ...pjs(13, 500, '18px', '#94a3b8'), padding: '24px 0', textAlign: 'center' }}>Loading...</div>
+            <div className="py-6 text-center text-[13px] t-muted">Loading...</div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div className="flex flex-col gap-5">
               {[
-                {
-                  label: 'Students',
-                  value: (stats?.total_students ?? 0).toLocaleString(),
-                  progress: Math.min(100, Math.round(((stats?.total_students ?? 0) / Math.max(stats?.total_students ?? 0, 500)) * 100)),
-                  color: '#4f46e5',
-                },
-                {
-                  label: 'Marketplace Listings',
-                  value: (stats?.marketplace_listings ?? 0).toLocaleString(),
-                  progress: Math.min(100, Math.round(((stats?.marketplace_listings ?? 0) / Math.max(stats?.marketplace_listings ?? 0, 20)) * 100)),
-                  color: '#10b981',
-                },
-                {
-                  label: 'Campus Societies',
-                  value: (stats?.societies_count ?? 0).toLocaleString(),
-                  progress: Math.min(100, Math.round(((stats?.societies_count ?? 0) / Math.max(stats?.societies_count ?? 0, 10)) * 100)),
-                  color: '#f59e0b',
-                },
+                { label: 'Students',             value: (stats?.total_students ?? 0).toLocaleString(),       color: '#4f46e5', progress: 100 },
+                { label: 'Marketplace Listings', value: (stats?.marketplace_listings ?? 0).toLocaleString(), color: '#10b981', progress: 100 },
+                { label: 'Campus Societies',     value: (stats?.societies_count ?? 0).toLocaleString(),      color: '#f59e0b', progress: 100 },
               ].map((m, i) => (
                 <div key={i}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                    <span style={pjs(13, 500, '18px', '#475569')}>{m.label}</span>
-                    <span style={pjs(14, 700, '18px', '#0f172a')}>{m.value}</span>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-[13px] text-slate-500">{m.label}</span>
+                    <span className="text-[14px] font-bold t-primary">{m.value}</span>
                   </div>
-                  <div style={{ height: 6, background: '#f1f5f9', borderRadius: 3 }}>
-                    <div style={{ height: '100%', width: `${m.progress}%`, background: m.color, borderRadius: 3, transition: 'width 0.6s ease' }} />
+                  <div className="h-1.5 bg-slate-100 rounded-[3px]">
+                    <div className="h-full rounded-[3px] transition-[width] duration-[600ms] ease-out" style={{ width: `${m.progress}%`, background: m.color }} />
                   </div>
                 </div>
               ))}

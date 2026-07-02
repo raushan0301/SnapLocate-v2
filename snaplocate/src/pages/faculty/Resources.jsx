@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
-import { Plus, Trash2, Upload, FileText, BookOpen, FlaskConical, FileQuestion, ExternalLink, X, Check } from 'lucide-react'
+import { Plus, Trash2, Upload, FileText, ExternalLink, X, Check } from 'lucide-react'
 
 const TYPE_OPTIONS = [
   { value: 'note',     label: 'Notes',    color: '#4f46e5', bg: '#eef2ff' },
@@ -15,6 +15,8 @@ const TYPE_OPTIONS = [
 const typeInfo = (t) => TYPE_OPTIONS.find(o => o.value === t) || TYPE_OPTIONS[TYPE_OPTIONS.length - 1]
 
 const EMPTY_FORM = { title: '', type: 'note', course_id: '', description: '', file_url: '' }
+
+const fieldCls = 'w-full px-[14px] py-[10px] rounded-[10px] border-[1.5px] border-slate-200 text-[14px] outline-none box-border focus:border-brand transition-colors'
 
 function UploadModal({ courses, onClose, onSaved }) {
   const [form, setForm] = useState(EMPTY_FORM)
@@ -74,123 +76,116 @@ function UploadModal({ courses, onClose, onSaved }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ background: '#fff', borderRadius: 20, padding: 32, width: '100%', maxWidth: 520, boxShadow: '0 20px 60px rgba(0,0,0,0.15)', maxHeight: '90vh', overflowY: 'auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+    <div className="fixed inset-0 bg-black/35 z-[100] flex items-center justify-center p-5">
+      <div className="bg-white rounded-[20px] p-8 w-full max-w-[520px] shadow-[0_20px_60px_rgba(0,0,0,0.15)] max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', margin: 0 }}>Upload Resource</h2>
-            <p style={{ fontSize: 13, color: '#64748b', marginTop: 4, marginBottom: 0 }}>Share notes, PYQs, lab files with your students.</p>
+            <h2 className="text-[20px] font-extrabold t-primary m-0">Upload Resource</h2>
+            <p className="text-[13px] t-muted mt-1 mb-0">Share notes, PYQs, lab files with your students.</p>
           </div>
-          <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: 10, padding: 8, cursor: 'pointer', color: '#64748b' }}><X size={18} /></button>
+          <button onClick={onClose} className="bg-slate-100 border-0 rounded-[10px] p-2 cursor-pointer t-muted"><X size={18} /></button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          {/* Title */}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Title *</label>
+            <label className="text-[13px] font-semibold text-slate-700 block mb-1.5">Title *</label>
             <input
               value={form.title} onChange={e => set('title', e.target.value)}
               placeholder="e.g. Unit 2 Notes — Database Design"
               required
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
-              onFocus={e => e.target.style.borderColor = '#4f46e5'}
-              onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+              className={fieldCls}
             />
           </div>
 
-          {/* Type */}
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 8 }}>Type *</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <label className="text-[13px] font-semibold text-slate-700 block mb-2">Type *</label>
+            <div className="flex flex-wrap gap-2">
               {TYPE_OPTIONS.map(t => (
                 <button
                   key={t.value} type="button"
                   onClick={() => set('type', t.value)}
+                  className="px-3.5 py-[7px] rounded-[10px] border-[1.5px] text-[12px] font-semibold cursor-pointer transition-colors"
                   style={{
-                    padding: '7px 14px', borderRadius: 10, border: '1.5px solid',
                     borderColor: form.type === t.value ? t.color : '#e2e8f0',
                     background: form.type === t.value ? t.color : '#fff',
                     color: form.type === t.value ? '#fff' : '#475569',
-                    fontSize: 12, fontWeight: 600, cursor: 'pointer',
                   }}
                 >{t.label}</button>
               ))}
             </div>
           </div>
 
-          {/* Course */}
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Course <span style={{ fontWeight: 400, color: '#94a3b8' }}>(optional)</span></label>
+            <label className="text-[13px] font-semibold text-slate-700 block mb-1.5">
+              Course <span className="font-normal t-muted">(optional)</span>
+            </label>
             <select
               value={form.course_id} onChange={e => set('course_id', e.target.value)}
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', background: '#fff', cursor: 'pointer' }}
+              className={`${fieldCls} bg-white cursor-pointer`}
             >
               <option value="">— Not linked to a course —</option>
               {courses.map(c => <option key={c.id} value={c.id}>{c.code} — {c.name}</option>)}
             </select>
           </div>
 
-          {/* Description */}
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Description <span style={{ fontWeight: 400, color: '#94a3b8' }}>(optional)</span></label>
+            <label className="text-[13px] font-semibold text-slate-700 block mb-1.5">
+              Description <span className="font-normal t-muted">(optional)</span>
+            </label>
             <textarea
               value={form.description} onChange={e => set('description', e.target.value)}
               placeholder="Brief description of this resource..."
               rows={2}
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
-              onFocus={e => e.target.style.borderColor = '#4f46e5'}
-              onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+              className={`${fieldCls} resize-y font-[inherit]`}
             />
           </div>
 
-          {/* File Upload */}
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>File * <span style={{ fontWeight: 400, color: '#94a3b8' }}>(PDF, DOC, PPT, XLSX — max 10MB)</span></label>
-            <input type="file" ref={fileRef} onChange={handleFile} accept=".pdf,.doc,.docx,.ppt,.pptx,.xlsx,.xls,.txt" style={{ display: 'none' }} />
+            <label className="text-[13px] font-semibold text-slate-700 block mb-1.5">
+              File * <span className="font-normal t-muted">(PDF, DOC, PPT, XLSX — max 10MB)</span>
+            </label>
+            <input type="file" ref={fileRef} onChange={handleFile} accept=".pdf,.doc,.docx,.ppt,.pptx,.xlsx,.xls,.txt" className="hidden" />
 
             {form.file_url ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 10, border: '1.5px solid #22c55e', background: '#f0fdf4' }}>
+              <div className="flex items-center gap-2.5 px-3.5 py-3 rounded-[10px] border-[1.5px] border-green-500 bg-green-50">
                 <Check size={16} color="#16a34a" />
-                <span style={{ fontSize: 13, color: '#15803d', fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{uploadedName}</span>
-                <button type="button" onClick={() => { set('file_url', ''); setUploadedName('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}><X size={14} /></button>
+                <span className="text-[13px] text-green-700 font-semibold flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{uploadedName}</span>
+                <button type="button" onClick={() => { set('file_url', ''); setUploadedName('') }} className="bg-transparent border-0 cursor-pointer t-muted"><X size={14} /></button>
               </div>
             ) : (
               <button
                 type="button" onClick={() => fileRef.current?.click()}
                 disabled={uploading}
-                style={{ width: '100%', padding: '18px 14px', borderRadius: 10, border: '2px dashed #e2e8f0', background: uploading ? '#f8fafc' : '#fafafa', cursor: uploading ? 'not-allowed' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}
-                onMouseEnter={e => { if (!uploading) e.currentTarget.style.borderColor = '#4f46e5' }}
-                onMouseLeave={e => { if (!uploading) e.currentTarget.style.borderColor = '#e2e8f0' }}
+                className={`w-full py-[18px] px-3.5 rounded-[10px] border-2 border-dashed border-slate-200 hover:border-brand flex flex-col items-center gap-2 transition-colors ${uploading ? 'bg-slate-50 cursor-not-allowed' : 'bg-[#fafafa] cursor-pointer'}`}
               >
                 {uploading ? (
                   <>
-                    <div style={{ width: 22, height: 22, border: '2px solid #e2e8f0', borderTopColor: '#4f46e5', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                    <span style={{ fontSize: 13, color: '#64748b' }}>Uploading...</span>
+                    <div className="w-[22px] h-[22px] border-2 border-slate-200 border-t-brand rounded-full" style={{ animation: 'spin 0.8s linear infinite' }} />
+                    <span className="text-[13px] t-muted">Uploading...</span>
                   </>
                 ) : (
                   <>
                     <Upload size={22} color="#94a3b8" />
-                    <span style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>Click to select file</span>
+                    <span className="text-[13px] t-muted font-medium">Click to select file</span>
                   </>
                 )}
               </button>
             )}
           </div>
 
-          {error && <div style={{ padding: '10px 14px', borderRadius: 10, background: '#fef2f2', color: '#dc2626', fontSize: 13 }}>{error}</div>}
+          {error && <div className="px-3.5 py-2.5 rounded-[10px] bg-red-50 text-red-600 text-[13px]">{error}</div>}
 
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-            <button type="button" onClick={onClose} style={{ padding: '10px 20px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#475569' }}>Cancel</button>
+          <div className="flex gap-2.5 justify-end">
+            <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-[10px] border-[1.5px] border-slate-200 bg-white text-[14px] font-semibold cursor-pointer text-slate-600">Cancel</button>
             <button
               type="submit" disabled={saving || uploading || !form.file_url}
-              style={{ padding: '10px 24px', borderRadius: 10, border: 'none', background: saving || uploading || !form.file_url ? '#c7d2fe' : '#4f46e5', color: '#fff', fontSize: 14, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer' }}
+              className={`px-6 py-2.5 rounded-[10px] border-0 text-white text-[14px] font-bold ${saving || uploading || !form.file_url ? 'bg-indigo-200 cursor-not-allowed' : 'bg-brand cursor-pointer'}`}
             >
               {saving ? 'Saving...' : 'Upload Resource'}
             </button>
           </div>
         </form>
       </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
     </div>
   )
 }
@@ -247,96 +242,88 @@ export default function FacultyResources() {
     <PageLayout>
       {showModal && <UploadModal courses={courses} onClose={() => setShowModal(false)} onSaved={handleSaved} />}
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0f172a', margin: 0 }}>My Resources</h1>
-          <p style={{ fontSize: 14, color: '#64748b', marginTop: 4, marginBottom: 0 }}>Upload and manage academic resources for your students.</p>
+          <h1 className="text-[26px] font-extrabold t-primary m-0">My Resources</h1>
+          <p className="text-[14px] t-muted mt-1 mb-0">Upload and manage academic resources for your students.</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 22px', borderRadius: 12, border: 'none', background: '#4f46e5', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
+          className="flex items-center gap-2 px-[22px] py-[11px] rounded-[12px] border-0 bg-brand text-white text-[14px] font-bold cursor-pointer shrink-0"
         >
           <Plus size={17} /> Upload Resource
         </button>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+      <div className="grid grid-cols-4 gap-4">
         {[
-          { label: 'Total Uploads', value: resources.length, color: '#4f46e5', bg: '#eef2ff' },
-          { label: 'Notes',         value: counts.note || 0, color: '#4f46e5', bg: '#eef2ff' },
-          { label: 'PYQs',          value: counts.pyq || 0,  color: '#7e22ce', bg: '#fdf4ff' },
-          { label: 'Other',         value: (counts.lab || 0) + (counts.syllabus || 0) + (counts.doc || 0) + (counts.paper || 0), color: '#047857', bg: '#ecfdf5' },
+          { label: 'Total Uploads', value: resources.length },
+          { label: 'Notes',         value: counts.note || 0 },
+          { label: 'PYQs',          value: counts.pyq || 0 },
+          { label: 'Other',         value: (counts.lab || 0) + (counts.syllabus || 0) + (counts.doc || 0) + (counts.paper || 0) },
         ].map((s, i) => (
-          <div key={i} style={{ background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', padding: '18px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#64748b', marginBottom: 6 }}>{s.label}</div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: '#0f172a' }}>{s.value}</div>
+          <div key={i} className="bg-white rounded-[16px] border border-slate-100 px-5 py-[18px] shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+            <div className="text-[12px] font-semibold t-muted mb-1.5">{s.label}</div>
+            <div className="text-[28px] font-extrabold t-primary">{s.value}</div>
           </div>
         ))}
       </div>
 
-      {/* Filters */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <button onClick={() => setTypeFilter('all')} style={{
-          padding: '8px 16px', borderRadius: 10, border: '1.5px solid',
-          borderColor: typeFilter === 'all' ? '#4f46e5' : '#e2e8f0',
-          background: typeFilter === 'all' ? '#4f46e5' : '#fff',
-          color: typeFilter === 'all' ? '#fff' : '#475569',
-          fontSize: 12, fontWeight: 600, cursor: 'pointer',
-        }}>All ({resources.length})</button>
+      <div className="flex gap-2 flex-wrap">
+        <button onClick={() => setTypeFilter('all')} className="px-4 py-2 rounded-[10px] border-[1.5px] text-[12px] font-semibold cursor-pointer transition-colors"
+          style={{
+            borderColor: typeFilter === 'all' ? '#4f46e5' : '#e2e8f0',
+            background: typeFilter === 'all' ? '#4f46e5' : '#fff',
+            color: typeFilter === 'all' ? '#fff' : '#475569',
+          }}>All ({resources.length})</button>
         {TYPE_OPTIONS.map(t => counts[t.value] > 0 && (
-          <button key={t.value} onClick={() => setTypeFilter(t.value)} style={{
-            padding: '8px 16px', borderRadius: 10, border: '1.5px solid',
-            borderColor: typeFilter === t.value ? t.color : '#e2e8f0',
-            background: typeFilter === t.value ? t.color : '#fff',
-            color: typeFilter === t.value ? '#fff' : '#475569',
-            fontSize: 12, fontWeight: 600, cursor: 'pointer',
-          }}>{t.label} ({counts[t.value]})</button>
+          <button key={t.value} onClick={() => setTypeFilter(t.value)} className="px-4 py-2 rounded-[10px] border-[1.5px] text-[12px] font-semibold cursor-pointer transition-colors"
+            style={{
+              borderColor: typeFilter === t.value ? t.color : '#e2e8f0',
+              background: typeFilter === t.value ? t.color : '#fff',
+              color: typeFilter === t.value ? '#fff' : '#475569',
+            }}>{t.label} ({counts[t.value]})</button>
         ))}
       </div>
 
-      {/* Resource List */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: '#94a3b8', fontSize: 14 }}>Loading your resources...</div>
+        <div className="text-center py-[60px] t-muted text-[14px]">Loading your resources...</div>
       ) : filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: '#94a3b8' }}>
-          <FileText size={44} style={{ opacity: 0.2, marginBottom: 14, display: 'block', margin: '0 auto 14px' }} />
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#64748b', marginBottom: 6 }}>No resources yet</div>
-          <div style={{ fontSize: 13, marginBottom: 20 }}>Upload your first resource to share with students.</div>
-          <button onClick={() => setShowModal(true)} style={{ padding: '10px 22px', borderRadius: 12, border: 'none', background: '#4f46e5', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+        <div className="text-center py-[60px]">
+          <FileText size={44} className="opacity-20 mx-auto mb-3.5 block" />
+          <div className="text-[15px] font-semibold text-slate-600 mb-1.5">No resources yet</div>
+          <div className="text-[13px] t-muted mb-5">Upload your first resource to share with students.</div>
+          <button onClick={() => setShowModal(true)} className="px-[22px] py-2.5 rounded-[12px] border-0 bg-brand text-white text-[14px] font-bold cursor-pointer">
             Upload Resource
           </button>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="flex flex-col gap-2.5">
           {filtered.map(item => {
             const ti = typeInfo(item.type)
             return (
-              <div key={item.id} style={{ background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', padding: '18px 22px', display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: ti.bg, color: ti.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div key={item.id} className="bg-white rounded-[16px] border border-slate-100 px-[22px] py-[18px] flex items-center gap-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                <div className="w-11 h-11 rounded-[12px] flex items-center justify-center shrink-0" style={{ background: ti.bg, color: ti.color }}>
                   <FileText size={18} />
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: '#0f172a', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <span style={{ background: ti.bg, color: ti.color, padding: '2px 9px', borderRadius: 6, fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>{item.type}</span>
-                    {item.course && <span style={{ fontSize: 12, color: '#64748b' }}>{item.course.code} — {item.course.name}</span>}
-                    <span style={{ fontSize: 12, color: '#94a3b8' }}>{new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-[14px] t-primary mb-[3px] overflow-hidden text-ellipsis whitespace-nowrap">{item.title}</div>
+                  <div className="flex gap-2 flex-wrap items-center">
+                    <span className="px-[9px] py-[2px] rounded-[6px] text-[11px] font-bold uppercase" style={{ background: ti.bg, color: ti.color }}>{item.type}</span>
+                    {item.course && <span className="text-[12px] t-muted">{item.course.code} — {item.course.name}</span>}
+                    <span className="text-[12px] text-slate-400">{new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                   </div>
-                  {item.description && <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>{item.description}</div>}
+                  {item.description && <div className="text-[12px] t-muted mt-1">{item.description}</div>}
                 </div>
-                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                <div className="flex gap-2 shrink-0">
                   <a href={item.file_url} target="_blank" rel="noopener noreferrer"
-                    style={{ padding: '8px 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#f8fafc', color: '#475569', fontSize: 13, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    className="px-3.5 py-2 rounded-[10px] border-[1.5px] border-slate-200 bg-slate-50 text-slate-600 text-[13px] font-semibold no-underline flex items-center gap-1.5">
                     <ExternalLink size={14} /> View
                   </a>
                   <button
                     onClick={() => handleDelete(item.id)}
                     disabled={deletingId === item.id}
-                    style={{ padding: '8px', borderRadius: 10, border: '1px solid #fee2e2', background: '#fff', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: deletingId === item.id ? 0.5 : 1 }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#fef2f2'}
-                    onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+                    className={`p-2 rounded-[10px] border border-red-100 bg-white text-red-400 cursor-pointer flex items-center justify-center hover:bg-red-50 transition-colors ${deletingId === item.id ? 'opacity-50' : ''}`}
                   >
                     <Trash2 size={15} />
                   </button>

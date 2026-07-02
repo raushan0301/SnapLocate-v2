@@ -32,21 +32,29 @@ import {
   Upload,
   FileQuestion,
   FolderOpen,
+  Settings,
+  Headset,
+  LogOut,
 } from 'lucide-react'
 
 const studentNav = [
-  { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-  { label: 'Professor', path: '/professors', icon: Users },
-  { label: 'My Requests', path: '/requests', icon: ClipboardList },
-  { label: 'Classroom', path: '/classroom', icon: DoorOpen },
-  { label: 'Resources', path: '/resources', icon: FileStack },
-  { label: 'Work-Space', path: '/workspace', icon: Briefcase },
-  { label: 'Calendar', path: '/calendar', icon: CalendarDays },
-  { label: 'Market-Place', path: '/marketplace', icon: ShoppingCart },
-  { label: 'Lost & Found', path: '/lost-found', icon: Search },
-  { label: 'Society', path: '/society', icon: Users2 },
-  { label: 'Shops', path: '/shops', icon: Store },
-  { label: 'Wi-Fi', path: '/wifi', icon: Wifi },
+  { section: 'Overview' },
+  { label: 'Dashboard',  path: '/dashboard',  icon: LayoutDashboard },
+
+  { section: 'Academic' },
+  { label: 'Classroom',  path: '/classroom',  icon: DoorOpen },
+  { label: 'Work-Space', path: '/workspace',  icon: Briefcase },
+  { label: 'Calendar',   path: '/calendar',   icon: CalendarDays },
+  { label: 'Resources',  path: '/resources',  icon: FileStack },
+  { label: 'My Requests',path: '/requests',   icon: ClipboardList },
+  { label: 'Professor',  path: '/professors', icon: Users },
+
+  { section: 'Campus Life' },
+  { label: 'Market-Place',   path: '/marketplace',    icon: ShoppingCart },
+  { label: 'Lost & Found',   path: '/lost-found',     icon: Search },
+  { label: 'Society',        path: '/society',        icon: Users2 },
+  { label: 'Shops',          path: '/shops',          icon: Store },
+  { label: 'Wi-Fi',          path: '/wifi',           icon: Wifi },
   { label: 'Campus-Support', path: '/campus-support', icon: LifeBuoy },
 ]
 
@@ -59,9 +67,9 @@ const facultyNav = [
   { label: 'My Profile', path: '/faculty/profile', icon: IdCard },
   { label: 'Office Hours', path: '/faculty/office-hours', icon: Clock },
   { label: 'Student Req', path: '/faculty/requests', icon: Inbox },
+  { label: 'Professors', path: '/professors', icon: Users },
 
   { section: 'Campus' },
-  { label: 'Professors', path: '/professors', icon: Users },
   { label: 'Classroom', path: '/classroom', icon: DoorOpen },
   { label: 'Resources', path: '/resources', icon: FileStack },
   { label: 'Calendar', path: '/faculty/calendar', icon: CalendarDays },
@@ -178,12 +186,23 @@ export default function Sidebar({ isOpen, onClose }) {
         lg:static lg:inset-auto lg:h-full lg:translate-x-0
       `}>
 
-        {/* Mobile-only header row inside sidebar */}
-        <div className="flex lg:hidden items-center justify-between px-5 pt-5 pb-0">
-          <span className="font-jakarta font-extrabold text-brand">MENU</span>
+        {/* Mobile-only header row inside sidebar — mirrors the top Header logo */}
+        <div className="flex lg:hidden items-center justify-between px-5 pt-5 pb-4">
+          <div className="flex items-center gap-2.5">
+            <img src="/images/snaplocate-icon.svg" alt="SnapLocate" className="w-[38px] h-[38px]" />
+            <div>
+              <div className="font-jakarta text-[15px] font-extrabold leading-[19px] text-ink">
+                SnapLocate
+              </div>
+              <div className="font-jakarta text-[10px] font-bold leading-[13px] text-brand uppercase tracking-[0.08em]">
+                {user?.role || 'user'} OS
+              </div>
+            </div>
+          </div>
           <button
             onClick={onClose}
             className="bg-transparent border-none cursor-pointer text-2xl leading-none text-ink-secondary hover:text-ink transition-colors"
+            aria-label="Close navigation menu"
           >
             ×
           </button>
@@ -215,6 +234,33 @@ export default function Sidebar({ isOpen, onClose }) {
               )
             })}
         </nav>
+
+        {/* ── Bottom: Settings + Logout (admin only — student/faculty use the profile-avatar menu) ── */}
+        {user?.role === 'admin' && (
+          <div className="p-3 pb-6 flex flex-col gap-0.5 border-t border-ink-border">
+            <div onClick={() => { if (window.innerWidth <= 1024) onClose() }}>
+              <NavLink to="/admin/settings" end className="block no-underline rounded-lg">
+                {({ isActive }) => (
+                  <div className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 ${isActive ? 'bg-[rgba(79,70,229,0.08)]' : 'hover:bg-slate-100'}`}>
+                    <span className={`w-5 h-5 flex items-center justify-center shrink-0 ${isActive ? 'text-brand' : 'text-ink-secondary'}`}>
+                      <Settings size={17} strokeWidth={isActive ? 2.5 : 2} />
+                    </span>
+                    <span className={`font-jakarta text-[13px] leading-4 ${isActive ? 'text-brand font-semibold' : 'text-ink-secondary font-medium'}`}>Settings</span>
+                  </div>
+                )}
+              </NavLink>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 hover:bg-red-50 bg-transparent border-none w-full text-left"
+            >
+              <span className="w-5 h-5 flex items-center justify-center shrink-0 text-danger">
+                <LogOut size={17} strokeWidth={2} />
+              </span>
+              <span className="font-jakarta text-[13px] leading-4 text-danger font-medium">Sign Out</span>
+            </button>
+          </div>
+        )}
       </aside>
     </>
   )

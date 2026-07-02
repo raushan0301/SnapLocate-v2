@@ -4,23 +4,15 @@ import api from '../../lib/api'
 import BulkUploadModal from '../../components/admin/BulkUploadModal'
 import { Plus, Trash2, X, CheckSquare, UploadCloud, Image as ImageIcon } from 'lucide-react'
 
-// Simple custom modal overlay
 const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null
   return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', zIndex: 1000,
-      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
-    }}>
-      <div style={{
-        background: '#fff', padding: 32, borderRadius: 24, width: '100%', maxWidth: 540,
-        maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 50px rgba(0,0,0,0.15)'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
-          <h2 style={{ margin: 0, fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 20, fontWeight: 800, color: '#0f172a' }}>{title}</h2>
-          <button onClick={onClose} style={{ border: 'none', background: '#f1f5f9', cursor: 'pointer', width: 32, height: 32, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
-             <X size={18} />
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[4px] z-[1000] flex items-center justify-center p-5">
+      <div className="bg-white p-8 rounded-[24px] w-full max-w-[540px] max-h-[90vh] overflow-y-auto shadow-[0_20px_50px_rgba(0,0,0,0.15)]">
+        <div className="flex justify-between mb-6">
+          <h2 className="m-0 text-[20px] font-extrabold t-primary">{title}</h2>
+          <button onClick={onClose} className="border-0 bg-slate-100 cursor-pointer w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
+            <X size={18} />
           </button>
         </div>
         {children}
@@ -29,43 +21,27 @@ const Modal = ({ isOpen, onClose, title, children }) => {
   )
 }
 
-const inputStyle = { 
-  width: '100%', padding: '0 16px', height: '48px', borderRadius: 12, border: '1.5px solid #e2e8f0', 
-  outline: 'none', boxSizing: 'border-box', fontFamily: "'Inter', sans-serif", 
-  fontSize: 14, color: '#1e293b', background: '#fff', transition: 'border-color 0.2s', marginBottom: 16
-}
-
-const selectStyle = {
-  ...inputStyle,
-  cursor: 'pointer',
-  appearance: 'none',
-  backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3Csvg width='12' height='7' viewBox='0 0 12 7' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-  backgroundRepeat: 'no-repeat',
-  backgroundPosition: 'right 16px center'
-}
+const fieldCls = 'w-full h-12 px-4 rounded-[12px] border-[1.5px] border-slate-200 text-[14px] text-slate-800 bg-white outline-none box-border focus:border-brand transition-colors mb-4'
+const labelCls = 'text-[13px] font-bold text-slate-600 mb-1.5 block'
 
 const STATUS_COLORS = {
-  'green': { bg: '#dcfce7', c: '#166534', label: 'Green (Available)' },
-  'red': { bg: '#fee2e2', c: '#991b1b', label: 'Red (In Use)' },
+  'green':  { bg: '#dcfce7', c: '#166534', label: 'Green (Available)' },
+  'red':    { bg: '#fee2e2', c: '#991b1b', label: 'Red (In Use)' },
   'yellow': { bg: '#fef3c7', c: '#92400e', label: 'Yellow (Maintenance)' },
-  'blue': { bg: '#dbeafe', c: '#1e40af', label: 'Blue (Info)' },
-  'indigo': { bg: '#e0e7ff', c: '#3730a3', label: 'Indigo (Special)' }
+  'blue':   { bg: '#dbeafe', c: '#1e40af', label: 'Blue (Info)' },
+  'indigo': { bg: '#e0e7ff', c: '#3730a3', label: 'Indigo (Special)' },
 }
 
 export default function ManageClassrooms() {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
-
   const [modalOpen, setModalOpen] = useState(false)
   const [editingCard, setEditingCard] = useState(null)
-  
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [bulkLoading, setBulkLoading] = useState(false)
   const [bulkModalOpen, setBulkModalOpen] = useState(false)
-
-  // form state
   const [formData, setFormData] = useState({
-    name: '', subtitle: '', type: 'LEC', 
+    name: '', subtitle: '', type: 'LEC',
     status: 'AVAILABLE NOW', status_bg: '#dcfce7', status_c: '#166534',
     block: '', floor: '', capacity: '', indicator_bg: '#4f46e5', image_url: ''
   })
@@ -75,9 +51,7 @@ export default function ManageClassrooms() {
   const fetchClassrooms = async () => {
     try {
       const res = await api.get('/api/classrooms')
-      if (res.success) {
-        setData(res.data)
-      }
+      if (res.success) setData(res.data)
     } catch (err) {
       console.error('Failed to load classrooms:', err)
     } finally {
@@ -85,38 +59,18 @@ export default function ManageClassrooms() {
     }
   }
 
-  useEffect(() => {
-    fetchClassrooms()
-  }, [])
+  useEffect(() => { fetchClassrooms() }, [])
 
   const handleOpenAdd = () => {
     setEditingCard(null)
-    setFormData({
-      name: '', subtitle: '', type: 'LEC', 
-      status: 'AVAILABLE NOW', status_bg: '#dcfce7', status_c: '#166534',
-      block: '', floor: '', capacity: '', indicator_bg: '#4f46e5', image_url: ''
-    })
-    setImageFile(null)
-    setModalOpen(true)
+    setFormData({ name: '', subtitle: '', type: 'LEC', status: 'AVAILABLE NOW', status_bg: '#dcfce7', status_c: '#166534', block: '', floor: '', capacity: '', indicator_bg: '#4f46e5', image_url: '' })
+    setImageFile(null); setModalOpen(true)
   }
 
   const handleOpenEdit = (row) => {
     setEditingCard(row)
-    setFormData({
-      name: row.name || '',
-      subtitle: row.subtitle || '',
-      type: row.type || 'LEC',
-      status: row.status || 'AVAILABLE NOW',
-      status_bg: row.status_bg || '#dcfce7',
-      status_c: row.status_c || '#166534',
-      block: row.block || '',
-      floor: row.floor || '',
-      capacity: row.capacity || '',
-      indicator_bg: row.indicator_bg || '#4f46e5',
-      image_url: row.image_url || row.img || ''
-    })
-    setImageFile(null)
-    setModalOpen(true)
+    setFormData({ name: row.name || '', subtitle: row.subtitle || '', type: row.type || 'LEC', status: row.status || 'AVAILABLE NOW', status_bg: row.status_bg || '#dcfce7', status_c: row.status_c || '#166534', block: row.block || '', floor: row.floor || '', capacity: row.capacity || '', indicator_bg: row.indicator_bg || '#4f46e5', image_url: row.image_url || row.img || '' })
+    setImageFile(null); setModalOpen(true)
   }
 
   const handleDelete = async (row) => {
@@ -127,9 +81,7 @@ export default function ManageClassrooms() {
         setData(prev => prev.filter(c => c.id !== row.id))
         setSelectedIds(prev => { const n = new Set(prev); n.delete(row.id); return n })
       }
-    } catch (err) {
-      alert('Delete failed')
-    }
+    } catch { alert('Delete failed') }
   }
 
   const bulkDelete = async () => {
@@ -143,191 +95,114 @@ export default function ManageClassrooms() {
   }
 
   const toggleSelect = (id) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      return next
-    })
+    setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setSubmitting(true)
+    e.preventDefault(); setSubmitting(true)
     try {
       let finalImageUrl = formData.image_url
-
       if (imageFile) {
-        const fileForm = new FormData()
-        fileForm.append('file', imageFile)
-        fileForm.append('type', 'workspace')
-        
-        const uploadRes = await api.upload('/api/upload/image', fileForm)
-        if (uploadRes?.success) {
-          finalImageUrl = uploadRes.url
-        }
+        const fd = new FormData(); fd.append('file', imageFile); fd.append('type', 'workspace')
+        const r = await api.upload('/api/upload/image', fd)
+        if (r?.success) finalImageUrl = r.url
       }
-
       const payload = { ...formData, image_url: finalImageUrl }
-      if (editingCard) {
-        await api.put(`/api/classrooms/${editingCard.id}`, payload)
-      } else {
-        await api.post('/api/classrooms', payload)
-      }
-      setModalOpen(false)
-      fetchClassrooms()
-    } catch (err) {
-      alert('Operation failed')
-      console.error(err)
-    } finally {
-      setSubmitting(false)
-    }
+      if (editingCard) await api.put(`/api/classrooms/${editingCard.id}`, payload)
+      else await api.post('/api/classrooms', payload)
+      setModalOpen(false); fetchClassrooms()
+    } catch (err) { alert('Operation failed'); console.error(err) }
+    finally { setSubmitting(false) }
   }
 
   const handleBulkUpload = async (parsedData) => {
     const rows = parsedData.map(r => ({
-      name: r['Room Name'] || 'Unnamed Room',
-      block: String(r['Block'] || ''),
-      subtitle: String(r['Subtitle'] || ''),
-      capacity: String(r['Capacity'] || ''),
-      floor: String(r['Floor'] || ''),
-      type: r['Room Type'] || 'LEC',
-      status: r['Status'] || 'AVAILABLE NOW',
-      status_bg: r['Status Bg'] || '#dcfce7',
-      status_c: r['Status Text'] || '#166534',
-      indicator_bg: '#4f46e5',
-      image_url: r['Image URL'] || ''
+      name: r['Room Name'] || 'Unnamed Room', block: String(r['Block'] || ''),
+      subtitle: String(r['Subtitle'] || ''), capacity: String(r['Capacity'] || ''),
+      floor: String(r['Floor'] || ''), type: r['Room Type'] || 'LEC',
+      status: r['Status'] || 'AVAILABLE NOW', status_bg: r['Status Bg'] || '#dcfce7',
+      status_c: r['Status Text'] || '#166534', indicator_bg: '#4f46e5', image_url: r['Image URL'] || ''
     }))
-
     const res = await api.post('/api/classrooms/bulk', { rows })
-    if (res.success) {
-      alert(`Successfully imported ${res.count} classrooms!`)
-      fetchClassrooms()
-    }
+    if (res.success) { alert(`Successfully imported ${res.count} classrooms!`); fetchClassrooms() }
   }
+
+  const fd = (k, v) => setFormData(p => ({ ...p, [k]: v }))
+  const currentColorKey = Object.keys(STATUS_COLORS).find(k => STATUS_COLORS[k].bg === formData.status_bg) || 'green'
 
   const columns = [
     {
       key: 'select',
       label: (
-        <input
-          type="checkbox"
-          checked={data.length > 0 && selectedIds.size === data.length}
-          onChange={(e) => {
-            if (e.target.checked) setSelectedIds(new Set(data.map(d => d.id)))
-            else setSelectedIds(new Set())
-          }}
-          style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#4f46e5' }}
-        />
+        <input type="checkbox" checked={data.length > 0 && selectedIds.size === data.length}
+          onChange={e => e.target.checked ? setSelectedIds(new Set(data.map(d => d.id))) : setSelectedIds(new Set())}
+          className="w-4 h-4 cursor-pointer accent-brand" />
       ),
       render: (row) => (
-        <input
-          type="checkbox"
-          checked={selectedIds.has(row.id)}
-          onChange={() => toggleSelect(row.id)}
-          onClick={e => e.stopPropagation()}
-          style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#4f46e5' }}
-        />
+        <input type="checkbox" checked={selectedIds.has(row.id)} onChange={() => toggleSelect(row.id)}
+          onClick={e => e.stopPropagation()} className="w-4 h-4 cursor-pointer accent-brand" />
       )
     },
-    { 
-      key: 'name', 
-      label: 'Room Name',
+    {
+      key: 'name', label: 'Room Name',
       render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {row.image_url || row.img ? (
-            <img src={row.image_url || row.img} style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover' }} />
-          ) : (
-            <div style={{ width: 44, height: 44, borderRadius: 8, background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <ImageIcon size={20} color="#94a3b8" />
-            </div>
-          )}
+        <div className="flex items-center gap-3">
+          {row.image_url || row.img
+            ? <img src={row.image_url || row.img} className="w-11 h-11 rounded-[8px] object-cover" />
+            : <div className="w-11 h-11 rounded-[8px] bg-slate-50 border border-slate-200 flex items-center justify-center"><ImageIcon size={20} color="#94a3b8" /></div>}
           <div>
-            <div style={{ fontWeight: 700, color: '#0f172a' }}>{row.name}</div>
-            <div style={{ fontSize: 12, color: '#64748b' }}>{row.subtitle}</div>
+            <div className="font-bold t-primary">{row.name}</div>
+            <div className="text-[12px] t-muted">{row.subtitle}</div>
           </div>
         </div>
       )
     },
     { key: 'block', label: 'Block' },
-    { 
-      key: 'classcode', 
-      label: 'Code',
-      render: (row) => (
-        <span style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>
-          {row.classcode || row.classCode || '—'}
-        </span>
-      )
+    {
+      key: 'classcode', label: 'Code',
+      render: (row) => <span className="text-[13px] font-semibold text-slate-600">{row.classcode || row.classCode || '—'}</span>
     },
     { key: 'capacity', label: 'Capacity' },
-    { 
-      key: 'type', 
-      label: 'Type',
-      render: (row) => (
-        <span style={{ fontSize: 11, fontWeight: 800, color: '#4f46e5', background: '#eef2ff', padding: '4px 10px', borderRadius: 8, textTransform: 'uppercase' }}>
-          {row.type}
-        </span>
-      )
+    {
+      key: 'type', label: 'Type',
+      render: (row) => <span className="text-[11px] font-extrabold text-brand bg-indigo-50 px-2.5 py-1 rounded-[8px] uppercase">{row.type}</span>
     },
-    { 
-      key: 'status', 
-      label: 'Status',
+    {
+      key: 'status', label: 'Status',
       render: (row) => (
-        <span style={{
-          display: 'inline-block', whiteSpace: 'nowrap',
-          background: row.status_bg || '#dcfce7',
-          color: row.status_c || '#166534',
-          padding: '6px 14px', borderRadius: 50, fontSize: 11, fontWeight: 800,
-          border: `1px solid ${row.status_bg ? row.status_bg.replace('22','11') : '#a7f3d0'}`
-        }}>
+        <span className="inline-block whitespace-nowrap px-3.5 py-[6px] rounded-full text-[11px] font-extrabold border"
+          style={{ background: row.status_bg || '#dcfce7', color: row.status_c || '#166534', borderColor: (row.status_bg || '#dcfce7').replace('22', '11') }}>
           {row.status}
         </span>
       )
     }
   ]
 
-  // Find the selected color key for the dropdown
-  const currentColorKey = Object.keys(STATUS_COLORS).find(k => STATUS_COLORS[k].bg === formData.status_bg) || 'green'
-
   return (
     <>
       <AdminPageTemplate
         title="Manage Classrooms"
         description="Add, edit, or remove classroom and lab locations."
-        columns={columns}
-        data={data}
-        loading={loading}
-        onAdd={handleOpenAdd}
-        onEdit={handleOpenEdit}
-        onDelete={handleDelete}
-        onBulkUpload={() => setBulkModalOpen(true)}
-        onRefresh={fetchClassrooms}
+        columns={columns} data={data} loading={loading}
+        onAdd={handleOpenAdd} onEdit={handleOpenEdit} onDelete={handleDelete}
+        onBulkUpload={() => setBulkModalOpen(true)} onRefresh={fetchClassrooms}
       >
         {selectedIds.size > 0 && (
-          <div style={{ background: '#ffffff', borderRadius: 16, padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 20, border: '1px solid #e2e8f0', boxShadow: '0 8px 24px rgba(0,0,0,0.04)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
-              <div style={{ background: '#eef2ff', padding: '8px 12px', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="bg-white rounded-[16px] px-6 py-4 flex items-center gap-4 flex-wrap mb-5 border border-slate-200 shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
+            <div className="flex items-center gap-2.5 flex-1">
+              <div className="bg-indigo-50 px-3 py-2 rounded-[10px] flex items-center gap-2">
                 <CheckSquare size={18} color="#4f46e5" />
-                <span style={{ color: '#4f46e5', fontSize: 14, fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                  {selectedIds.size} classroom{selectedIds.size !== 1 ? 's' : ''} selected
-                </span>
+                <span className="text-brand text-[14px] font-bold">{selectedIds.size} classroom{selectedIds.size !== 1 ? 's' : ''} selected</span>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                onClick={bulkDelete} disabled={bulkLoading}
-                style={{ padding: '10px 18px', borderRadius: 12, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', fontSize: 13, fontWeight: 700, cursor: bulkLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: '0.2s', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#fee2e2' }}
-                onMouseLeave={e => { e.currentTarget.style.background = '#fef2f2' }}
-              >
+            <div className="flex gap-2.5">
+              <button onClick={bulkDelete} disabled={bulkLoading}
+                className="flex items-center gap-1.5 px-[18px] py-2.5 rounded-[12px] border border-red-200 bg-red-50 text-red-600 text-[13px] font-bold cursor-pointer hover:bg-red-100 transition-colors">
                 <Trash2 size={16} /> Delete Selected
               </button>
-              <div style={{ width: 1, background: '#e2e8f0', margin: '0 4px' }} />
-              <button
-                onClick={() => setSelectedIds(new Set())}
-                style={{ padding: '10px', borderRadius: 12, border: '1px solid #e2e8f0', background: '#f8fafc', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: '0.2s' }}
-                 onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9' }}
-                onMouseLeave={e => { e.currentTarget.style.background = '#f8fafc' }}
-              >
+              <div className="w-px bg-slate-200 mx-1" />
+              <button onClick={() => setSelectedIds(new Set())}
+                className="p-2.5 rounded-[12px] border border-slate-200 bg-slate-50 text-slate-500 cursor-pointer flex hover:bg-slate-100 transition-colors">
                 <X size={18} />
               </button>
             </div>
@@ -335,48 +210,44 @@ export default function ManageClassrooms() {
         )}
       </AdminPageTemplate>
 
-      <BulkUploadModal 
-        isOpen={bulkModalOpen}
-        onClose={() => setBulkModalOpen(false)}
-        title="Bulk Upload Classrooms"
-        templateType="Classrooms"
+      <BulkUploadModal
+        isOpen={bulkModalOpen} onClose={() => setBulkModalOpen(false)}
+        title="Bulk Upload Classrooms" templateType="Classrooms"
         templateColumns={['Room Name', 'Block', 'Subtitle', 'Capacity', 'Floor', 'Room Type', 'Status', 'Status Bg', 'Status Text', 'Image URL']}
-        templateData={[
-          ['Programming Lab 1 (Delete this row)', 'CSED', 'L 106', '60', '01', 'LAB (Options: LEC, LAB, GENERAL)', 'AVAILABLE NOW (Options: AVAILABLE NOW, IN USE, MAINTENANCE)', '#dcfce7', '#166534', 'https://example.com/image.jpg']
-        ]}
+        templateData={[['Programming Lab 1 (Delete this row)', 'CSED', 'L 106', '60', '01', 'LAB (Options: LEC, LAB, GENERAL)', 'AVAILABLE NOW (Options: AVAILABLE NOW, IN USE, MAINTENANCE)', '#dcfce7', '#166534', 'https://example.com/image.jpg']]}
         expectedHeaders={['Room Name']}
-        onUpload={(data) => handleBulkUpload(data.filter(r => !String(r['Room Name']).includes('(Delete this row)')))}
+        onUpload={d => handleBulkUpload(d.filter(r => !String(r['Room Name']).includes('(Delete this row)')))}
       />
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editingCard ? 'Edit Classroom' : 'Add Classroom'}>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column' }}>
-          
-          <div style={{ display: 'flex', gap: 16 }}>
-            <div style={{ flex: 2 }}>
-              <label style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#475569', display: 'block' }}>Room Name</label>
-              <input required style={inputStyle} value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="e.g. Programming Lab 1" />
+        <form onSubmit={handleSubmit} className="flex flex-col">
+
+          <div className="flex gap-4">
+            <div className="flex-[2]">
+              <label className={labelCls}>Room Name</label>
+              <input required className={fieldCls} value={formData.name} onChange={e => fd('name', e.target.value)} placeholder="e.g. Programming Lab 1" />
             </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#475569', display: 'block' }}>Block</label>
-              <input style={inputStyle} value={formData.block} onChange={e => setFormData({ ...formData, block: e.target.value })} placeholder="CSED" />
+            <div className="flex-1">
+              <label className={labelCls}>Block</label>
+              <input className={fieldCls} value={formData.block} onChange={e => fd('block', e.target.value)} placeholder="CSED" />
             </div>
           </div>
 
-          <label style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#475569', display: 'block' }}>Subtitle / Location Details</label>
-          <input style={inputStyle} value={formData.subtitle} onChange={e => setFormData({ ...formData, subtitle: e.target.value })} placeholder="e.g. L 106 • PL Lab I" />
+          <label className={labelCls}>Subtitle / Location Details</label>
+          <input className={fieldCls} value={formData.subtitle} onChange={e => fd('subtitle', e.target.value)} placeholder="e.g. L 106 • PL Lab I" />
 
-          <div style={{ display: 'flex', gap: 16 }}>
-             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#475569', display: 'block' }}>Capacity</label>
-              <input type="number" style={inputStyle} value={formData.capacity} onChange={e => setFormData({ ...formData, capacity: e.target.value })} placeholder="60" />
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className={labelCls}>Capacity</label>
+              <input type="number" className={fieldCls} value={formData.capacity} onChange={e => fd('capacity', e.target.value)} placeholder="60" />
             </div>
-             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#475569', display: 'block' }}>Floor</label>
-              <input style={inputStyle} value={formData.floor} onChange={e => setFormData({ ...formData, floor: e.target.value })} placeholder="01" />
+            <div className="flex-1">
+              <label className={labelCls}>Floor</label>
+              <input className={fieldCls} value={formData.floor} onChange={e => fd('floor', e.target.value)} placeholder="01" />
             </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#475569', display: 'block' }}>Room Type</label>
-              <select style={selectStyle} value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value })}>
+            <div className="flex-1">
+              <label className={labelCls}>Room Type</label>
+              <select className={fieldCls} value={formData.type} onChange={e => fd('type', e.target.value)}>
                 <option value="LEC">Lecture</option>
                 <option value="LAB">Lab</option>
                 <option value="GENERAL">General</option>
@@ -384,10 +255,10 @@ export default function ManageClassrooms() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 16 }}>
-             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#475569', display: 'block' }}>Status Message</label>
-              <select style={selectStyle} value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })}>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className={labelCls}>Status Message</label>
+              <select className={fieldCls} value={formData.status} onChange={e => fd('status', e.target.value)}>
                 <option value="AVAILABLE NOW">Available Now</option>
                 <option value="IN USE">In Use</option>
                 <option value="MAINTENANCE">Maintenance</option>
@@ -395,49 +266,36 @@ export default function ManageClassrooms() {
                 <option value="EXAM IN PROGRESS">Exam In Progress</option>
               </select>
             </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#475569', display: 'block' }}>Status Color</label>
-              <select style={selectStyle} value={currentColorKey} onChange={e => {
+            <div className="flex-1">
+              <label className={labelCls}>Status Color</label>
+              <select className={fieldCls} value={currentColorKey} onChange={e => {
                 const color = STATUS_COLORS[e.target.value]
-                setFormData({ ...formData, status_bg: color.bg, status_c: color.c })
+                setFormData(p => ({ ...p, status_bg: color.bg, status_c: color.c }))
               }}>
-                {Object.keys(STATUS_COLORS).map(k => (
-                  <option key={k} value={k}>{STATUS_COLORS[k].label}</option>
-                ))}
+                {Object.keys(STATUS_COLORS).map(k => <option key={k} value={k}>{STATUS_COLORS[k].label}</option>)}
               </select>
             </div>
           </div>
 
-          <label style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#475569', display: 'block' }}>Classroom Image</label>
-          <div style={{ 
-            position: 'relative', width: '100%', height: 160, borderRadius: 16, 
-            border: '2px dashed #cbd5e1', background: '#f8fafc', display: 'flex', 
-            flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
-            cursor: 'pointer', overflow: 'hidden', marginBottom: 24, transition: '0.2s'
-          }}
-          onMouseEnter={e => e.currentTarget.style.borderColor = '#4f46e5'}
-          onMouseLeave={e => e.currentTarget.style.borderColor = '#cbd5e1'}
-          >
+          <label className={labelCls}>Classroom Image</label>
+          <div className="relative w-full h-40 rounded-[16px] border-2 border-dashed border-slate-300 bg-slate-50 flex flex-col items-center justify-center cursor-pointer overflow-hidden mb-6 hover:border-brand transition-colors">
             {imageFile ? (
-              <img src={URL.createObjectURL(imageFile)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={URL.createObjectURL(imageFile)} className="w-full h-full object-cover" />
             ) : formData.image_url ? (
-              <img src={formData.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={formData.image_url} className="w-full h-full object-cover" />
             ) : (
-              <div style={{ textAlign: 'center', color: '#64748b', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              <div className="text-center text-slate-500 flex flex-col items-center gap-2">
                 <UploadCloud size={28} />
-                <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 700 }}>Click to upload image</div>
-                <div style={{ fontSize: 12 }}>PNG, JPG up to 5MB</div>
+                <div className="text-[14px] font-bold">Click to upload image</div>
+                <div className="text-[12px]">PNG, JPG up to 5MB</div>
               </div>
             )}
-            <input type="file" style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} onChange={e => e.target.files[0] && setImageFile(e.target.files[0])} accept="image/*" />
+            <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => e.target.files[0] && setImageFile(e.target.files[0])} accept="image/*" />
           </div>
 
-          <div style={{ display: 'flex', gap: 12 }}>
-            <button type="button" onClick={() => setModalOpen(false)} style={{ flex: 1, padding: '14px', borderRadius: 12, border: '1.5px solid #e2e8f0', background: 'transparent', fontWeight: 600, color: '#475569', cursor: 'pointer' }}>Cancel</button>
-            <button disabled={submitting} type="submit" style={{ 
-              flex: 2, background: '#4f46e5', color: '#fff', border: 'none', padding: '14px', borderRadius: 12, 
-              fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 15, fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer'
-            }}>
+          <div className="flex gap-3">
+            <button type="button" onClick={() => setModalOpen(false)} className="flex-1 py-3.5 rounded-[12px] border-[1.5px] border-slate-200 bg-transparent font-semibold text-slate-600 cursor-pointer hover:bg-slate-50 transition-colors">Cancel</button>
+            <button disabled={submitting} type="submit" className={`flex-[2] py-3.5 rounded-[12px] border-0 text-white text-[15px] font-bold ${submitting ? 'bg-slate-200 cursor-not-allowed' : 'bg-brand cursor-pointer'}`}>
               {submitting ? 'Saving...' : (editingCard ? 'Save Changes' : 'Create Classroom')}
             </button>
           </div>

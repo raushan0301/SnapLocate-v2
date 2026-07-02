@@ -1,13 +1,15 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
 import { Upload, Download, CheckCircle, XCircle, AlertTriangle, BookOpen, Users, BarChart2, CalendarCheck, ChevronDown } from 'lucide-react'
 
-const pjs = (sz, fw, lh, col) => ({ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:sz, fontWeight:fw, lineHeight:lh, color:col })
-
 function Toast({ msg, type }) {
   if (!msg) return null
-  return <div style={{ position:'fixed', bottom:24, right:24, background:type==='error'?'#dc2626':'#0f172a', color:'#fff', padding:'12px 20px', borderRadius:12, zIndex:999, fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:14, fontWeight:600 }}>{msg}</div>
+  return (
+    <div className={`fixed bottom-6 right-6 z-[999] px-5 py-3 rounded-[12px] text-white text-[14px] font-semibold ${type === 'error' ? 'bg-red-600' : 'bg-slate-900'}`}>
+      {msg}
+    </div>
+  )
 }
 
 const UPLOAD_TYPES = [
@@ -69,7 +71,7 @@ const UPLOAD_TYPES = [
 ]
 
 function UploadCard({ type }) {
-  const { key, label, icon: Icon, color, bg, border, endpoint, template, description, format, example, requiresId, idLabel, idPlaceholder } = type
+  const { label, icon: Icon, color, bg, border, endpoint, template, description, format, example, requiresId, idLabel, idPlaceholder } = type
   const [expanded, setExpanded] = useState(false)
   const [csvText, setCsvText] = useState('')
   const [entityId, setEntityId] = useState('')
@@ -83,114 +85,116 @@ function UploadCard({ type }) {
   const handleUpload = async () => {
     if (!csvText.trim()) return
     if (requiresId && !entityId.trim()) return
-    setLoading(true)
-    setResult(null)
+    setLoading(true); setResult(null)
     try {
       const url = requiresId ? `${endpoint}/${entityId.trim()}` : endpoint
       const res = await api.post(url, { csv_text: csvText })
       setResult(res)
     } catch (e) {
       setResult({ success: false, error: e?.message || 'Network error' })
-    } finally {
-      setLoading(false)
-    }
+    } finally { setLoading(false) }
   }
 
   const handleFileRead = (e) => {
-    const file = e.target.files[0]
-    if (!file) return
+    const file = e.target.files[0]; if (!file) return
     const reader = new FileReader()
     reader.onload = (ev) => setCsvText(ev.target.result)
-    reader.readAsText(file)
-    e.target.value = ''
+    reader.readAsText(file); e.target.value = ''
   }
 
+  const disabled = loading || !csvText.trim() || (requiresId && !entityId.trim())
+
   return (
-    <div style={{ background:'#fff', borderRadius:20, border:`1.5px solid ${expanded?border:'#f1f5f9'}`, boxShadow: expanded?`0 4px 24px rgba(0,0,0,0.06)`:'0 2px 8px rgba(0,0,0,0.03)', overflow:'hidden', transition:'all 0.2s' }}>
-      {/* Header */}
+    <div className="bg-white rounded-[20px] overflow-hidden transition-all"
+      style={{ border: `1.5px solid ${expanded ? border : '#f1f5f9'}`, boxShadow: expanded ? '0 4px 24px rgba(0,0,0,0.06)' : '0 2px 8px rgba(0,0,0,0.03)' }}>
+
       <div onClick={() => setExpanded(e => !e)}
-        style={{ padding:'18px 20px', display:'flex', alignItems:'center', gap:14, cursor:'pointer', background: expanded?bg:'transparent' }}>
-        <div style={{ width:42, height:42, borderRadius:12, background:bg, border:`1.5px solid ${border}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+        className="flex items-center gap-3.5 px-5 py-[18px] cursor-pointer transition-colors"
+        style={{ background: expanded ? bg : 'transparent' }}>
+        <div className="w-[42px] h-[42px] rounded-[12px] flex items-center justify-center shrink-0"
+          style={{ background: bg, border: `1.5px solid ${border}` }}>
           <Icon size={20} color={color} />
         </div>
-        <div style={{ flex:1, minWidth:0 }}>
-          <div style={pjs(15,700,'20px','#0f172a')}>{label}</div>
-          <div style={pjs(12,400,'16px','#64748b')}>{description}</div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[15px] font-bold t-primary">{label}</div>
+          <div className="text-[12px] t-muted">{description}</div>
         </div>
-        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+        <div className="flex items-center gap-2">
           <button onClick={e => { e.stopPropagation(); downloadTemplate() }}
-            style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:8, border:`1.5px solid ${border}`, background:bg, cursor:'pointer', ...pjs(12,600,'16px',color) }}>
+            className="flex items-center gap-[5px] px-3 py-[6px] rounded-[8px] text-[12px] font-semibold cursor-pointer"
+            style={{ border: `1.5px solid ${border}`, background: bg, color }}>
             <Download size={12} /> Template
           </button>
-          <ChevronDown size={16} color="#94a3b8" style={{ transform: expanded?'rotate(180deg)':'none', transition:'transform 0.2s' }} />
+          <ChevronDown size={16} className={`text-slate-400 transition-transform ${expanded ? 'rotate-180' : 'rotate-0'}`} />
         </div>
       </div>
 
-      {/* Expanded body */}
       {expanded && (
-        <div style={{ padding:'0 20px 20px', borderTop:`1px solid ${border}20` }}>
-          {/* Format hint */}
-          <div style={{ background:'#f8fafc', borderRadius:12, padding:'12px 14px', margin:'16px 0', border:'1px solid #f1f5f9' }}>
-            <div style={{ ...pjs(11,700,'14px','#94a3b8'), letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:6 }}>CSV Format</div>
-            <code style={{ fontSize:12, color:'#334155', fontFamily:'monospace', display:'block', marginBottom:4 }}>{format}</code>
-            <div style={{ ...pjs(11,400,'16px','#94a3b8'), marginTop:2 }}>Example: <code style={{ fontSize:11, color:'#475569' }}>{example}</code></div>
+        <div className="px-5 pb-5" style={{ borderTop: `1px solid ${border}20` }}>
+          <div className="bg-slate-50 rounded-[12px] px-3.5 py-3 my-4 border border-slate-100">
+            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.08em] mb-1.5">CSV Format</div>
+            <code className="text-[12px] text-slate-700 font-mono block mb-1">{format}</code>
+            <div className="text-[11px] t-muted mt-0.5">
+              Example: <code className="text-[11px] text-slate-500">{example}</code>
+            </div>
           </div>
 
-          {/* Entity ID if needed */}
           {requiresId && (
-            <div style={{ marginBottom:14 }}>
-              <div style={pjs(12,600,'16px','#374151')}>{idLabel} <span style={{ color:'#dc2626' }}>*</span></div>
+            <div className="mb-3.5">
+              <div className="text-[12px] font-semibold text-slate-700 mb-1">
+                {idLabel} <span className="text-red-500">*</span>
+              </div>
               <input value={entityId} onChange={e => setEntityId(e.target.value)} placeholder={idPlaceholder}
-                style={{ width:'100%', marginTop:4, padding:'9px 12px', borderRadius:10, border:`1.5px solid ${entityId?border:'#e2e8f0'}`, fontSize:13, fontFamily:"'Plus Jakarta Sans',sans-serif", outline:'none', boxSizing:'border-box', fontFamily:'monospace' }} />
+                className="w-full mt-1 py-[9px] px-3 rounded-[10px] text-[13px] font-mono outline-none box-border transition-colors"
+                style={{ border: `1.5px solid ${entityId ? border : '#e2e8f0'}` }} />
             </div>
           )}
 
-          {/* CSV input */}
-          <div style={{ marginBottom:14 }}>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
-              <div style={pjs(12,600,'16px','#374151')}>CSV Data</div>
-              <label style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 10px', borderRadius:8, border:'1.5px solid #e2e8f0', background:'#fff', cursor:'pointer', ...pjs(11,600,'14px','#475569') }}>
+          <div className="mb-3.5">
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="text-[12px] font-semibold text-slate-700">CSV Data</div>
+              <label className="flex items-center gap-[5px] px-2.5 py-[5px] rounded-[8px] border-[1.5px] border-slate-200 bg-white text-slate-500 text-[11px] font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
                 <Upload size={11} /> Upload .csv file
-                <input type="file" accept=".csv" onChange={handleFileRead} style={{ display:'none' }} />
+                <input type="file" accept=".csv" onChange={handleFileRead} className="hidden" />
               </label>
             </div>
             <textarea value={csvText} onChange={e => setCsvText(e.target.value)} rows={6}
               placeholder={`Paste CSV here or upload a file above...\n${format}\n${example}`}
-              style={{ width:'100%', padding:'10px 12px', borderRadius:10, border:`1.5px solid ${csvText?border:'#e2e8f0'}`, fontSize:13, fontFamily:'monospace', outline:'none', boxSizing:'border-box', resize:'vertical', lineHeight:'1.6' }} />
-            <div style={{ ...pjs(11,400,'14px','#94a3b8'), marginTop:4 }}>
+              className="w-full py-[10px] px-3 rounded-[10px] text-[13px] font-mono outline-none box-border resize-y leading-relaxed"
+              style={{ border: `1.5px solid ${csvText ? border : '#e2e8f0'}` }} />
+            <div className="text-[11px] t-muted mt-1">
               {csvText ? `${csvText.trim().split('\n').length - 1} data rows detected` : 'First row must be header'}
             </div>
           </div>
 
-          {/* Upload button */}
-          <button onClick={handleUpload} disabled={loading || !csvText.trim() || (requiresId && !entityId.trim())}
-            style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'11px 0', borderRadius:12, border:'none',
-              background: loading||!csvText.trim()||(requiresId&&!entityId.trim()) ? '#e2e8f0' : `linear-gradient(135deg, ${color}, ${color}cc)`,
-              cursor: loading||!csvText.trim()||(requiresId&&!entityId.trim()) ? 'not-allowed' : 'pointer',
-              ...pjs(14,700,'20px','#fff') }}>
+          <button onClick={handleUpload} disabled={disabled}
+            className="w-full flex items-center justify-center gap-2 py-[11px] rounded-[12px] border-none text-white text-[14px] font-bold transition-colors"
+            style={{
+              background: disabled ? '#e2e8f0' : `linear-gradient(135deg, ${color}, ${color}cc)`,
+              cursor: disabled ? 'not-allowed' : 'pointer',
+            }}>
             <Upload size={16} />
             {loading ? 'Uploading...' : `Upload ${label}`}
           </button>
 
-          {/* Result */}
           {result && (
-            <div style={{ marginTop:14, padding:'14px', borderRadius:12, background: result.success?'#f0fdf4':'#fef2f2', border:`1.5px solid ${result.success?'#bbf7d0':'#fecaca'}` }}>
-              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom: result.errors?.length?10:0 }}>
+            <div className={`mt-3.5 p-3.5 rounded-[12px] border-[1.5px] ${result.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+              <div className={`flex items-center gap-2 ${result.errors?.length ? 'mb-2.5' : ''}`}>
                 {result.success
-                  ? <CheckCircle size={16} color="#16a34a" />
-                  : <XCircle size={16} color="#dc2626" />}
-                <span style={pjs(13,700,'18px',result.success?'#16a34a':'#dc2626')}>
+                  ? <CheckCircle size={16} className="text-green-600" />
+                  : <XCircle size={16} className="text-red-600" />}
+                <span className={`text-[13px] font-bold ${result.success ? 'text-green-700' : 'text-red-700'}`}>
                   {result.success
-                    ? `Success! ${result.created||result.enrolled||result.saved||result.records_saved||0} records processed${result.failed||result.failed_rows?` · ${result.failed||result.failed_rows} failed`:''}`
+                    ? `Success! ${result.created || result.enrolled || result.saved || result.records_saved || 0} records processed${result.failed || result.failed_rows ? ` · ${result.failed || result.failed_rows} failed` : ''}`
                     : result.error || 'Upload failed'}
                 </span>
               </div>
               {result.errors?.length > 0 && (
-                <div style={{ maxHeight:160, overflowY:'auto' }}>
+                <div className="max-h-[160px] overflow-y-auto">
                   {result.errors.map((e, i) => (
-                    <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:6, padding:'4px 0', borderTop: i>0?'1px solid rgba(0,0,0,0.05)':'' }}>
-                      <AlertTriangle size={12} color="#d97706" style={{ flexShrink:0, marginTop:2 }} />
-                      <span style={pjs(11,400,'16px','#92400e')}>{e}</span>
+                    <div key={i} className={`flex items-start gap-1.5 py-1 ${i > 0 ? 'border-t border-black/5' : ''}`}>
+                      <AlertTriangle size={12} className="text-amber-600 shrink-0 mt-0.5" />
+                      <span className="text-[11px] text-amber-900">{e}</span>
                     </div>
                   ))}
                 </div>
@@ -206,28 +210,26 @@ function UploadCard({ type }) {
 export default function BulkUpload() {
   return (
     <PageLayout>
-      {/* Header */}
-      <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
-        <div>
-          <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-            <div style={{ width:44, height:44, borderRadius:14, background:'linear-gradient(135deg,#eef2ff,#e0e7ff)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <Upload size={22} color="#4f46e5" />
-            </div>
-            <div>
-              <h1 style={{ fontSize:26, fontWeight:800, color:'#0f172a', margin:0 }}>Bulk Data Upload</h1>
-              <p style={{ fontSize:13, color:'#64748b', margin:0 }}>Import courses, enrollments, marks and attendance from CSV files</p>
-            </div>
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-[14px] flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg,#eef2ff,#e0e7ff)' }}>
+            <Upload size={22} color="#4f46e5" />
+          </div>
+          <div>
+            <h1 className="text-[26px] font-extrabold t-primary m-0">Bulk Data Upload</h1>
+            <p className="text-[13px] t-muted m-0">Import courses, enrollments, marks and attendance from CSV files</p>
           </div>
         </div>
       </div>
 
-      {/* Info banner */}
-      <div style={{ background:'linear-gradient(135deg,#eef2ff,#e0e7ff)', border:'1.5px solid #c7d2fe', borderRadius:16, padding:'14px 18px' }}>
-        <div style={{ display:'flex', alignItems:'flex-start', gap:10 }}>
-          <AlertTriangle size={16} color="#4f46e5" style={{ flexShrink:0, marginTop:2 }} />
+      <div className="rounded-[16px] p-[18px] border-[1.5px] border-indigo-200"
+        style={{ background: 'linear-gradient(135deg,#eef2ff,#e0e7ff)' }}>
+        <div className="flex items-start gap-2.5">
+          <AlertTriangle size={16} color="#4f46e5" className="shrink-0 mt-0.5" />
           <div>
-            <div style={pjs(13,700,'18px','#3730a3')}>How bulk upload works</div>
-            <div style={pjs(12,400,'18px','#4f46e5')}>
+            <div className="text-[13px] font-bold text-indigo-900 mb-1">How bulk upload works</div>
+            <div className="text-[12px] text-indigo-700 leading-relaxed">
               1. Download the CSV template for each type. &nbsp;
               2. Fill your data following the column format. &nbsp;
               3. Upload or paste the CSV. &nbsp;
@@ -238,8 +240,7 @@ export default function BulkUpload() {
         </div>
       </div>
 
-      {/* Upload cards */}
-      <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+      <div className="flex flex-col gap-3">
         {UPLOAD_TYPES.map(t => <UploadCard key={t.key} type={t} />)}
       </div>
     </PageLayout>

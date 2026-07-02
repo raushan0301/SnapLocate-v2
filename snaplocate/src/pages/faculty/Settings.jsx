@@ -2,24 +2,15 @@ import { useState, useEffect, useRef } from 'react'
 import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
 import { useAuth } from '../../context/AuthContext'
-import { Settings, Save, Lock, CheckCircle, Eye, EyeOff, Camera, Loader, KeyRound, Shield, ShieldCheck } from 'lucide-react'
+import { Settings, CheckCircle, Eye, EyeOff, Camera, Loader, KeyRound, Shield, ShieldCheck } from 'lucide-react'
 import Modal from '../../components/admin/Modal'
-
-const pjs = (size, weight, lh, color) => ({
-  fontFamily: "'Plus Jakarta Sans', sans-serif",
-  fontSize: size, fontWeight: weight, lineHeight: lh, color,
-})
-const inter = (size, weight, lh, color) => ({
-  fontFamily: "'Inter', sans-serif",
-  fontSize: size, fontWeight: weight, lineHeight: lh, color,
-})
 
 function Section({ title, icon, children }) {
   return (
-    <div style={{ background: '#fff', borderRadius: 24, padding: 32, border: '1px solid #f1f5f9', boxShadow: '0 4px 24px rgba(0,0,0,0.03)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{icon}</div>
-        <span style={pjs(18, 700, '23px', '#0f172a')}>{title}</span>
+    <div className="bg-white rounded-[24px] p-8 border border-slate-100 shadow-[0_4px_24px_rgba(0,0,0,0.03)]">
+      <div className="flex items-center gap-3 mb-7">
+        <div className="flex items-center justify-center">{icon}</div>
+        <span className="text-[18px] font-bold t-primary">{title}</span>
       </div>
       {children}
     </div>
@@ -29,26 +20,15 @@ function Section({ title, icon, children }) {
 function Toast({ msg, type, onClose }) {
   if (!msg) return null
   return (
-    <div style={{
-      position: 'fixed', bottom: 32, right: 32, zIndex: 9999,
-      padding: '14px 22px', borderRadius: 14,
-      background: type === 'success' ? '#16a34a' : '#ef4444',
-      color: '#fff', boxShadow: '0 8px 32px rgba(0,0,0,.18)',
-      fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 600,
-      display: 'flex', alignItems: 'center', gap: 10,
-      animation: 'slideIn 0.3s ease-out'
-    }}>
-      <style>{`
-        @keyframes slideIn {
-          from { transform: translateX(100%); opacity: 0; }
-          to { transform: translateX(0); opacity: 1; }
-        }
-      `}</style>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }}>
+    <div
+      className={`fixed bottom-8 right-8 z-[9999] px-[22px] py-3.5 rounded-[14px] text-white shadow-[0_8px_32px_rgba(0,0,0,0.18)] text-[14px] font-semibold flex items-center gap-2.5 ${type === 'success' ? 'bg-green-600' : 'bg-red-500'}`}
+      style={{ animation: 'slideIn 0.3s ease-out' }}
+    >
+      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-white/20">
         {type === 'success' ? '✓' : '!'}
       </div>
       <span>{msg}</span>
-      <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', marginLeft: 10, opacity: 0.7, fontSize: 16 }}>×</button>
+      <button onClick={onClose} className="bg-transparent border-0 text-white cursor-pointer ml-2.5 opacity-70 text-[16px]">×</button>
     </div>
   )
 }
@@ -57,20 +37,15 @@ function Toggle({ on, onChange }) {
   return (
     <div
       onClick={() => onChange(!on)}
-      style={{
-        width: 44, height: 24, borderRadius: 12, cursor: 'pointer',
-        background: on ? '#4f46e5' : '#e2e8f0',
-        position: 'relative', transition: 'background 0.2s', flexShrink: 0,
-      }}
+      className={`w-11 h-6 rounded-full cursor-pointer relative transition-colors shrink-0 ${on ? 'bg-brand' : 'bg-slate-200'}`}
     >
-      <div style={{
-        position: 'absolute', top: 3, left: on ? 23 : 3,
-        width: 18, height: 18, borderRadius: '50%', background: '#ffffff',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.15)', transition: 'left 0.2s',
-      }} />
+      <div className={`absolute top-[3px] w-[18px] h-[18px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.15)] transition-[left] ${on ? 'left-[23px]' : 'left-[3px]'}`} />
     </div>
   )
 }
+
+const fieldCls = 'w-full px-[14px] py-3 rounded-[12px] border border-slate-200 bg-slate-50 text-[14px] t-primary outline-none box-border transition-all focus:border-brand'
+const labelCls = 'text-[10px] font-bold text-slate-500 uppercase tracking-[0.08em] block mb-1.5'
 
 export default function FacultySettings() {
   const { user, updateUser } = useAuth()
@@ -174,50 +149,32 @@ export default function FacultySettings() {
   const currentAvatar = avatarPreview || user?.avatar_url
   const initials = (displayName || 'F').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
 
-  const inputStyle = {
-    width: '100%', padding: '12px 14px',
-    borderRadius: 12, border: '1px solid #e2e8f0', background: '#f8fafc',
-    ...pjs(14, 400, '20px', '#0f172a'), outline: 'none', boxSizing: 'border-box',
-    transition: 'all 0.15s',
-  }
-  const labelStyle = { ...pjs(10, 700, '14px', '#64748b'), textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 6 }
-
-  const primaryButtonStyle = {
-    padding: '12px 34px', background: '#4f46e5', borderRadius: 16, border: 'none', cursor: 'pointer',
-    ...pjs(14, 700, '18px', '#ffffff'), transition: 'all 0.2s',
-  }
-  const secondaryButtonStyle = {
-    padding: '12px 34px', background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', cursor: 'pointer',
-    ...pjs(14, 700, '18px', '#1e293b'), transition: 'all 0.2s',
-  }
-
   return (
     <PageLayout>
       <Toast msg={toast.msg} type={toast.type} onClose={() => setToast({ msg: '', type: 'success' })} />
 
-      <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
+      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
 
-      {/* Page Header */}
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={pjs(30, 700, '38px', '#0f172a')}>Settings</h1>
-        <p style={{ ...pjs(16, 400, '22px', '#64748b'), marginTop: 2 }}>
+      <div className="mb-8">
+        <h1 className="text-[30px] font-bold t-primary m-0">Settings</h1>
+        <p className="text-[16px] t-muted mt-0.5 mb-0">
           Manage your faculty profile picture, display name, and account security.
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, alignItems: 'start' }}>
+      <div className="grid grid-cols-2 gap-6 items-start">
 
         {/* Left — Profile */}
         <Section title="Faculty Profile" icon={<Settings size={20} color="#4f46e5" strokeWidth={2.5} />}>
-          <div style={{ display: 'flex', gap: 28, alignItems: 'flex-start' }}>
-            <div style={{ position: 'relative', flexShrink: 0 }}>
-              <div style={{ width: 104, height: 104, borderRadius: '50%', background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '4px solid #fff', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+          <div className="flex gap-7 items-start">
+            <div className="relative shrink-0">
+              <div className="w-[104px] h-[104px] rounded-full bg-indigo-50 flex items-center justify-center overflow-hidden border-4 border-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
                 {currentAvatar
-                  ? <img src={currentAvatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span style={{ fontSize: 36, fontWeight: 700, color: '#4f46e5' }}>{initials}</span>
+                  ? <img src={currentAvatar} alt="" className="w-full h-full object-cover" />
+                  : <span className="text-[36px] font-bold text-brand">{initials}</span>
                 }
                 {uploadingAvatar && (
-                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="absolute inset-0 bg-black/45 flex items-center justify-center">
                     <Loader size={24} color="#fff" style={{ animation: 'spin 1s linear infinite' }} />
                   </div>
                 )}
@@ -225,46 +182,33 @@ export default function FacultySettings() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingAvatar}
-                style={{
-                  position: 'absolute', bottom: 2, right: 2,
-                  width: 32, height: 32, borderRadius: '50%',
-                  background: '#4f46e5', border: '2.5px solid #fff',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: uploadingAvatar ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)', transition: 'transform 0.1s'
-                }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                className={`absolute bottom-0.5 right-0.5 w-8 h-8 rounded-full bg-brand border-[2.5px] border-white flex items-center justify-center shadow-[0_2px_4px_rgba(0,0,0,0.1)] transition-transform hover:scale-110 ${uploadingAvatar ? 'cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <Camera size={14} color="#fff" />
               </button>
             </div>
 
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <div className="flex-1 flex flex-col gap-[18px]">
               <div>
-                <label style={labelStyle}>DISPLAY NAME</label>
+                <label className={labelCls}>DISPLAY NAME</label>
                 <input
                   value={displayName} onChange={e => setDisplayName(e.target.value)}
                   placeholder="Your full name"
-                  style={inputStyle}
-                  onFocus={e => e.target.style.borderColor = '#4f46e5'}
-                  onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                  className={fieldCls}
                 />
               </div>
               <div>
-                <label style={labelStyle}>PROFESSIONAL EMAIL</label>
+                <label className={labelCls}>PROFESSIONAL EMAIL</label>
                 <input
                   value={user?.email || ''} disabled
-                  style={{ ...inputStyle, background: '#f8fafc', color: '#94a3b8' }}
+                  className={`${fieldCls} text-slate-400`}
                 />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+              <div className="flex justify-end mt-2">
                 <button
                   onClick={handleSaveProfile}
                   disabled={savingProfile || !displayName.trim()}
-                  style={primaryButtonStyle}
-                  onMouseEnter={e => e.currentTarget.style.background = '#4338ca'}
-                  onMouseLeave={e => e.currentTarget.style.background = '#4f46e5'}
+                  className="px-[34px] py-3 bg-brand hover:bg-indigo-700 rounded-[16px] border-0 cursor-pointer text-[14px] font-bold text-white transition-colors"
                 >
                   {savingProfile ? 'Syncing...' : 'Save Changes'}
                 </button>
@@ -274,45 +218,41 @@ export default function FacultySettings() {
         </Section>
 
         {/* Right — Security & Account Info */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div className="flex flex-col gap-6">
           <Section title="Security & Access" icon={<Shield size={20} color="#4f46e5" strokeWidth={2.5} />}>
-            <div style={{ background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 20, marginBottom: 16 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div className="bg-slate-50 border border-slate-100 rounded-[16px] px-6 py-5 flex items-center gap-5 mb-4">
+              <div className="w-11 h-11 rounded-[12px] bg-indigo-50 flex items-center justify-center shrink-0">
                 <KeyRound size={20} color="#4f46e5" />
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={pjs(15, 700, '21px', '#0f172a')}>Reset Password</div>
-                <div style={inter(13, 400, '18px', '#64748b')}>Update your security credentials.</div>
+              <div className="flex-1">
+                <div className="text-[15px] font-bold t-primary">Reset Password</div>
+                <div className="text-[13px] t-muted">Update your security credentials.</div>
               </div>
-              <button onClick={() => setPwModal(true)} style={{
-                padding: '12px 20px', background: '#fff', border: '1px solid #e2e8f0',
-                borderRadius: 12, cursor: 'pointer', ...pjs(13, 700, '18px', '#0f172a'),
-                transition: 'all 0.15s'
-              }} onMouseEnter={e => e.currentTarget.style.borderColor = '#4f46e5'} onMouseLeave={e => e.currentTarget.style.borderColor = '#e2e8f0'}>
+              <button onClick={() => setPwModal(true)} className="px-5 py-3 bg-white border border-slate-200 hover:border-brand rounded-[12px] cursor-pointer text-[13px] font-bold t-primary transition-colors">
                 Update
               </button>
             </div>
-            <div style={{ background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 20 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div className="bg-slate-50 border border-slate-100 rounded-[16px] px-6 py-5 flex items-center gap-5">
+              <div className="w-11 h-11 rounded-[12px] bg-emerald-50 flex items-center justify-center shrink-0">
                 <ShieldCheck size={20} color="#10b981" />
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={pjs(15, 700, '21px', '#0f172a')}>Two-Factor Auth</div>
-                <div style={inter(13, 400, '18px', '#64748b')}>Enhanced account protection.</div>
+              <div className="flex-1">
+                <div className="text-[15px] font-bold t-primary">Two-Factor Auth</div>
+                <div className="text-[13px] t-muted">Enhanced account protection.</div>
               </div>
               <Toggle on={true} onChange={() => { }} />
             </div>
           </Section>
 
           <Section title="Context" icon={<CheckCircle size={20} color="#4f46e5" strokeWidth={2.5} />}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Role', value: 'Faculty Agent' },
-                { label: 'Status', value: user?.is_verified ? 'Approved' : 'Pending', type: user?.is_verified ? 'success' : 'warning' },
+                { label: 'Role', value: 'Faculty Agent', cls: 't-primary' },
+                { label: 'Status', value: user?.is_verified ? 'Approved' : 'Pending', cls: user?.is_verified ? 'text-emerald-500' : 'text-amber-400' },
               ].map((row, i) => (
-                <div key={i} style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: 14, border: '1px solid #f1f5f9' }}>
-                  <div style={{ ...pjs(10, 700, '14px', '#94a3b8'), textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>{row.label}</div>
-                  <div style={{ ...pjs(14, 700, '18px', row.type === 'success' ? '#10b981' : (row.type === 'warning' ? '#f59e0b' : '#0f172a')) }}>{row.value}</div>
+                <div key={i} className="px-4 py-3 bg-slate-50 rounded-[14px] border border-slate-100">
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.04em] mb-1">{row.label}</div>
+                  <div className={`text-[14px] font-bold ${row.cls}`}>{row.value}</div>
                 </div>
               ))}
             </div>
@@ -320,69 +260,69 @@ export default function FacultySettings() {
         </div>
       </div>
 
-      {/* Password Modal */}
       <Modal isOpen={pwModal} onClose={closePwModal} title="Change Password">
-        <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <form onSubmit={handleChangePassword} className="flex flex-col gap-4">
           {pwError && (
-            <div style={{ padding: '10px 14px', borderRadius: 8, background: '#fef2f2', border: '1px solid #fee2e2', color: '#b91c1c', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="px-3.5 py-2.5 rounded-[8px] bg-red-50 border border-red-200 text-red-700 text-[13px] font-medium flex items-center gap-2">
               <span>⚠️</span> {pwError}
             </div>
           )}
           <div>
-            <label style={labelStyle}>Current Password</label>
-            <div style={{ position: 'relative' }}>
+            <label className={labelCls}>Current Password</label>
+            <div className="relative">
               <input
                 type={showPwd.current ? 'text' : 'password'}
-                required style={{ ...inputStyle, paddingRight: 44 }}
+                required
+                className={`${fieldCls} pr-11`}
                 value={currPwd} onChange={e => setCurrPwd(e.target.value)}
               />
               <button type="button" onClick={() => setShowPwd({ ...showPwd, current: !showPwd.current })}
-                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+                className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-0 cursor-pointer text-slate-400">
                 {showPwd.current ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </div>
           <div>
-            <label style={labelStyle}>New Password</label>
-            <div style={{ position: 'relative' }}>
+            <label className={labelCls}>New Password</label>
+            <div className="relative">
               <input
                 type={showPwd.next ? 'text' : 'password'}
-                required style={{ ...inputStyle, paddingRight: 44 }}
+                required
+                className={`${fieldCls} pr-11`}
                 value={newPwd} onChange={e => setNewPwd(e.target.value)}
               />
               <button type="button" onClick={() => setShowPwd({ ...showPwd, next: !showPwd.next })}
-                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+                className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-0 cursor-pointer text-slate-400">
                 {showPwd.next ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </div>
           <div>
-            <label style={labelStyle}>Confirm New Password</label>
-            <div style={{ position: 'relative' }}>
+            <label className={labelCls}>Confirm New Password</label>
+            <div className="relative">
               <input
                 type={showPwd.confirm ? 'text' : 'password'}
-                required style={{ ...inputStyle, paddingRight: 44, borderColor: confirmPwd && newPwd && confirmPwd !== newPwd ? '#ef4444' : '#e2e8f0' }}
+                required
+                className={`${fieldCls} pr-11 ${confirmPwd && newPwd && confirmPwd !== newPwd ? 'border-red-500' : ''}`}
                 value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)}
               />
               <button type="button" onClick={() => setShowPwd({ ...showPwd, confirm: !showPwd.confirm })}
-                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+                className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-0 cursor-pointer text-slate-400">
                 {showPwd.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
             {confirmPwd && newPwd && confirmPwd !== newPwd && (
-              <p style={{ fontSize: 11, color: '#ef4444', margin: '4px 0 0' }}>Passwords do not match</p>
+              <p className="text-[11px] text-red-500 mt-1 mb-0">Passwords do not match</p>
             )}
           </div>
-          <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end', gap: 14 }}>
-            <button type="button" onClick={closePwModal} style={secondaryButtonStyle}>Cancel</button>
-            <button type="submit" disabled={savingPwd} style={primaryButtonStyle}>
+          <div className="mt-5 flex justify-end gap-3.5">
+            <button type="button" onClick={closePwModal} className="px-[34px] py-3 bg-white rounded-[16px] border border-slate-200 cursor-pointer text-[14px] font-bold text-slate-800 transition-all">Cancel</button>
+            <button type="submit" disabled={savingPwd} className="px-[34px] py-3 bg-brand hover:bg-indigo-700 rounded-[16px] border-0 cursor-pointer text-[14px] font-bold text-white transition-colors">
               {savingPwd ? 'Updating...' : 'Update Password'}
             </button>
           </div>
         </form>
       </Modal>
-
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </PageLayout>
   )
 }

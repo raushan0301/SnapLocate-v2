@@ -3,20 +3,15 @@ import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
 import { BookOpen, Plus, Trash2, Edit2, X, Users, Search, ChevronDown, ChevronRight } from 'lucide-react'
 
-const pjs = (size, weight, lh, color) => ({
-  fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: size, fontWeight: weight, lineHeight: lh, color,
-})
-
 function Toast({ msg, type }) {
   if (!msg) return null
   return (
-    <div style={{ position: 'fixed', bottom: 24, right: 24, background: type === 'error' ? '#dc2626' : '#0f172a', color: '#fff', padding: '12px 20px', borderRadius: 12, zIndex: 999, fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 600 }}>
+    <div className={`fixed bottom-6 right-6 px-5 py-3 rounded-[12px] z-[999] text-white text-[14px] font-semibold ${type === 'error' ? 'bg-red-600' : 'bg-slate-900'}`}>
       {msg}
     </div>
   )
 }
 
-// "2526EVESEM" → "Even Sem 2025-26"
 function semLabel(sem) {
   if (!sem) return 'No Semester'
   const m = String(sem).match(/^(\d{2})(\d{2})(EVEN|ODD)SEM$/i)
@@ -25,7 +20,6 @@ function semLabel(sem) {
   return String(sem)
 }
 
-// Colour per semester group
 const semColors = [
   { bg: '#eef2ff', color: '#4f46e5', border: '#c7d2fe' },
   { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' },
@@ -36,6 +30,9 @@ const semColors = [
 ]
 
 const emptyForm = { code: '', name: '', dept: '', semester: '', year: new Date().getFullYear() }
+
+const fieldCls = 'w-full mt-1 px-3 py-[9px] rounded-[10px] border-[1.5px] border-slate-200 text-[14px] outline-none box-border focus:border-brand transition-colors'
+const labelCls = 'text-[12px] font-semibold text-slate-700 block'
 
 export default function ManageCourses() {
   const [courses, setCourses]   = useState([])
@@ -68,7 +65,7 @@ export default function ManageCourses() {
   useEffect(() => { load() }, [load])
 
   const openCreate = () => { setForm(emptyForm); setModal({ mode: 'create' }) }
-  const openEdit   = (c) => {
+  const openEdit = (c) => {
     setForm({ code: c.code, name: c.name, dept: c.dept || '', semester: c.semester || '', year: c.year || '', faculty_id: c.faculty_id })
     setModal({ mode: 'edit', id: c.id })
   }
@@ -122,7 +119,6 @@ export default function ManageCourses() {
   )
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
-  // Filter + group by semester
   const filtered = courses.filter(c => {
     if (!search) return true
     const q = search.toLowerCase()
@@ -135,7 +131,6 @@ export default function ManageCourses() {
     if (!grouped[key]) grouped[key] = []
     grouped[key].push(c)
   }
-  // Sort semester keys: newest first (2526 > 2425), then no-semester last
   const semKeys = Object.keys(grouped).sort((a, b) => {
     if (a === 'No Semester') return 1
     if (b === 'No Semester') return -1
@@ -146,121 +141,87 @@ export default function ManageCourses() {
     !studentSearch || s.full_name?.toLowerCase().includes(studentSearch.toLowerCase()) || s.email?.toLowerCase().includes(studentSearch.toLowerCase())
   )
 
-  const inputStyle = {
-    width: '100%', marginTop: 4, padding: '9px 12px', borderRadius: 10,
-    border: '1.5px solid #e2e8f0', fontSize: 14,
-    fontFamily: "'Plus Jakarta Sans', sans-serif", outline: 'none', boxSizing: 'border-box',
-  }
-
   return (
     <PageLayout>
       <Toast msg={toast?.msg} type={toast?.type} />
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ width: 44, height: 44, borderRadius: 14, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-4">
+          <div className="w-11 h-11 rounded-[14px] bg-indigo-50 flex items-center justify-center">
             <BookOpen size={22} color="#4f46e5" />
           </div>
           <div>
-            <h1 style={{ fontSize: 26, fontWeight: 700, color: '#0f172a', margin: 0 }}>Manage Courses</h1>
-            <p style={{ fontSize: 14, color: '#64748b', margin: 0 }}>{courses.length} courses across {semKeys.length} semesters</p>
+            <h1 className="text-[26px] font-bold t-primary m-0">Manage Courses</h1>
+            <p className="text-[14px] t-muted m-0">{courses.length} courses across {semKeys.length} semesters</p>
           </div>
         </div>
-        <button onClick={openCreate}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 12, border: 'none', background: '#4f46e5', color: '#fff', cursor: 'pointer', ...pjs(14, 700, '20px', '#fff') }}>
+        <button onClick={openCreate} className="flex items-center gap-1.5 px-[18px] py-[10px] rounded-[12px] border-0 bg-brand text-white text-[14px] font-bold cursor-pointer">
           <Plus size={16} /> Add Course
         </button>
       </div>
 
-      {/* Search */}
-      <div style={{ position: 'relative' }}>
-        <Search size={15} color="#94a3b8" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
-        <input
-          value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Search by code, name or department..."
-          style={{ width: '100%', padding: '10px 14px 10px 38px', borderRadius: 12, border: '1.5px solid #e2e8f0', fontSize: 14, fontFamily: "'Plus Jakarta Sans', sans-serif", outline: 'none', boxSizing: 'border-box', background: '#fff' }}
-          onFocus={e => e.target.style.borderColor = '#4f46e5'} onBlur={e => e.target.style.borderColor = '#e2e8f0'}
-        />
+      <div className="relative">
+        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by code, name or department..."
+          className="w-full py-[10px] pl-[38px] pr-4 rounded-[12px] border-[1.5px] border-slate-200 text-[14px] outline-none box-border bg-white focus:border-brand transition-colors" />
       </div>
 
-      {/* Content */}
       {loading ? (
-        <div style={{ padding: 60, textAlign: 'center', ...pjs(14, 500, '20px', '#94a3b8') }}>Loading courses...</div>
+        <div className="py-[60px] text-center text-[14px] t-muted">Loading courses...</div>
       ) : semKeys.length === 0 ? (
-        <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', padding: '60px 24px', textAlign: 'center' }}>
-          <BookOpen size={40} color="#e2e8f0" style={{ margin: '0 auto 12px', display: 'block' }} />
-          <div style={pjs(15, 600, '20px', '#0f172a')}>{search ? 'No courses match your search' : 'No courses yet'}</div>
-          {!search && <div style={{ ...pjs(13, 400, '18px', '#94a3b8'), marginTop: 4 }}>Click "Add Course" or sync from Moodle.</div>}
+        <div className="bg-white rounded-[20px] border border-slate-100 py-[60px] px-6 text-center">
+          <BookOpen size={40} color="#e2e8f0" className="mx-auto mb-3 block" />
+          <div className="text-[15px] font-semibold t-primary">{search ? 'No courses match your search' : 'No courses yet'}</div>
+          {!search && <div className="text-[13px] t-muted mt-1">Click "Add Course" or sync from Moodle.</div>}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="flex flex-col gap-4">
           {semKeys.map((semKey, si) => {
             const sc = semColors[si % semColors.length]
             const isCollapsed = collapsed[semKey]
             const semCourses = grouped[semKey]
-
             return (
-              <div key={semKey} style={{ background: '#fff', borderRadius: 20, border: `1px solid ${sc.border}`, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
-                {/* Semester header */}
-                <div
-                  onClick={() => setCollapsed(p => ({ ...p, [semKey]: !p[semKey] }))}
-                  style={{ padding: '14px 20px', background: sc.bg, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 10, background: sc.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div key={semKey} className="bg-white rounded-[20px] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.03)]" style={{ border: `1px solid ${sc.border}` }}>
+                <div onClick={() => setCollapsed(p => ({ ...p, [semKey]: !p[semKey] }))}
+                  className="px-5 py-3.5 flex items-center justify-between cursor-pointer select-none"
+                  style={{ background: sc.bg }}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-[10px] flex items-center justify-center" style={{ background: sc.color }}>
                       <BookOpen size={15} color="#fff" />
                     </div>
                     <div>
-                      <div style={pjs(14, 700, '18px', sc.color)}>{semLabel(semKey)}</div>
-                      <div style={pjs(11, 400, '14px', sc.color + 'aa')}>{semCourses.length} course{semCourses.length !== 1 ? 's' : ''}</div>
+                      <div className="text-[14px] font-bold" style={{ color: sc.color }}>{semLabel(semKey)}</div>
+                      <div className="text-[11px]" style={{ color: sc.color + 'aa' }}>{semCourses.length} course{semCourses.length !== 1 ? 's' : ''}</div>
                     </div>
                   </div>
-                  {isCollapsed ? <ChevronRight size={16} color={sc.color} /> : <ChevronDown size={16} color={sc.color} />}
+                  {isCollapsed ? <ChevronRight size={16} style={{ color: sc.color }} /> : <ChevronDown size={16} style={{ color: sc.color }} />}
                 </div>
 
-                {/* Courses grid */}
                 {!isCollapsed && (
-                  <div style={{ padding: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
-                    {semCourses.map((c) => {
+                  <div className="p-4 grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                    {semCourses.map(c => {
                       const facultyName = c.faculty_profiles?.users?.full_name
                       return (
-                        <div key={c.id} style={{ border: '1px solid #f1f5f9', borderRadius: 14, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10, background: '#fafafa', transition: 'box-shadow 0.15s' }}
-                          onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.07)'}
-                          onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
-
-                          {/* Top row */}
-                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ ...pjs(12, 700, '16px', sc.color), background: sc.bg, padding: '2px 8px', borderRadius: 6, display: 'inline-block', marginBottom: 5 }}>{c.code}</div>
-                              <div style={{ ...pjs(13, 700, '18px', '#0f172a'), wordBreak: 'break-word' }}>{c.name}</div>
+                        <div key={c.id} className="border border-slate-100 rounded-[14px] px-4 py-3.5 flex flex-col gap-2.5 bg-slate-50 hover:shadow-[0_4px_16px_rgba(0,0,0,0.07)] transition-shadow">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <span className="text-[12px] font-bold px-2 py-[2px] rounded-[6px] inline-block mb-1.5" style={{ background: sc.bg, color: sc.color }}>{c.code}</span>
+                              <div className="text-[13px] font-bold t-primary break-words">{c.name}</div>
                             </div>
                           </div>
-
-                          {/* Meta */}
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                            {c.dept && (
-                              <span style={{ ...pjs(11, 600, '14px', '#64748b'), background: '#f1f5f9', padding: '2px 8px', borderRadius: 6 }}>{c.dept}</span>
-                            )}
-                            <span style={{ ...pjs(11, 600, '14px', '#4f46e5'), background: '#eef2ff', padding: '2px 8px', borderRadius: 6 }}>
-                              {c.enrolled_count || 0} enrolled
-                            </span>
-                            {facultyName && (
-                              <span style={{ ...pjs(11, 400, '14px', '#64748b'), background: '#f8fafc', padding: '2px 8px', borderRadius: 6 }}>👤 {facultyName}</span>
-                            )}
+                          <div className="flex flex-wrap gap-1.5">
+                            {c.dept && <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-[2px] rounded-[6px]">{c.dept}</span>}
+                            <span className="text-[11px] font-semibold text-brand bg-indigo-50 px-2 py-[2px] rounded-[6px]">{c.enrolled_count || 0} enrolled</span>
+                            {facultyName && <span className="text-[11px] text-slate-600 bg-slate-50 px-2 py-[2px] rounded-[6px]">👤 {facultyName}</span>}
                           </div>
-
-                          {/* Actions */}
-                          <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
-                            <button onClick={() => openEnroll(c.id, c.name)}
-                              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '7px 0', borderRadius: 8, border: '1.5px solid #bbf7d0', background: '#f0fdf4', cursor: 'pointer', ...pjs(11, 700, '14px', '#16a34a') }}>
+                          <div className="flex gap-2 mt-0.5">
+                            <button onClick={() => openEnroll(c.id, c.name)} className="flex-1 flex items-center justify-center gap-1 py-[7px] rounded-[8px] border-[1.5px] border-green-200 bg-green-50 cursor-pointer text-[11px] font-bold text-green-700">
                               <Users size={11} /> Enroll
                             </button>
-                            <button onClick={() => openEdit(c)}
-                              style={{ padding: '7px 10px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer' }}>
+                            <button onClick={() => openEdit(c)} className="px-[10px] py-[7px] rounded-[8px] border-[1.5px] border-slate-200 bg-white cursor-pointer hover:bg-slate-50 transition-colors">
                               <Edit2 size={13} color="#64748b" />
                             </button>
-                            <button onClick={() => handleDelete(c.id)}
-                              style={{ padding: '7px 10px', borderRadius: 8, border: '1.5px solid #fecaca', background: '#fee2e2', cursor: 'pointer' }}>
+                            <button onClick={() => handleDelete(c.id)} className="px-[10px] py-[7px] rounded-[8px] border-[1.5px] border-red-200 bg-red-50 cursor-pointer hover:bg-red-100 transition-colors">
                               <Trash2 size={13} color="#dc2626" />
                             </button>
                           </div>
@@ -275,55 +236,48 @@ export default function ManageCourses() {
         </div>
       )}
 
-      {/* Create/Edit Modal */}
       {modal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 20 }} onClick={closeModal}>
-          <div style={{ background: '#fff', borderRadius: 20, padding: 28, width: '100%', maxWidth: 480, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <span style={pjs(17, 700, '22px', '#0f172a')}>{modal.mode === 'create' ? 'Add Course' : 'Edit Course'}</span>
-              <button onClick={closeModal} style={{ border: 'none', background: 'none', cursor: 'pointer' }}><X size={18} color="#94a3b8" /></button>
+        <div className="fixed inset-0 bg-black/45 flex items-center justify-center z-[100] p-5" onClick={closeModal}>
+          <div className="bg-white rounded-[20px] p-7 w-full max-w-[480px] shadow-[0_20px_60px_rgba(0,0,0,0.2)]" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-5">
+              <span className="text-[17px] font-bold t-primary">{modal.mode === 'create' ? 'Add Course' : 'Edit Course'}</span>
+              <button onClick={closeModal} className="border-0 bg-transparent cursor-pointer"><X size={18} color="#94a3b8" /></button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="flex flex-col gap-3.5">
+              <div className="grid grid-cols-2 gap-3">
                 {[{ key: 'code', label: 'Course Code', placeholder: 'e.g. UCS301' },
-                  { key: 'dept', label: 'Department',  placeholder: 'e.g. CSE' }].map(({ key, label, placeholder }) => (
+                  { key: 'dept', label: 'Department', placeholder: 'e.g. CSE' }].map(({ key, label, placeholder }) => (
                   <div key={key}>
-                    <div style={pjs(12, 600, '16px', '#374151')}>{label}</div>
-                    <input value={form[key] || ''} onChange={e => f(key, e.target.value)} placeholder={placeholder}
-                      style={inputStyle} onFocus={e => e.target.style.borderColor = '#4f46e5'} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                    <label className={labelCls}>{label}</label>
+                    <input value={form[key] || ''} onChange={e => f(key, e.target.value)} placeholder={placeholder} className={fieldCls} />
                   </div>
                 ))}
               </div>
               <div>
-                <div style={pjs(12, 600, '16px', '#374151')}>Course Name</div>
-                <input value={form.name || ''} onChange={e => f('name', e.target.value)} placeholder="e.g. Operating Systems"
-                  style={inputStyle} onFocus={e => e.target.style.borderColor = '#4f46e5'} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                <label className={labelCls}>Course Name</label>
+                <input value={form.name || ''} onChange={e => f('name', e.target.value)} placeholder="e.g. Operating Systems" className={fieldCls} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+              <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <div style={pjs(12, 600, '16px', '#374151')}>Semester</div>
-                  <input value={form.semester || ''} onChange={e => f('semester', e.target.value)} placeholder="e.g. 2526EVESEM"
-                    style={inputStyle} onFocus={e => e.target.style.borderColor = '#4f46e5'} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                  <label className={labelCls}>Semester</label>
+                  <input value={form.semester || ''} onChange={e => f('semester', e.target.value)} placeholder="e.g. 2526EVESEM" className={fieldCls} />
                 </div>
                 <div>
-                  <div style={pjs(12, 600, '16px', '#374151')}>Year</div>
-                  <input type="number" value={form.year || ''} onChange={e => f('year', parseInt(e.target.value))}
-                    style={inputStyle} />
+                  <label className={labelCls}>Year</label>
+                  <input type="number" value={form.year || ''} onChange={e => f('year', parseInt(e.target.value))} className={fieldCls} />
                 </div>
                 <div>
-                  <div style={pjs(12, 600, '16px', '#374151')}>Faculty</div>
-                  <select value={form.faculty_id || ''} onChange={e => f('faculty_id', e.target.value)}
-                    style={{ ...inputStyle, padding: '9px 10px' }}>
+                  <label className={labelCls}>Faculty</label>
+                  <select value={form.faculty_id || ''} onChange={e => f('faculty_id', e.target.value)} className={fieldCls}>
                     <option value="">— None —</option>
                     {faculty.map(fc => <option key={fc.id} value={fc.id}>{fc.users?.full_name || fc.designation}</option>)}
                   </select>
                 </div>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 10, marginTop: 24, justifyContent: 'flex-end' }}>
-              <button onClick={closeModal} style={{ padding: '10px 18px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', ...pjs(13, 600, '18px', '#64748b') }}>Cancel</button>
-              <button onClick={handleSave} disabled={saving}
-                style={{ padding: '10px 20px', borderRadius: 10, border: 'none', background: saving ? '#e2e8f0' : '#4f46e5', color: '#fff', cursor: saving ? 'not-allowed' : 'pointer', ...pjs(13, 700, '18px', '#fff') }}>
+            <div className="flex gap-2.5 mt-6 justify-end">
+              <button onClick={closeModal} className="px-[18px] py-[10px] rounded-[10px] border-[1.5px] border-slate-200 bg-white cursor-pointer text-[13px] font-semibold text-slate-500">Cancel</button>
+              <button onClick={handleSave} disabled={saving} className={`px-5 py-[10px] rounded-[10px] border-0 text-white text-[13px] font-bold ${saving ? 'bg-slate-200 cursor-not-allowed' : 'bg-brand cursor-pointer'}`}>
                 {saving ? 'Saving...' : modal.mode === 'create' ? 'Create Course' : 'Save Changes'}
               </button>
             </div>
@@ -331,58 +285,54 @@ export default function ManageCourses() {
         </div>
       )}
 
-      {/* Enroll Students Modal */}
       {enrollModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 20 }} onClick={() => setEnrollModal(null)}>
-          <div style={{ background: '#fff', borderRadius: 20, padding: 28, width: '100%', maxWidth: 480, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <div className="fixed inset-0 bg-black/45 flex items-center justify-center z-[100] p-5" onClick={() => setEnrollModal(null)}>
+          <div className="bg-white rounded-[20px] p-7 w-full max-w-[480px] max-h-[85vh] flex flex-col shadow-[0_20px_60px_rgba(0,0,0,0.2)]" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-3">
               <div>
-                <div style={pjs(17, 700, '22px', '#0f172a')}>Enroll Students</div>
-                <div style={{ ...pjs(12, 400, '16px', '#94a3b8'), marginTop: 2 }}>{enrollModal.courseName}</div>
+                <div className="text-[17px] font-bold t-primary">Enroll Students</div>
+                <div className="text-[12px] t-muted mt-0.5">{enrollModal.courseName}</div>
               </div>
-              <button onClick={() => setEnrollModal(null)} style={{ border: 'none', background: 'none', cursor: 'pointer' }}><X size={18} color="#94a3b8" /></button>
+              <button onClick={() => setEnrollModal(null)} className="border-0 bg-transparent cursor-pointer"><X size={18} color="#94a3b8" /></button>
             </div>
 
-            {/* Student search */}
-            <div style={{ position: 'relative', marginBottom: 10 }}>
-              <Search size={13} color="#94a3b8" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)' }} />
+            <div className="relative mb-2.5">
+              <Search size={13} className="absolute left-[11px] top-1/2 -translate-y-1/2 text-slate-400" />
               <input value={studentSearch} onChange={e => setStudentSearch(e.target.value)} placeholder="Search students..."
-                style={{ width: '100%', padding: '8px 10px 8px 32px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 13, fontFamily: "'Plus Jakarta Sans', sans-serif", outline: 'none', boxSizing: 'border-box' }} />
+                className="w-full py-2 pl-8 pr-2.5 rounded-[10px] border-[1.5px] border-slate-200 text-[13px] outline-none box-border focus:border-brand transition-colors" />
             </div>
 
-            <div style={{ ...pjs(12, 600, '16px', '#64748b'), marginBottom: 8 }}>
-              {selectedStudents.length} selected · {filteredStudents.length} shown
-            </div>
+            <div className="text-[12px] font-semibold text-slate-500 mb-2">{selectedStudents.length} selected · {filteredStudents.length} shown</div>
 
-            <div style={{ flex: 1, overflowY: 'auto', border: '1px solid #f1f5f9', borderRadius: 12 }}>
+            <div className="flex-1 overflow-y-auto border border-slate-100 rounded-[12px]">
               {filteredStudents.length === 0 ? (
-                <div style={{ padding: 24, textAlign: 'center', ...pjs(13, 400, '18px', '#94a3b8') }}>No students found</div>
-              ) : filteredStudents.map((s) => {
+                <div className="py-6 text-center text-[13px] t-muted">No students found</div>
+              ) : filteredStudents.map(s => {
                 const checked = selectedStudents.includes(s.id)
                 return (
                   <div key={s.id} onClick={() => toggleStudent(s.id)}
-                    style={{ padding: '11px 16px', borderBottom: '1px solid #f8fafc', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', background: checked ? '#f5f3ff' : 'transparent', transition: 'background 0.1s' }}>
-                    <div style={{ width: 18, height: 18, borderRadius: 5, border: `2px solid ${checked ? '#4f46e5' : '#e2e8f0'}`, background: checked ? '#4f46e5' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    className={`px-4 py-[11px] border-b border-slate-50 flex items-center gap-3 cursor-pointer transition-colors ${checked ? 'bg-indigo-50' : 'bg-transparent hover:bg-slate-50'}`}>
+                    <div className={`w-[18px] h-[18px] rounded-[5px] border-2 flex items-center justify-center shrink-0 ${checked ? 'border-brand bg-brand' : 'border-slate-200 bg-white'}`}>
                       {checked && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={pjs(13, 600, '18px', '#0f172a')}>{s.full_name}</div>
-                      <div style={{ ...pjs(11, 400, '14px', '#94a3b8'), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[13px] font-semibold t-primary">{s.full_name}</div>
+                      <div className="text-[11px] t-muted truncate">{s.email}</div>
                     </div>
                   </div>
                 )
               })}
             </div>
 
-            <div style={{ display: 'flex', gap: 10, marginTop: 16, justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="flex gap-2.5 mt-4 justify-between items-center">
               <button onClick={() => setSelectedStudents(filteredStudents.map(s => s.id))}
-                style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', ...pjs(12, 600, '16px', '#475569') }}>
+                className="px-3.5 py-2 rounded-[8px] border-[1.5px] border-slate-200 bg-white cursor-pointer text-[12px] font-semibold text-slate-600">
                 Select all
               </button>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => setEnrollModal(null)} style={{ padding: '10px 16px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', ...pjs(13, 600, '18px', '#64748b') }}>Cancel</button>
+              <div className="flex gap-2">
+                <button onClick={() => setEnrollModal(null)} className="px-4 py-[10px] rounded-[10px] border-[1.5px] border-slate-200 bg-white cursor-pointer text-[13px] font-semibold text-slate-500">Cancel</button>
                 <button onClick={handleBulkEnroll} disabled={enrolling || selectedStudents.length === 0}
-                  style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: enrolling || selectedStudents.length === 0 ? '#e2e8f0' : '#4f46e5', cursor: enrolling || selectedStudents.length === 0 ? 'not-allowed' : 'pointer', ...pjs(13, 700, '18px', '#fff') }}>
+                  className={`px-[18px] py-[10px] rounded-[10px] border-0 text-white text-[13px] font-bold ${enrolling || selectedStudents.length === 0 ? 'bg-slate-200 cursor-not-allowed' : 'bg-brand cursor-pointer'}`}>
                   {enrolling ? 'Enrolling...' : `Enroll ${selectedStudents.length}`}
                 </button>
               </div>

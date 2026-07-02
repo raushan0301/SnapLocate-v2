@@ -3,28 +3,36 @@ import AdminPageTemplate from '../../components/admin/AdminPageTemplate'
 import Modal from '../../components/admin/Modal'
 import api from '../../lib/api'
 
+const CATEGORIES = ['Cafe', 'Food', 'Stationary', 'General Store']
+const LOCATIONS = ['Jaggi', 'COS', 'G Block', 'TSLAS']
+const STATUSES = ['OPEN', 'CLOSED', 'CLOSING SOON']
+const ICONS = ['book', 'bag', 'file']
+
+const STATUS_CLS = {
+  OPEN:          { chip: 'bg-green-100 text-green-800 border-green-200' },
+  CLOSED:        { chip: 'bg-red-100 text-red-800 border-red-200' },
+  'CLOSING SOON': { chip: 'bg-amber-100 text-amber-800 border-amber-200' },
+}
+
+const fieldCls = 'w-full h-12 px-4 rounded-[12px] border-[1.5px] border-slate-200 text-[14px] text-slate-800 bg-white outline-none box-border focus:border-brand transition-colors'
+
+const defaultForm = {
+  name: '', type: '', category: 'Cafe',
+  status: 'OPEN', phone: '',
+  location_tag: 'COS', location_detail: '',
+  btn_label: 'View Menu', btn_icon: 'book', logo_img: '',
+  menu_type: 'image', menu_img: '', menu_items: [{ name: '', price: '' }]
+}
+
 export default function Shops() {
   const [shops, setShops] = useState([])
   const [loading, setLoading] = useState(true)
-
   const [modalOpen, setModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [editId, setEditId] = useState(null)
   const [logoFile, setLogoFile] = useState(null)
   const [menuFile, setMenuFile] = useState(null)
-
-  const [formData, setFormData] = useState({
-    name: '', type: '', category: 'Cafe',
-    status: 'OPEN', phone: '',
-    location_tag: 'COS', location_detail: '',
-    btn_label: 'View Menu', btn_icon: 'book', logo_img: '',
-    menu_type: 'image', menu_img: '', menu_items: [{ name: '', price: '' }]
-  })
-
-  const CATEGORIES = ['Cafe', 'Food', 'Stationary', 'General Store']
-  const LOCATIONS = ['Jaggi', 'COS', 'G Block', 'TSLAS']
-  const STATUSES = ['OPEN', 'CLOSED', 'CLOSING SOON']
-  const ICONS = ['book', 'bag', 'file']
+  const [formData, setFormData] = useState(defaultForm)
 
   const fetchShops = async () => {
     try {
@@ -37,33 +45,16 @@ export default function Shops() {
     }
   }
 
-  useEffect(() => {
-    fetchShops()
-  }, [])
+  useEffect(() => { fetchShops() }, [])
 
   const handleAdd = () => {
-    setEditId(null)
-    setLogoFile(null)
-    setMenuFile(null)
-    setFormData({ 
-      name: '', type: '', category: 'Cafe',
-      status: 'OPEN', phone: '',
-      location_tag: 'COS', location_detail: '',
-      btn_label: 'View Menu', btn_icon: 'book', logo_img: '',
-      menu_type: 'image', menu_img: '', menu_items: [{ name: '', price: '' }]
-    })
-    setModalOpen(true)
+    setEditId(null); setLogoFile(null); setMenuFile(null)
+    setFormData(defaultForm); setModalOpen(true)
   }
 
   const handleEdit = (shop) => {
-    setEditId(shop.id)
-    setLogoFile(null)
-    setMenuFile(null)
-    setFormData({
-      ...shop,
-      menu_type: shop.menu_type || 'image',
-      menu_items: shop.menu_items || [{ name: '', price: '' }]
-    })
+    setEditId(shop.id); setLogoFile(null); setMenuFile(null)
+    setFormData({ ...shop, menu_type: shop.menu_type || 'image', menu_items: shop.menu_items || [{ name: '', price: '' }] })
     setModalOpen(true)
   }
 
@@ -72,48 +63,35 @@ export default function Shops() {
     try {
       const res = await api.delete(`/api/shops/${shop.id}`)
       if (res.success) fetchShops()
-    } catch (err) {
-      alert('Delete failed.')
-    }
+    } catch { alert('Delete failed.') }
   }
 
   const handleMenuItemChange = (index, field, value) => {
-    const list = [...formData.menu_items]
-    list[index][field] = value
+    const list = [...formData.menu_items]; list[index][field] = value
     setFormData({ ...formData, menu_items: list })
   }
   const addMenuItem = () => setFormData({ ...formData, menu_items: [...formData.menu_items, { name: '', price: '' }] })
   const removeMenuItem = (index) => setFormData({ ...formData, menu_items: formData.menu_items.filter((_, i) => i !== index) })
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setSubmitting(true)
+    e.preventDefault(); setSubmitting(true)
     try {
       let finalLogo = formData.logo_img
       let finalMenuImg = formData.menu_img
 
-      // Upload logo
       if (logoFile) {
-        const fileForm = new FormData()
-        fileForm.append('file', logoFile)
-        fileForm.append('type', 'shop')
-        const uploadRes = await api.upload('/api/upload/image', fileForm)
-        if (uploadRes?.success) finalLogo = uploadRes.url
+        const fd = new FormData(); fd.append('file', logoFile); fd.append('type', 'shop')
+        const r = await api.upload('/api/upload/image', fd)
+        if (r?.success) finalLogo = r.url
       }
-
-      // Upload menu image
       if (menuFile && formData.menu_type === 'image') {
-        const fileForm = new FormData()
-        fileForm.append('file', menuFile)
-        fileForm.append('type', 'shop')
-        const uploadRes = await api.upload('/api/upload/image', fileForm)
-        if (uploadRes?.success) finalMenuImg = uploadRes.url
+        const fd = new FormData(); fd.append('file', menuFile); fd.append('type', 'shop')
+        const r = await api.upload('/api/upload/image', fd)
+        if (r?.success) finalMenuImg = r.url
       }
 
-      const payload = { 
-        ...formData, 
-        logo_img: finalLogo, 
-        menu_img: finalMenuImg,
+      const payload = {
+        ...formData, logo_img: finalLogo, menu_img: finalMenuImg,
         menu_items: formData.menu_type === 'list' ? formData.menu_items.filter(i => i.name.trim()) : []
       }
 
@@ -125,102 +103,60 @@ export default function Shops() {
         if (res.success) fetchShops()
       }
       setModalOpen(false)
-    } catch (err) {
-      alert(`Failed to save: ${err.message}`)
-    } finally {
-      setSubmitting(false)
-    }
+    } catch (err) { alert(`Failed to save: ${err.message}`) }
+    finally { setSubmitting(false) }
   }
 
-  const inputStyle = { 
-    width: '100%', padding: '0 16px', height: '48px', borderRadius: 12, border: '1.5px solid #e2e8f0', 
-    outline: 'none', boxSizing: 'border-box', fontFamily: "'Inter', sans-serif", 
-    fontSize: 14, color: '#1e293b', background: '#fff', transition: 'border-color 0.2s'
-  }
-
-  const selectStyle = {
-    ...inputStyle,
-    cursor: 'pointer',
-    appearance: 'none',
-    backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3Csvg width='12' height='7' viewBox='0 0 12 7' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'right 16px center'
-  }
+  const fd = (k, v) => setFormData(p => ({ ...p, [k]: v }))
 
   const columns = [
-    { label: 'Shop Details', key: 'name', render: (row) => (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#fff', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-          {row.logo_img ? (
-            <img src={row.logo_img} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            <span style={{ fontSize: 20 }}>🏪</span>
-          )}
+    {
+      label: 'Shop Details', key: 'name', render: (row) => (
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+            {row.logo_img ? <img src={row.logo_img} alt="Logo" className="w-full h-full object-cover" /> : <span className="text-xl">🏪</span>}
+          </div>
+          <div className="min-w-0">
+            <div className="font-bold t-primary truncate">{row.name}</div>
+            <div className="text-[12px] t-muted mt-0.5">{row.category} • {row.phone}</div>
+          </div>
         </div>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.name}</div>
-          <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>{row.category} • {row.phone}</div>
-        </div>
-      </div>
-    )},
-    { label: 'Location', key: 'location_tag', render: (row) => (
-      <div>
-        <span style={{ fontWeight: 600, color: '#475569' }}>{row.location_tag}</span>
-        {row.location_detail && <div style={{ fontSize: 11, color: '#94a3b8' }}>{row.location_detail}</div>}
-      </div>
-    )},
-    { label: 'Menu Type', key: 'menu_type', render: (row) => (
-      <span style={{ fontSize: 12, color: '#64748b', textTransform: 'capitalize' }}>{row.menu_type || 'None'}</span>
-    )},
-    { label: 'Status', key: 'status', render: (row) => {
-      const isClosed = row.status === 'CLOSED'
-      const isClosingSoon = row.status === 'CLOSING SOON'
-      
-      let bg = '#dcfce7'
-      let color = '#166534'
-      
-      if (isClosed) {
-        bg = '#fee2e2'
-        color = '#991b1b'
-      } else if (isClosingSoon) {
-        bg = '#fef3c7'
-        color = '#92400e'
-      }
-
-      return (
-        <select
-          value={row.status}
-          onChange={async (e) => {
-            e.stopPropagation()
-            const newStatus = e.target.value
-            setShops(prev => prev.map(s => s.id === row.id ? { ...s, status: newStatus } : s))
-            try {
-              const payload = { ...row, status: newStatus }
-              // Remove fields that might cause issues if they're complex depending on backend, but flat spreading usually works.
-              const res = await api.put(`/api/shops/${row.id}`, payload)
-              if (!res.success) fetchShops()
-            } catch {
-              fetchShops()
-            }
-          }}
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            backgroundColor: bg,
-            color: color,
-            padding: '6px 28px 6px 14px', borderRadius: 50, fontSize: 10, fontWeight: 800,
-            cursor: 'pointer', border: `1px solid ${bg === '#dcfce7' ? '#a7f3d0' : bg === '#fee2e2' ? '#fecaca' : '#fde68a'}`,
-            outline: 'none', letterSpacing: '0.05em', fontFamily: "'Plus Jakarta Sans', sans-serif",
-            appearance: 'none',
-            backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='${encodeURIComponent(color)}' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-            backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center'
-          }}
-        >
-          {STATUSES.map(s => (
-            <option key={s} value={s} style={{color: '#0f172a'}}>{s}</option>
-          ))}
-        </select>
       )
-    }},
+    },
+    {
+      label: 'Location', key: 'location_tag', render: (row) => (
+        <div>
+          <span className="font-semibold text-slate-600">{row.location_tag}</span>
+          {row.location_detail && <div className="text-[11px] t-muted">{row.location_detail}</div>}
+        </div>
+      )
+    },
+    {
+      label: 'Menu Type', key: 'menu_type', render: (row) => (
+        <span className="text-[12px] t-muted capitalize">{row.menu_type || 'None'}</span>
+      )
+    },
+    {
+      label: 'Status', key: 'status', render: (row) => {
+        const cfg = STATUS_CLS[row.status] || STATUS_CLS.OPEN
+        return (
+          <select value={row.status}
+            onChange={async (e) => {
+              e.stopPropagation()
+              const newStatus = e.target.value
+              setShops(prev => prev.map(s => s.id === row.id ? { ...s, status: newStatus } : s))
+              try {
+                const res = await api.put(`/api/shops/${row.id}`, { ...row, status: newStatus })
+                if (!res.success) fetchShops()
+              } catch { fetchShops() }
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className={`px-3.5 py-[6px] rounded-full border text-[10px] font-extrabold cursor-pointer outline-none tracking-[0.05em] appearance-none ${cfg.chip}`}>
+            {STATUSES.map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
+          </select>
+        )
+      }
+    },
   ]
 
   return (
@@ -236,128 +172,128 @@ export default function Shops() {
         onDelete={handleDelete}
       />
 
-      <Modal isOpen={modalOpen} onClose={() => !submitting && setModalOpen(false)} title={editId ? "Edit Shop" : "Add Shop"}>
-        <div style={{ maxHeight: '70vh', overflowY: 'auto', paddingRight: 8 }}>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            
-            {/* Basic Info */}
-            <div style={{ display: 'flex', gap: 16 }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Shop Name *</label>
-                <input required type="text" placeholder="e.g. Sip & Bite" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} style={inputStyle} />
+      <Modal isOpen={modalOpen} onClose={() => !submitting && setModalOpen(false)} title={editId ? 'Edit Shop' : 'Add Shop'}>
+        <div className="max-h-[70vh] overflow-y-auto pr-2">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label className="block text-[13px] font-bold text-slate-600 mb-2">Shop Name *</label>
+                <input required type="text" placeholder="e.g. Sip & Bite" value={formData.name} onChange={e => fd('name', e.target.value)} className={fieldCls} />
               </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Shop Type (Subtitle) *</label>
-                <input required type="text" placeholder="e.g. Fast Food & Beverages" value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value })} style={inputStyle} />
+              <div className="flex-1">
+                <label className="block text-[13px] font-bold text-slate-600 mb-2">Shop Type (Subtitle) *</label>
+                <input required type="text" placeholder="e.g. Fast Food & Beverages" value={formData.type} onChange={e => fd('type', e.target.value)} className={fieldCls} />
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 16 }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Root Category *</label>
-                <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} style={selectStyle}>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label className="block text-[13px] font-bold text-slate-600 mb-2">Root Category *</label>
+                <select value={formData.category} onChange={e => fd('category', e.target.value)} className={fieldCls}>
                   {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Current Status *</label>
-                <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })} style={{ ...selectStyle, color: formData.status === 'OPEN' ? '#16a34a' : '#dc2626', fontWeight: 700 }}>
+              <div className="flex-1">
+                <label className="block text-[13px] font-bold text-slate-600 mb-2">Current Status *</label>
+                <select value={formData.status} onChange={e => fd('status', e.target.value)}
+                  className={`${fieldCls} font-bold ${formData.status === 'OPEN' ? 'text-green-700' : 'text-red-600'}`}>
                   {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
             </div>
 
-            {/* Location & Contact */}
-            <div style={{ display: 'flex', gap: 16 }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Building / Tag *</label>
-                <select value={formData.location_tag} onChange={e => setFormData({ ...formData, location_tag: e.target.value })} style={selectStyle}>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label className="block text-[13px] font-bold text-slate-600 mb-2">Building / Tag *</label>
+                <select value={formData.location_tag} onChange={e => fd('location_tag', e.target.value)} className={fieldCls}>
                   {LOCATIONS.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Exact Address</label>
-                <input required type="text" placeholder="e.g. COS, 1st Floor" value={formData.location_detail} onChange={e => setFormData({ ...formData, location_detail: e.target.value })} style={inputStyle} />
+              <div className="flex-1">
+                <label className="block text-[13px] font-bold text-slate-600 mb-2">Exact Address</label>
+                <input required type="text" placeholder="e.g. COS, 1st Floor" value={formData.location_detail} onChange={e => fd('location_detail', e.target.value)} className={fieldCls} />
               </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Contact Number</label>
-                <input type="text" placeholder="+91 XXXX" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} style={inputStyle} />
+              <div className="flex-1">
+                <label className="block text-[13px] font-bold text-slate-600 mb-2">Contact Number</label>
+                <input type="text" placeholder="+91 XXXX" value={formData.phone} onChange={e => fd('phone', e.target.value)} className={fieldCls} />
               </div>
             </div>
 
-            {/* Logo Upload */}
             <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Shop Logo / Image</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px', borderRadius: '12px', border: '1.5px dashed #cbd5e1', background: '#f8fafc' }}>
-                {(formData.logo_img || logoFile) ? (
-                  <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#fff', border: '2px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                    <img src={logoFile ? URL.createObjectURL(logoFile) : formData.logo_img} alt="Logo preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
-                ) : (
-                  <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🏪</div>
-                )}
+              <label className="block text-[13px] font-bold text-slate-600 mb-2">Shop Logo / Image</label>
+              <div className="flex items-center gap-4 p-4 rounded-[12px] border-[1.5px] border-dashed border-slate-300 bg-slate-50">
+                <div className="w-16 h-16 rounded-full bg-white border-2 border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                  {(formData.logo_img || logoFile)
+                    ? <img src={logoFile ? URL.createObjectURL(logoFile) : formData.logo_img} alt="Logo preview" className="w-full h-full object-cover" />
+                    : <span className="text-2xl">🏪</span>}
+                </div>
                 <div>
-                  <input id="shop-logo-upload" type="file" accept="image/*" onChange={e => setLogoFile(e.target.files[0])} style={{ display: 'none' }} />
-                  <label htmlFor="shop-logo-upload" style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#fff', color: '#1e293b', fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: '0.2s', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                  <input id="shop-logo-upload" type="file" accept="image/*" onChange={e => setLogoFile(e.target.files[0])} className="hidden" />
+                  <label htmlFor="shop-logo-upload" className="inline-block px-5 py-2.5 rounded-[10px] border-[1.5px] border-slate-200 bg-white text-slate-800 font-bold text-[13px] cursor-pointer hover:bg-slate-50 transition-colors">
                     {logoFile || formData.logo_img ? 'Replace Logo Image' : 'Upload Logo Image'}
                   </label>
                 </div>
               </div>
             </div>
 
-            {/* Menu Management */}
-            <div style={{ border: '1.5px solid #e2e8f0', borderRadius: 16, padding: 24, background: '#f8fafc' }}>
-              <label style={{ display: 'block', fontSize: 15, fontWeight: 800, color: '#0f172a', marginBottom: 16, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Menu Configuration</label>
-              <div style={{ display: 'flex', gap: 20, marginBottom: 20 }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, fontWeight: 600, color: '#334155' }}>
-                  <input type="radio" checked={formData.menu_type === 'image'} onChange={() => setFormData({ ...formData, menu_type: 'image' })} style={{ width: 18, height: 18, accentColor: '#4f46e5' }} /> Upload Menu Image
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, fontWeight: 600, color: '#334155' }}>
-                  <input type="radio" checked={formData.menu_type === 'list'} onChange={() => setFormData({ ...formData, menu_type: 'list' })} style={{ width: 18, height: 18, accentColor: '#4f46e5' }} /> Manual Text List
-                </label>
+            <div className="border-[1.5px] border-slate-200 rounded-[16px] p-6 bg-slate-50">
+              <label className="block text-[15px] font-extrabold t-primary mb-4">Menu Configuration</label>
+              <div className="flex gap-5 mb-5">
+                {[{ val: 'image', label: 'Upload Menu Image' }, { val: 'list', label: 'Manual Text List' }].map(({ val, label }) => (
+                  <label key={val} className="flex items-center gap-2 cursor-pointer text-[14px] font-semibold text-slate-700">
+                    <input type="radio" checked={formData.menu_type === val} onChange={() => fd('menu_type', val)} className="w-[18px] h-[18px] accent-brand" /> {label}
+                  </label>
+                ))}
               </div>
 
               {formData.menu_type === 'image' ? (
                 <div>
                   {(formData.menu_img || menuFile) && (
-                    <img src={menuFile ? URL.createObjectURL(menuFile) : formData.menu_img} style={{ width: '100%', maxHeight: 240, objectFit: 'contain', borderRadius: 12, marginBottom: 16, border: '1.5px solid #e2e8f0', background: '#fff' }} />
+                    <img src={menuFile ? URL.createObjectURL(menuFile) : formData.menu_img}
+                      className="w-full max-h-60 object-contain rounded-[12px] mb-4 border-[1.5px] border-slate-200 bg-white" />
                   )}
-                  <input id="menu-img-upload" type="file" accept="image/*" onChange={e => setMenuFile(e.target.files[0])} style={{ display: 'none' }} />
-                  <label htmlFor="menu-img-upload" style={{ display: 'block', textAlign: 'center', padding: '16px', border: '2px dashed #cbd5e1', borderRadius: 12, background: '#fff', cursor: 'pointer', color: '#64748b', fontSize: 14, fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                  <input id="menu-img-upload" type="file" accept="image/*" onChange={e => setMenuFile(e.target.files[0])} className="hidden" />
+                  <label htmlFor="menu-img-upload" className="block text-center py-4 border-2 border-dashed border-slate-300 rounded-[12px] bg-white cursor-pointer text-slate-500 text-[14px] font-bold hover:bg-slate-50 transition-colors">
                     {menuFile || formData.menu_img ? 'Replace Menu Image' : 'Click to Upload Menu Image'}
                   </label>
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div className="flex flex-col gap-3">
                   {formData.menu_items.map((item, idx) => (
-                    <div key={idx} style={{ display: 'flex', gap: 12 }}>
-                      <input placeholder="Item Name (e.g. Masala Dosa)" value={item.name} onChange={e => handleMenuItemChange(idx, 'name', e.target.value)} style={{ ...inputStyle, flex: 2, marginBottom: 0 }} />
-                      <input placeholder="Price (e.g. ₹60)" value={item.price} onChange={e => handleMenuItemChange(idx, 'price', e.target.value)} style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
-                      <button type="button" onClick={() => removeMenuItem(idx)} style={{ padding: '0 16px', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: 12, cursor: 'pointer', fontWeight: 800, fontSize: 18 }}>×</button>
+                    <div key={idx} className="flex gap-3">
+                      <input placeholder="Item Name (e.g. Masala Dosa)" value={item.name} onChange={e => handleMenuItemChange(idx, 'name', e.target.value)} className={`${fieldCls} flex-[2]`} />
+                      <input placeholder="Price (e.g. ₹60)" value={item.price} onChange={e => handleMenuItemChange(idx, 'price', e.target.value)} className={`${fieldCls} flex-1`} />
+                      <button type="button" onClick={() => removeMenuItem(idx)} className="px-4 bg-red-50 text-red-500 border-0 rounded-[12px] cursor-pointer font-extrabold text-[18px] hover:bg-red-100 transition-colors">×</button>
                     </div>
                   ))}
-                  <button type="button" onClick={addMenuItem} style={{ padding: '14px', background: '#eef2ff', color: '#4f46e5', border: '1.5px dashed #a5b4fc', borderRadius: 12, cursor: 'pointer', fontSize: 14, fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>+ Add Menu Item</button>
+                  <button type="button" onClick={addMenuItem} className="py-3.5 bg-indigo-50 text-brand border-[1.5px] border-dashed border-indigo-300 rounded-[12px] cursor-pointer text-[14px] font-bold hover:bg-indigo-100 transition-colors">+ Add Menu Item</button>
                 </div>
               )}
             </div>
 
-            {/* Action Buttons */}
-            <div style={{ display: 'flex', gap: 16 }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Button Action Label</label>
-                <input type="text" value={formData.btn_label || 'View Menu'} onChange={e => setFormData({ ...formData, btn_label: e.target.value })} style={inputStyle} />
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label className="block text-[13px] font-bold text-slate-600 mb-2">Button Action Label</label>
+                <input type="text" value={formData.btn_label || 'View Menu'} onChange={e => fd('btn_label', e.target.value)} className={fieldCls} />
               </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Button Action Icon</label>
-                <select value={formData.btn_icon} onChange={e => setFormData({ ...formData, btn_icon: e.target.value })} style={selectStyle}>
+              <div className="flex-1">
+                <label className="block text-[13px] font-bold text-slate-600 mb-2">Button Action Icon</label>
+                <select value={formData.btn_icon} onChange={e => fd('btn_icon', e.target.value)} className={fieldCls}>
                   {ICONS.map(i => <option key={i} value={i}>{i}</option>)}
                 </select>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-              <button type="button" onClick={() => setModalOpen(false)} disabled={submitting} style={{ flex: 1, padding: '14px', borderRadius: 12, border: '1.5px solid #e2e8f0', background: 'transparent', fontWeight: 700, color: '#475569', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 15 }}>Cancel</button>
-              <button type="submit" disabled={submitting} style={{ flex: 2, padding: '14px', borderRadius: 12, border: 'none', background: '#4f46e5', color: '#fff', cursor: 'pointer', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 15 }}>{submitting ? 'Saving...' : 'Save Shop'}</button>
+            <div className="flex gap-3 mt-3">
+              <button type="button" onClick={() => setModalOpen(false)} disabled={submitting}
+                className="flex-1 py-3.5 rounded-[12px] border-[1.5px] border-slate-200 bg-transparent font-bold text-slate-600 cursor-pointer text-[15px] hover:bg-slate-50 transition-colors">
+                Cancel
+              </button>
+              <button type="submit" disabled={submitting}
+                className="flex-[2] py-3.5 rounded-[12px] border-0 bg-brand text-white cursor-pointer font-bold text-[15px]">
+                {submitting ? 'Saving...' : 'Save Shop'}
+              </button>
             </div>
           </form>
         </div>

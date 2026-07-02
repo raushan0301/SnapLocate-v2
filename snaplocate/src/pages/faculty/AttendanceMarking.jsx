@@ -1,19 +1,18 @@
 import { useState, useEffect, useCallback } from 'react'
 import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
-import { CalendarCheck, Check, X, Clock, Users, AlertCircle } from 'lucide-react'
-
-const pjs = (size, weight, lh, color) => ({
-  fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: size, fontWeight: weight, lineHeight: lh, color,
-})
+import { CalendarCheck, Users } from 'lucide-react'
 
 const STATUS = ['present', 'absent', 'late', 'excused']
-const statusStyle = {
-  present: { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' },
-  absent:  { bg: '#fee2e2', color: '#dc2626', border: '#fecaca' },
-  late:    { bg: '#fef3c7', color: '#d97706', border: '#fde68a' },
-  excused: { bg: '#f0f9ff', color: '#0284c7', border: '#bae6fd' },
+
+const STATUS_CLS = {
+  present: 'border-green-200 bg-green-50 text-green-600 font-bold',
+  absent:  'border-red-200 bg-red-50 text-red-600 font-bold',
+  late:    'border-amber-200 bg-amber-50 text-amber-600 font-bold',
+  excused: 'border-sky-200 bg-sky-50 text-sky-600 font-bold',
 }
+
+const fieldCls = 'w-full px-3 py-[9px] rounded-[10px] border-[1.5px] border-slate-200 text-[14px] outline-none focus:border-brand transition-colors'
 
 export default function AttendanceMarking() {
   const [courses, setCourses]   = useState([])
@@ -47,7 +46,6 @@ export default function AttendanceMarking() {
       ])
       const studs = sRes.status === 'fulfilled' ? (sRes.value.data || []) : []
       setStudents(studs)
-      // Pre-fill existing attendance
       const existing = existRes.status === 'fulfilled' ? (existRes.value.data || []) : []
       const existMap = {}
       existing.forEach(r => { existMap[r.student_id] = r.status })
@@ -95,91 +93,83 @@ export default function AttendanceMarking() {
   return (
     <PageLayout>
       {toast && (
-        <div style={{ position: 'fixed', bottom: 24, right: 24, background: toast.type === 'error' ? '#dc2626' : '#0f172a', color: '#fff', padding: '12px 20px', borderRadius: 12, zIndex: 999, ...pjs(14, 600, '20px', '#fff') }}>
+        <div className={`fixed bottom-6 right-6 z-[999] px-5 py-3 rounded-[12px] text-white text-[14px] font-semibold ${toast.type === 'error' ? 'bg-red-600' : 'bg-slate-900'}`}>
           {toast.msg}
         </div>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <div style={{ width: 44, height: 44, borderRadius: 14, background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="flex items-center gap-4">
+        <div className="w-11 h-11 rounded-[14px] bg-green-50 flex items-center justify-center">
           <CalendarCheck size={22} color="#16a34a" />
         </div>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: '#0f172a', margin: 0 }}>Mark Attendance</h1>
-          <p style={{ fontSize: 14, color: '#64748b', margin: 0 }}>Select a course and date, then mark each student.</p>
+          <h1 className="text-[26px] font-bold t-primary m-0">Mark Attendance</h1>
+          <p className="text-[14px] t-muted m-0">Select a course and date, then mark each student.</p>
         </div>
       </div>
 
-      {/* Controls */}
-      <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', padding: '20px 24px', display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-        <div style={{ flex: 1, minWidth: 200 }}>
-          <div style={{ ...pjs(12, 600, '16px', '#374151'), marginBottom: 6 }}>Course</div>
-          <select value={course} onChange={e => setCourse(e.target.value)}
-            style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, fontFamily: "'Plus Jakarta Sans', sans-serif", outline: 'none' }}>
+      <div className="bg-white rounded-[20px] border border-slate-100 px-6 py-5 flex gap-4 flex-wrap items-end">
+        <div className="flex-1 min-w-[200px]">
+          <div className="text-[12px] font-semibold text-slate-700 mb-1.5">Course</div>
+          <select value={course} onChange={e => setCourse(e.target.value)} className={fieldCls}>
             <option value="">— Select course —</option>
             {courses.map(c => <option key={c.id} value={c.id}>{c.code} — {c.name}</option>)}
           </select>
         </div>
         <div>
-          <div style={{ ...pjs(12, 600, '16px', '#374151'), marginBottom: 6 }}>Date</div>
+          <div className="text-[12px] font-semibold text-slate-700 mb-1.5">Date</div>
           <input type="date" value={date} onChange={e => setDate(e.target.value)} max={new Date().toISOString().split('T')[0]}
-            style={{ padding: '9px 12px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, fontFamily: "'Plus Jakarta Sans', sans-serif", outline: 'none' }} />
+            className="px-3 py-[9px] rounded-[10px] border-[1.5px] border-slate-200 text-[14px] outline-none focus:border-brand transition-colors" />
         </div>
       </div>
 
       {course && students.length > 0 && (
         <>
-          {/* Summary + quick actions */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <span style={{ ...pjs(13, 700, '18px', '#16a34a'), background: '#f0fdf4', padding: '6px 14px', borderRadius: 10 }}>{presentCount} Present</span>
-              <span style={{ ...pjs(13, 700, '18px', '#dc2626'), background: '#fee2e2', padding: '6px 14px', borderRadius: 10 }}>{absentCount} Absent</span>
-              <span style={{ ...pjs(13, 600, '18px', '#64748b'), background: '#f8fafc', padding: '6px 14px', borderRadius: 10 }}>{students.length} Total</span>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex gap-3">
+              <span className="text-[13px] font-bold text-green-600 bg-green-50 px-3.5 py-1.5 rounded-[10px]">{presentCount} Present</span>
+              <span className="text-[13px] font-bold text-red-600 bg-red-50 px-3.5 py-1.5 rounded-[10px]">{absentCount} Absent</span>
+              <span className="text-[13px] font-semibold t-muted bg-slate-50 px-3.5 py-1.5 rounded-[10px]">{students.length} Total</span>
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => markAll('present')} style={{ padding: '6px 14px', borderRadius: 8, border: '1.5px solid #bbf7d0', background: '#f0fdf4', cursor: 'pointer', ...pjs(12, 700, '16px', '#16a34a') }}>All Present</button>
-              <button onClick={() => markAll('absent')}  style={{ padding: '6px 14px', borderRadius: 8, border: '1.5px solid #fecaca', background: '#fee2e2', cursor: 'pointer', ...pjs(12, 700, '16px', '#dc2626') }}>All Absent</button>
+            <div className="flex gap-2">
+              <button onClick={() => markAll('present')} className="px-3.5 py-1.5 rounded-[8px] border-[1.5px] border-green-200 bg-green-50 cursor-pointer text-[12px] font-bold text-green-600">All Present</button>
+              <button onClick={() => markAll('absent')}  className="px-3.5 py-1.5 rounded-[8px] border-[1.5px] border-red-200 bg-red-50 cursor-pointer text-[12px] font-bold text-red-600">All Absent</button>
             </div>
           </div>
 
-          {/* Student list */}
-          <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', overflow: 'hidden' }}>
+          <div className="bg-white rounded-[20px] border border-slate-100 overflow-hidden">
             {loadingStudents ? (
-              <div style={{ padding: 40, textAlign: 'center', ...pjs(13, 400, '18px', '#94a3b8') }}>Loading students...</div>
+              <div className="p-10 text-center text-[13px] t-muted">Loading students...</div>
             ) : students.map((s, i) => {
               const sid      = s.student_id
               const cur      = marks[sid] || 'present'
               const initials = (s.full_name || 'S').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
               return (
-                <div key={i} style={{ padding: '14px 24px', borderBottom: '1px solid #f8fafc', display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 12, background: 'linear-gradient(135deg, #6366f1, #4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
-                    {s.avatar_url ? <img src={s.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <span style={pjs(13, 700, '16px', '#fff')}>{initials}</span>}
+                <div key={i} className="px-6 py-3.5 border-b border-slate-50 flex items-center gap-3.5">
+                  <div className="w-9 h-9 rounded-[12px] flex items-center justify-center shrink-0 overflow-hidden" style={{ background: 'linear-gradient(135deg,#6366f1,#4f46e5)' }}>
+                    {s.avatar_url ? <img src={s.avatar_url} alt="" className="w-full h-full object-cover" />
+                      : <span className="text-[13px] font-bold text-white">{initials}</span>}
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={pjs(14, 700, '18px', '#0f172a')}>{s.full_name}</div>
-                    <div style={pjs(12, 400, '16px', '#94a3b8')}>{s.email}</div>
+                  <div className="flex-1">
+                    <div className="text-[14px] font-bold t-primary">{s.full_name}</div>
+                    <div className="text-[12px] t-muted">{s.email}</div>
                   </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    {STATUS.map(st => {
-                      const ss = statusStyle[st]
-                      const active = cur === st
-                      return (
-                        <button key={st} onClick={() => setMarks(prev => ({ ...prev, [sid]: st }))}
-                          style={{ padding: '5px 12px', borderRadius: 8, border: `1.5px solid ${active ? ss.border : '#e2e8f0'}`, background: active ? ss.bg : '#fff', cursor: 'pointer', ...pjs(11, 700, '14px', active ? ss.color : '#94a3b8'), transition: 'all 0.1s' }}>
-                          {st.charAt(0).toUpperCase() + st.slice(1)}
-                        </button>
-                      )
-                    })}
+                  <div className="flex gap-1.5">
+                    {STATUS.map(st => (
+                      <button key={st} onClick={() => setMarks(prev => ({ ...prev, [sid]: st }))}
+                        className={`px-3 py-[5px] rounded-[8px] border-[1.5px] text-[11px] cursor-pointer transition-all ${cur === st ? STATUS_CLS[st] : 'border-slate-200 bg-white text-slate-400 font-medium'}`}>
+                        {st.charAt(0).toUpperCase() + st.slice(1)}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )
             })}
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div className="flex justify-end">
             <button onClick={handleSave} disabled={saving}
-              style={{ padding: '12px 28px', borderRadius: 12, border: 'none', background: saving ? '#e2e8f0' : '#4f46e5', color: '#fff', cursor: saving ? 'not-allowed' : 'pointer', ...pjs(14, 700, '20px', '#fff') }}>
+              className={`px-7 py-3 rounded-[12px] border-0 text-white text-[14px] font-bold ${saving ? 'bg-slate-200 cursor-not-allowed' : 'bg-brand cursor-pointer'}`}>
               {saving ? 'Saving...' : `Save Attendance (${students.length} students)`}
             </button>
           </div>
@@ -187,9 +177,9 @@ export default function AttendanceMarking() {
       )}
 
       {course && !loadingStudents && students.length === 0 && (
-        <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', padding: '60px 24px', textAlign: 'center' }}>
-          <Users size={40} color="#e2e8f0" style={{ margin: '0 auto 12px', display: 'block' }} />
-          <div style={pjs(15, 600, '20px', '#0f172a')}>No students enrolled in this course</div>
+        <div className="bg-white rounded-[20px] border border-slate-100 py-[60px] px-6 text-center">
+          <Users size={40} color="#e2e8f0" className="mx-auto mb-3 block" />
+          <div className="text-[15px] font-semibold t-primary">No students enrolled in this course</div>
         </div>
       )}
     </PageLayout>

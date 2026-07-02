@@ -5,16 +5,20 @@ import { Trash2, Search, FileText, BookOpen, FlaskConical, FileQuestion, Externa
 
 const TYPE_FILTERS = ['all', 'notes', 'pyq', 'lab', 'syllabus', 'paper']
 
-const typeStyle = (t) => {
-  const map = {
-    notes:    { bg: '#eef2ff', color: '#4f46e5', icon: <FileText size={14} /> },
-    pyq:      { bg: '#fdf4ff', color: '#7e22ce', icon: <FileQuestion size={14} /> },
-    lab:      { bg: '#ecfdf5', color: '#047857', icon: <FlaskConical size={14} /> },
-    syllabus: { bg: '#f0f9ff', color: '#0369a1', icon: <BookOpen size={14} /> },
-    paper:    { bg: '#fff7ed', color: '#c2410c', icon: <FileText size={14} /> },
-  }
-  return map[t?.toLowerCase()] || { bg: '#f8fafc', color: '#64748b', icon: <FileText size={14} /> }
+const TYPE_BADGE = {
+  notes:    { cls: 'bg-indigo-50 text-brand',        icon: <FileText size={14} /> },
+  pyq:      { cls: 'bg-purple-50 text-purple-800',   icon: <FileQuestion size={14} /> },
+  lab:      { cls: 'bg-emerald-50 text-emerald-800', icon: <FlaskConical size={14} /> },
+  syllabus: { cls: 'bg-sky-50 text-sky-800',         icon: <BookOpen size={14} /> },
+  paper:    { cls: 'bg-orange-50 text-orange-800',   icon: <FileText size={14} /> },
 }
+const defaultBadge = { cls: 'bg-slate-50 text-slate-500', icon: <FileText size={14} /> }
+
+const STAT_ITEMS = [
+  { label: 'Total Resources', iconCls: 'bg-indigo-50 text-brand',         icon: <FileText size={20} /> },
+  { label: 'Notes & PYQs',   iconCls: 'bg-purple-50 text-purple-700',    icon: <BookOpen size={20} /> },
+  { label: 'Labs & Syllabi', iconCls: 'bg-emerald-50 text-emerald-700',  icon: <FlaskConical size={20} /> },
+]
 
 export default function ManageResources() {
   const [data, setData] = useState([])
@@ -53,99 +57,90 @@ export default function ManageResources() {
     return acc
   }, {})
 
+  const statValues = [
+    data.length,
+    (counts.notes || 0) + (counts.pyq || 0),
+    (counts.lab || 0) + (counts.syllabus || 0),
+  ]
+
   return (
     <PageLayout>
       <div>
-        <h1 style={{ fontSize: 26, fontWeight: 700, color: '#0f172a', margin: 0 }}>Resources Moderation</h1>
-        <p style={{ fontSize: 14, color: '#64748b', marginTop: 4, marginBottom: 0 }}>Review and remove inappropriate or outdated academic resources uploaded by faculty.</p>
+        <h1 className="text-[26px] font-bold t-primary m-0">Resources Moderation</h1>
+        <p className="text-[14px] t-muted mt-1 mb-0">Review and remove inappropriate or outdated academic resources uploaded by faculty.</p>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
-        {[
-          { label: 'Total Resources', value: data.length, icon: <FileText size={20} />, color: '#4f46e5', bg: '#eef2ff' },
-          { label: 'Notes & PYQs', value: (counts.notes || 0) + (counts.pyq || 0), icon: <BookOpen size={20} />, color: '#7e22ce', bg: '#fdf4ff' },
-          { label: 'Labs & Syllabi', value: (counts.lab || 0) + (counts.syllabus || 0), icon: <FlaskConical size={20} />, color: '#10b981', bg: '#ecfdf5' },
-        ].map((s, idx) => (
-          <div key={idx} style={{ background: '#fff', padding: '24px', borderRadius: 20, border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: 20 }}>
-            <div style={{ width: 48, height: 48, borderRadius: 14, background: s.bg, color: s.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.icon}</div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        {STAT_ITEMS.map((s, i) => (
+          <div key={i} className="bg-white px-6 py-6 rounded-[20px] border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex items-center gap-5">
+            <div className={`w-12 h-12 rounded-[14px] flex items-center justify-center shrink-0 ${s.iconCls}`}>{s.icon}</div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#64748b', marginBottom: 4 }}>{s.label}</div>
-              <div style={{ fontSize: 24, fontWeight: 800, color: '#0f172a' }}>{s.value}</div>
+              <div className="text-[13px] font-semibold t-muted mb-1">{s.label}</div>
+              <div className="text-[24px] font-extrabold t-primary">{statValues[i]}</div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Table card */}
-      <div style={{ background: '#fff', borderRadius: 20, padding: 24, border: '1px solid #f1f5f9', boxShadow: '0 4px 24px rgba(0,0,0,0.03)' }}>
-        <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-            <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-            <input
-              type="text" placeholder="Search by title, course, or uploader..." value={search}
+      <div className="bg-white rounded-[20px] p-6 border border-slate-100 shadow-[0_4px_24px_rgba(0,0,0,0.03)]">
+        <div className="flex gap-3 mb-5 flex-wrap items-center">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input type="text" placeholder="Search by title, course, or uploader..." value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{ width: '100%', padding: '10px 16px 10px 36px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
-              onFocus={e => e.target.style.borderColor = '#4f46e5'}
-              onBlur={e => e.target.style.borderColor = '#e2e8f0'}
-            />
+              className="w-full py-[10px] pl-9 pr-4 rounded-[10px] border-[1.5px] border-slate-200 text-[14px] outline-none box-border focus:border-brand transition-colors" />
           </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div className="flex gap-2 flex-wrap">
             {TYPE_FILTERS.map(t => (
-              <button key={t} onClick={() => setTypeFilter(t)} style={{
-                padding: '8px 14px', borderRadius: 10, border: '1.5px solid',
-                borderColor: typeFilter === t ? '#4f46e5' : '#e2e8f0',
-                background: typeFilter === t ? '#4f46e5' : '#fff',
-                color: typeFilter === t ? '#fff' : '#475569',
-                fontSize: 12, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize'
-              }}>{t === 'all' ? 'All' : t.toUpperCase()}</button>
+              <button key={t} onClick={() => setTypeFilter(t)}
+                className={`px-3.5 py-2 rounded-[10px] border-[1.5px] text-[12px] font-semibold cursor-pointer capitalize transition-colors ${typeFilter === t ? 'border-brand bg-brand text-white' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}`}>
+                {t === 'all' ? 'All' : t.toUpperCase()}
+              </button>
             ))}
           </div>
         </div>
 
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ minWidth: '100%', borderCollapse: 'collapse' }}>
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-collapse">
             <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                {['Resource', 'Type', 'Course', 'Uploaded By', 'Date', 'Action'].map(h => (
-                  <th key={h} style={{ padding: '14px 16px', textAlign: h === 'Action' ? 'right' : 'left', fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>{h}</th>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                {['Resource', 'Type', 'Course', 'Uploaded By', 'Date', 'Action'].map((h, i) => (
+                  <th key={h} className={`px-4 py-3.5 text-[12px] font-semibold text-slate-500 uppercase tracking-[0.5px] whitespace-nowrap ${i === 5 ? 'text-right' : 'text-left'}`}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} style={{ padding: '40px 0', textAlign: 'center', color: '#64748b' }}>Loading...</td></tr>
+                <tr><td colSpan={6} className="py-10 text-center t-muted">Loading...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} style={{ padding: '40px 0', textAlign: 'center', color: '#64748b' }}>No resources found.</td></tr>
+                <tr><td colSpan={6} className="py-10 text-center t-muted">No resources found.</td></tr>
               ) : filtered.map(item => {
-                const ts = typeStyle(item.type)
+                const badge = TYPE_BADGE[item.type?.toLowerCase()] || defaultBadge
                 return (
-                  <tr key={item.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ fontWeight: 600, color: '#0f172a', fontSize: 14 }}>{item.title}</div>
+                  <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="font-semibold t-primary text-[14px]">{item.title}</div>
                         {item.file_url && (
-                          <a href={item.file_url} target="_blank" rel="noopener noreferrer" style={{ color: '#4f46e5', display: 'flex', alignItems: 'center' }}>
+                          <a href={item.file_url} target="_blank" rel="noopener noreferrer" className="text-brand flex items-center">
                             <ExternalLink size={13} />
                           </a>
                         )}
                       </div>
                     </td>
-                    <td style={{ padding: '16px' }}>
-                      <span style={{ background: ts.bg, color: ts.color, padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4, textTransform: 'uppercase' }}>
-                        {ts.icon}{item.type || '—'}
+                    <td className="px-4 py-4">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-[8px] text-[11px] font-bold uppercase ${badge.cls}`}>
+                        {badge.icon}{item.type || '—'}
                       </span>
                     </td>
-                    <td style={{ padding: '16px', fontSize: 13, color: '#475569' }}>
+                    <td className="px-4 py-4 text-[13px] text-slate-500">
                       {item.course ? `${item.course.code} — ${item.course.name}` : '—'}
                     </td>
-                    <td style={{ padding: '16px', fontSize: 13, color: '#475569' }}>{item.uploader?.full_name || '—'}</td>
-                    <td style={{ padding: '16px', fontSize: 13, color: '#64748b' }}>{new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-                    <td style={{ padding: '16px', textAlign: 'right' }}>
-                      <button onClick={() => handleDelete(item)} title="Remove resource" style={{ background: '#f8fafc', border: '1px solid #fee2e2', color: '#ef4444', padding: '8px', borderRadius: '10px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = '#fef2f2'; e.currentTarget.style.borderColor = '#ef4444' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.borderColor = '#fee2e2' }}
-                      >
+                    <td className="px-4 py-4 text-[13px] text-slate-500">{item.uploader?.full_name || '—'}</td>
+                    <td className="px-4 py-4 text-[13px] t-muted">{new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                    <td className="px-4 py-4 text-right">
+                      <button onClick={() => handleDelete(item)} title="Remove resource"
+                        className="inline-flex items-center justify-center p-2 rounded-[10px] border border-red-100 bg-slate-50 text-red-400 cursor-pointer hover:bg-red-50 hover:border-red-400 transition-colors">
                         <Trash2 size={16} />
                       </button>
                     </td>

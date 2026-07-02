@@ -4,93 +4,37 @@ import { useAuth } from '../../context/AuthContext'
 import api from '../../lib/api'
 import Modal from '../../components/admin/Modal'
 import {
-  User,
-  Shield,
-  Palette,
-  Bell,
-  Camera,
-  KeyRound,
-  ShieldCheck,
-  Sun,
-  Moon,
-  Loader2,
-  Globe,
-  Eye,
-  EyeOff
+  User, Shield, Palette, Bell, Camera,
+  KeyRound, ShieldCheck, Sun, Moon, Loader2, Globe, Eye, EyeOff
 } from 'lucide-react'
-
-const pjs = (size, weight, lh, color) => ({
-  fontFamily: "'Plus Jakarta Sans', sans-serif",
-  fontSize: size, fontWeight: weight, lineHeight: lh, color,
-})
-const inter = (size, weight, lh, color) => ({
-  fontFamily: "'Inter', sans-serif",
-  fontSize: size, fontWeight: weight, lineHeight: lh, color,
-})
 
 function Toast({ msg, type, onClose }) {
   if (!msg) return null
   return (
-    <div style={{
-      position: 'fixed', bottom: 32, right: 32, zIndex: 9999,
-      padding: '14px 22px', borderRadius: 14,
-      background: type === 'success' ? '#16a34a' : '#ef4444',
-      color: '#fff', boxShadow: '0 8px 32px rgba(0,0,0,.18)',
-      fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 600,
-      display: 'flex', alignItems: 'center', gap: 10,
-      animation: 'slideIn 0.3s ease-out'
-    }}>
-      <style>{`
-        @keyframes slideIn {
-          from { transform: translateX(100%); opacity: 0; }
-          to { transform: translateX(0); opacity: 1; }
-        }
-      `}</style>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }}>
-        {type === 'success' ? '✓' : '!'}
-      </div>
+    <div
+      className={`fixed bottom-8 right-8 z-[9999] px-5 py-3.5 rounded-2xl flex items-center gap-2.5 text-white shadow-[0_8px_32px_rgba(0,0,0,0.18)] t-md font-semibold ${type === 'success' ? 'bg-success' : 'bg-danger'}`}
+      style={{ animation: 'slideUp 0.3s ease-out' }}
+    >
+      <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">{type === 'success' ? '✓' : '!'}</div>
       <span>{msg}</span>
-      <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', marginLeft: 10, opacity: 0.7, fontSize: 16 }}>×</button>
-    </div>
-  )
-}
-
-/* ─── UI Components ─────────────────────────────────────────────── */
-function Card({ children, style = {} }) {
-  return (
-    <div style={{
-      background: '#ffffff', border: '1px solid #f1f5f9', borderRadius: 24,
-      padding: '28px', boxShadow: '0px 2px 8px rgba(0,0,0,0.04)', ...style,
-    }}>
-      {children}
+      <button onClick={onClose} className="bg-none border-none text-white cursor-pointer ml-2.5 opacity-70 text-base">×</button>
     </div>
   )
 }
 
 function SectionHeading({ icon, title }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{icon}</div>
-      <span style={pjs(18, 700, '23px', '#0f172a')}>{title}</span>
+    <div className="flex items-center gap-3 mb-7">
+      <div className="flex items-center justify-center">{icon}</div>
+      <span className="t-heading-lg t-primary">{title}</span>
     </div>
   )
 }
 
 function Toggle({ on, onChange }) {
   return (
-    <div
-      onClick={() => onChange(!on)}
-      style={{
-        width: 44, height: 24, borderRadius: 12, cursor: 'pointer',
-        background: on ? '#4f46e5' : '#e2e8f0',
-        position: 'relative', transition: 'background 0.2s', flexShrink: 0,
-      }}
-    >
-      <div style={{
-        position: 'absolute', top: 3, left: on ? 23 : 3,
-        width: 18, height: 18, borderRadius: '50%', background: '#ffffff',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.15)', transition: 'left 0.2s',
-      }} />
+    <div onClick={() => onChange(!on)} className="relative cursor-pointer shrink-0 transition-colors" style={{ width: 44, height: 24, borderRadius: 12, background: on ? '#4f46e5' : '#e2e8f0' }}>
+      <div className="absolute top-[3px] w-[18px] h-[18px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.15)] transition-[left] duration-200" style={{ left: on ? 23 : 3 }} />
     </div>
   )
 }
@@ -99,13 +43,7 @@ function Checkbox({ checked, onChange }) {
   return (
     <div
       onClick={() => onChange(!checked)}
-      style={{
-        width: 22, height: 22, borderRadius: 6, cursor: 'pointer', flexShrink: 0,
-        background: checked ? '#4f46e5' : '#ffffff',
-        border: `1.5px solid ${checked ? '#4f46e5' : '#d1d5db'}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        transition: 'all 0.1s',
-      }}
+      className={`w-[22px] h-[22px] rounded-md cursor-pointer shrink-0 flex items-center justify-center transition-all border-[1.5px] ${checked ? 'bg-brand border-brand' : 'bg-white border-slate-300'}`}
     >
       {checked && (
         <svg width="12" height="9" viewBox="0 0 12 9" fill="none">
@@ -116,38 +54,29 @@ function Checkbox({ checked, onChange }) {
   )
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   Settings Page
-   ════════════════════════════════════════════════════════════════ */
 export default function SettingsPage() {
   const { user, updateUser } = useAuth()
   const fileInputRef = useRef(null)
 
   const [profile, setProfile] = useState({
     firstName: user?.full_name?.split(' ')[0] || '',
-    lastName: user?.full_name?.split(' ').slice(1).join(' ') || '',
-    email: user?.email || '',
+    lastName:  user?.full_name?.split(' ').slice(1).join(' ') || '',
+    email:     user?.email || '',
     avatar_url: user?.avatar_url || ''
   })
-
   const [prefs, setPrefs] = useState({
-    theme: 'light',
-    language: 'English',
-    timezone: 'Asia/Kolkata (IST)',
-    push_notifs: true,
-    email_notifs: true,
-    weekly_analytics: false
+    theme: 'light', language: 'English', timezone: 'Asia/Kolkata (IST)',
+    push_notifs: true, email_notifs: true, weekly_analytics: false
   })
-
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const [loading, setLoading]     = useState(true)
+  const [saving, setSaving]       = useState(false)
   const [uploading, setUploading] = useState(false)
   const [savingPwd, setSavingPwd] = useState(false)
-  const [pwModal, setPwModal] = useState(false)
-  const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' })
-  const [pwError, setPwError] = useState('')
-  const [showPwd, setShowPwd] = useState({ current: false, next: false, confirm: false })
-  const [toast, setToast] = useState({ msg: '', type: 'success' })
+  const [pwModal, setPwModal]     = useState(false)
+  const [pwForm, setPwForm]       = useState({ current: '', next: '', confirm: '' })
+  const [pwError, setPwError]     = useState('')
+  const [showPwd, setShowPwd]     = useState({ current: false, next: false, confirm: false })
+  const [toast, setToast]         = useState({ msg: '', type: 'success' })
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type })
@@ -160,21 +89,11 @@ export default function SettingsPage() {
         const res = await api.get('/api/users/profile')
         if (res.success && res.data) {
           const u = res.data
-          setProfile({
-            firstName: u.full_name?.split(' ')[0] || '',
-            lastName: u.full_name?.split(' ').slice(1).join(' ') || '',
-            email: u.email,
-            avatar_url: u.avatar_url || ''
-          })
-          if (u.preferences) {
-            setPrefs(p => ({ ...p, ...u.preferences }))
-          }
+          setProfile({ firstName: u.full_name?.split(' ')[0] || '', lastName: u.full_name?.split(' ').slice(1).join(' ') || '', email: u.email, avatar_url: u.avatar_url || '' })
+          if (u.preferences) setPrefs(p => ({ ...p, ...u.preferences }))
         }
-      } catch (err) {
-        console.error('Failed to fetch profile:', err)
-      } finally {
-        setLoading(false)
-      }
+      } catch (err) { console.error('Failed to fetch profile:', err) }
+      finally { setLoading(false) }
     }
     fetchFullProfile()
   }, [])
@@ -185,430 +104,264 @@ export default function SettingsPage() {
     try {
       const full_name = `${profile.firstName} ${profile.lastName}`.trim()
       const res = await api.patch('/api/users/profile', { full_name })
-      if (res.success) {
-        updateUser({ full_name })
-        showToast('Profile updated!')
-      }
-    } catch (err) {
-      showToast(err.message, 'error')
-    } finally {
-      setSaving(false)
-    }
+      if (res.success) { updateUser({ full_name }); showToast('Profile updated!') }
+    } catch (err) { showToast(err.message, 'error') }
+    finally { setSaving(false) }
   }
 
   const handleAvatarChange = async (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-
+    const file = e.target.files[0]; if (!file) return
     setUploading(true)
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('type', 'avatar')
-
+      const formData = new FormData(); formData.append('file', file); formData.append('type', 'avatar')
       const uploadRes = await api.upload('/api/upload/image', formData)
       if (!uploadRes.success) throw new Error('Upload failed')
-
       const newUrl = uploadRes.url
       const profileRes = await api.patch('/api/users/profile', { avatar_url: newUrl })
       if (!profileRes.success) throw new Error('Profile update failed')
-
-      setProfile(s => ({ ...s, avatar_url: newUrl }))
-      updateUser({ avatar_url: newUrl })
-      showToast('Avatar updated!')
-    } catch (err) {
-      showToast(`Error uploading image: ${err.message}`, 'error')
-    } finally {
-      setUploading(false)
-    }
+      setProfile(s => ({ ...s, avatar_url: newUrl })); updateUser({ avatar_url: newUrl }); showToast('Avatar updated!')
+    } catch (err) { showToast(`Error uploading image: ${err.message}`, 'error') }
+    finally { setUploading(false) }
   }
 
   const handlePrefChange = async (key, value) => {
     const prev = { ...prefs }
     const nextPrefs = { ...prefs, [key]: value }
     setPrefs(nextPrefs)
-    try {
-      await api.put('/api/users/preferences', { preferences: nextPrefs })
-      showToast('Preferences updated!')
-    } catch (err) {
-      console.error('Failed to sync preferences:', err)
-      setPrefs(prev)
-      showToast('Failed to save preference', 'error')
-    }
+    try { await api.put('/api/users/preferences', { preferences: nextPrefs }); showToast('Preferences updated!') }
+    catch (err) { console.error('Failed to sync preferences:', err); setPrefs(prev); showToast('Failed to save preference', 'error') }
   }
 
   const handlePasswordUpdate = async (e) => {
-    e.preventDefault()
-    setPwError('')
+    e.preventDefault(); setPwError('')
     if (pwForm.current === pwForm.next) return setPwError('New password cannot be the same as current password')
     if (pwForm.next !== pwForm.confirm) return setPwError('Passwords do not match')
     if (pwForm.next.length < 8) return setPwError('Password must be at least 8 characters')
-
     setSavingPwd(true)
     try {
-      const res = await api.put('/api/users/password', {
-        current_password: pwForm.current,
-        new_password: pwForm.next
-      })
-      if (res.success) {
-        showToast('Password updated successfully!')
-        setPwModal(false)
-        setPwForm({ current: '', next: '', confirm: '' })
-      }
-    } catch (err) {
-      setPwError(err.message || 'Update failed')
-    } finally {
-      setSavingPwd(false)
-    }
+      const res = await api.put('/api/users/password', { current_password: pwForm.current, new_password: pwForm.next })
+      if (res.success) { showToast('Password updated successfully!'); setPwModal(false); setPwForm({ current: '', next: '', confirm: '' }) }
+    } catch (err) { setPwError(err.message || 'Update failed') }
+    finally { setSavingPwd(false) }
   }
 
   const closePwModal = () => {
-    setPwModal(false)
-    setPwError('')
-    setPwForm({ current: '', next: '', confirm: '' })
+    setPwModal(false); setPwError(''); setPwForm({ current: '', next: '', confirm: '' })
     setShowPwd({ current: false, next: false, confirm: false })
   }
 
-  const inputStyle = {
-    width: '100%', padding: '12px 14px', borderRadius: 12,
-    border: '1px solid #e2e8f0', background: '#f8fafc',
-    ...pjs(14, 400, '20px', '#0f172a'), outline: 'none', boxSizing: 'border-box',
-    transition: 'all 0.15s',
-  }
-
-  const labelStyle = {
-    ...inter(12, 600, '16px', '#64748b'), display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em'
-  }
-
-  // Unified Primary Button Style (Matching Sidebar Logout)
-  const primaryButtonStyle = {
-    padding: '12px 34px',
-    background: '#4f46e5',
-    borderRadius: 16,
-    border: 'none',
-    cursor: 'pointer',
-    ...pjs(14, 700, '18px', '#ffffff'),
-    transition: 'all 0.2s',
-  }
-
-  // Unified Cancel Button Style (Matching User Screenshot)
-  const secondaryButtonStyle = {
-    padding: '12px 34px',
-    background: '#ffffff',
-    borderRadius: 16,
-    border: '1px solid #e2e8f0',
-    cursor: 'pointer',
-    ...pjs(14, 700, '18px', '#1e293b'),
-    transition: 'all 0.2s',
-  }
-
-  if (loading) return <PageLayout><div style={{ textAlign: 'center', padding: '100px 0' }}>{/* Spinner... */} Loading settings...</div></PageLayout>
+  if (loading) return <PageLayout><div className="text-center py-24 t-base t-subtle">Loading settings...</div></PageLayout>
 
   return (
     <PageLayout>
       <Toast msg={toast.msg} type={toast.type} onClose={() => setToast({ msg: '', type: 'success' })} />
-      {/* Page Header */}
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={pjs(30, 700, '38px', '#0f172a')}>Settings</h1>
-        <p style={{ ...pjs(16, 400, '22px', '#64748b'), marginTop: 2 }}>
-          Manage your account preferences, security settings, and notifications.
-        </p>
+
+      <div className="mb-8">
+        <h1 className="t-heading-3xl t-primary">Settings</h1>
+        <p className="t-lg t-secondary mt-0.5">Manage your account preferences, security settings, and notifications.</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20 }}>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
 
-        {/* LEFT COLUMN */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {/* Left column */}
+        <div className="flex flex-col gap-5">
 
-          {/* User Profile Card */}
-          <Card>
+          {/* Profile card */}
+          <div className="card p-7">
             <SectionHeading title="User Profile" icon={<User size={20} color="#4f46e5" strokeWidth={2.5} />} />
-
-            <div style={{ display: 'flex', gap: 28, alignItems: 'flex-start' }}>
-              {/* Avatar Section */}
-              <div style={{ position: 'relative', flexShrink: 0 }}>
-                <div style={{
-                  width: 104, height: 104, borderRadius: '50%', overflow: 'hidden',
-                  border: '4px solid #fff', boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                  background: 'linear-gradient(135deg,#e0e7ff,#f1f5f9)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>
+            <div className="flex gap-7 items-start flex-col sm:flex-row">
+              {/* Avatar */}
+              <div className="relative shrink-0">
+                <div className="w-[104px] h-[104px] rounded-full overflow-hidden border-4 border-white shadow-[0_4px_12px_rgba(0,0,0,0.08)] bg-gradient-to-br from-brand-light to-surface-muted flex items-center justify-center">
                   {uploading ? (
                     <Loader2 size={32} color="#4f46e5" className="animate-spin" />
                   ) : profile.avatar_url ? (
-                    <img src={profile.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 36, fontWeight: 700 }}>
+                    <div className="w-full h-full bg-gradient-to-br from-brand to-violet-600 flex items-center justify-center text-white text-4xl font-bold">
                       {profile.firstName[0]}
                     </div>
                   )}
                 </div>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  style={{
-                    position: 'absolute', bottom: 2, right: 2,
-                    width: 32, height: 32, borderRadius: '50%',
-                    background: '#4f46e5', border: '2.5px solid #ffffff',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)', transition: 'transform 0.1s'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
-                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                  className="absolute bottom-0.5 right-0.5 w-8 h-8 rounded-full bg-brand border-[2.5px] border-white flex items-center justify-center cursor-pointer shadow-[0_2px_4px_rgba(0,0,0,0.1)] transition-transform hover:scale-110"
                 >
                   <Camera size={14} color="white" />
                 </button>
-                <input type="file" ref={fileInputRef} onChange={handleAvatarChange} accept="image/*" style={{ display: 'none' }} />
+                <input type="file" ref={fileInputRef} onChange={handleAvatarChange} accept="image/*" className="hidden" />
               </div>
 
-              {/* Profile Form Content */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 18 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+              {/* Form */}
+              <div className="flex-1 flex flex-col gap-[18px]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label style={labelStyle}>First Name</label>
-                    <input style={inputStyle} value={profile.firstName} onChange={e => setProfile({ ...profile, firstName: e.target.value })} />
+                    <label className="text-[12px] font-semibold t-secondary uppercase tracking-[0.05em] block mb-2">First Name</label>
+                    <input className="input" value={profile.firstName} onChange={e => setProfile({ ...profile, firstName: e.target.value })} />
                   </div>
                   <div>
-                    <label style={labelStyle}>Last Name</label>
-                    <input style={inputStyle} value={profile.lastName} onChange={e => setProfile({ ...profile, lastName: e.target.value })} />
+                    <label className="text-[12px] font-semibold t-secondary uppercase tracking-[0.05em] block mb-2">Last Name</label>
+                    <input className="input" value={profile.lastName} onChange={e => setProfile({ ...profile, lastName: e.target.value })} />
                   </div>
                 </div>
                 <div>
-                  <label style={labelStyle}>Email Address</label>
-                  <input style={{ ...inputStyle, background: '#f8fafc', color: '#64748b' }} value={profile.email} disabled />
+                  <label className="text-[12px] font-semibold t-secondary uppercase tracking-[0.05em] block mb-2">Email Address</label>
+                  <input className="input bg-surface t-secondary" value={profile.email} disabled />
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-                  <button
-                    onClick={handleProfileSave}
-                    disabled={saving}
-                    style={primaryButtonStyle}
-                    onMouseEnter={e => e.currentTarget.style.background = '#4338ca'}
-                    onMouseLeave={e => e.currentTarget.style.background = '#4f46e5'}
-                  >
+                <div className="flex justify-end mt-2">
+                  <button onClick={handleProfileSave} disabled={saving}
+                    className="px-8 py-3 bg-brand text-white rounded-2xl border-none cursor-pointer t-heading-md transition-colors hover:bg-brand-dark disabled:bg-slate-300 disabled:cursor-not-allowed">
                     {saving ? 'Syncing...' : 'Save Changes'}
                   </button>
                 </div>
               </div>
             </div>
-          </Card>
+          </div>
 
-          {/* Security & Access Card */}
-          <Card>
+          {/* Security card */}
+          <div className="card p-7">
             <SectionHeading title="Security & Access" icon={<Shield size={20} color="#4f46e5" strokeWidth={2.5} />} />
 
-            <div style={{ background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 20, marginBottom: 16 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div className="bg-surface border border-slate-100 rounded-2xl px-6 py-5 flex items-center gap-5 mb-4">
+              <div className="w-11 h-11 rounded-xl bg-brand-light flex items-center justify-center shrink-0">
                 <KeyRound size={20} color="#4f46e5" />
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={pjs(15, 700, '21px', '#0f172a')}>Reset Password</div>
-                <div style={inter(13, 400, '18px', '#64748b')}>Change your password to keep your account secure.</div>
+              <div className="flex-1">
+                <div className="t-base font-bold t-primary">Reset Password</div>
+                <div className="t-md t-secondary">Change your password to keep your account secure.</div>
               </div>
-              <button onClick={() => setPwModal(true)} style={{
-                padding: '12px 20px', background: '#fff', border: '1px solid #e2e8f0',
-                borderRadius: 12, cursor: 'pointer', ...pjs(13, 700, '18px', '#0f172a'),
-                transition: 'all 0.15s'
-              }} onMouseEnter={e => e.currentTarget.style.borderColor = '#4f46e5'} onMouseLeave={e => e.currentTarget.style.borderColor = '#e2e8f0'}>
+              <button onClick={() => setPwModal(true)}
+                className="px-5 py-3 bg-white border border-ink-border rounded-xl cursor-pointer t-md font-bold t-primary transition-colors hover:border-brand">
                 Update Password
               </button>
             </div>
 
-            <div style={{ background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 20 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div className="bg-surface border border-slate-100 rounded-2xl px-6 py-5 flex items-center gap-5">
+              <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
                 <ShieldCheck size={20} color="#10b981" />
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={pjs(15, 700, '21px', '#0f172a')}>Two-Factor Authentication</div>
-                <div style={inter(13, 400, '18px', '#64748b')}>Add an extra layer of security with SMS or App verification.</div>
+              <div className="flex-1">
+                <div className="t-base font-bold t-primary">Two-Factor Authentication</div>
+                <div className="t-md t-secondary">Add an extra layer of security with SMS or App verification.</div>
               </div>
-              <Toggle on={true} onChange={() => { }} />
+              <Toggle on={true} onChange={() => {}} />
             </div>
-          </Card>
+          </div>
         </div>
 
-        {/* RIGHT COLUMN */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {/* Right column */}
+        <div className="flex flex-col gap-5">
 
-          {/* Appearance Card */}
-          <Card>
+          {/* Appearance card */}
+          <div className="card p-7">
             <SectionHeading title="Appearance" icon={<Palette size={20} color="#4f46e5" strokeWidth={2.5} />} />
-            <p style={{ ...inter(14, 400, '20px', '#64748b'), marginBottom: 20 }}>Choose how SnapLocate looks for you.</p>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <p className="t-base t-secondary mb-5">Choose how SnapLocate looks for you.</p>
+            <div className="grid grid-cols-2 gap-3.5">
               {[
                 { id: 'light', label: 'Light Mode', icon: <Sun size={24} /> },
-                { id: 'dark', label: 'Dark Mode', icon: <Moon size={24} /> },
+                { id: 'dark',  label: 'Dark Mode',  icon: <Moon size={24} /> },
               ].map(t => (
-                <div
-                  key={t.id}
-                  onClick={() => handlePrefChange('theme', t.id)}
+                <div key={t.id} onClick={() => handlePrefChange('theme', t.id)}
+                  className="py-7 px-4 rounded-2xl cursor-pointer text-center transition-all border-2"
                   style={{
-                    padding: '28px 16px', borderRadius: 16, cursor: 'pointer', textAlign: 'center',
-                    border: `2px solid ${prefs.theme === t.id ? '#4f46e5' : '#e2e8f0'}`,
-                    background: t.id === 'dark' ? '#1a202c' : '#f8fafc',
-                    color: t.id === 'dark' ? '#fff' : '#0f172a',
-                    transition: 'all 0.15s'
+                    border:      `2px solid ${prefs.theme === t.id ? '#4f46e5' : '#e2e8f0'}`,
+                    background:  t.id === 'dark' ? '#1a202c' : '#f8fafc',
+                    color:       t.id === 'dark' ? '#fff' : '#0f172a',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12, color: prefs.theme === t.id ? '#4f46e5' : '#64748b' }}>{t.icon}</div>
-                  <div style={pjs(13, 700, '18px', prefs.theme === t.id ? (t.id === 'dark' ? '#fff' : '#4f46e5') : '#64748b')}>{t.label}</div>
+                  <div className={`flex justify-center mb-3 ${prefs.theme === t.id ? 'text-brand' : 't-secondary'}`}>{t.icon}</div>
+                  <div className={`t-md font-bold ${prefs.theme === t.id ? (t.id === 'dark' ? 'text-white' : 'text-brand') : 't-secondary'}`}>{t.label}</div>
                 </div>
               ))}
             </div>
-          </Card>
+          </div>
 
-          {/* Region & Language Card */}
-          <Card>
+          {/* Region & Language card */}
+          <div className="card p-7">
             <SectionHeading title="Region & Language" icon={<Globe size={20} color="#4f46e5" strokeWidth={2.5} />} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className="flex flex-col gap-4">
               <div>
-                <label style={labelStyle}>Language</label>
-                <select
-                  value={prefs.language}
-                  onChange={e => handlePrefChange('language', e.target.value)}
-                  style={{ ...inputStyle, background: '#fff', border: '1px solid #e2e8f0', cursor: 'pointer' }}
-                >
-                  <option>English</option>
-                  <option>Hindi</option>
-                  <option>Spanish</option>
-                  <option>French</option>
+                <label className="text-[12px] font-semibold t-secondary uppercase tracking-[0.05em] block mb-2">Language</label>
+                <select value={prefs.language} onChange={e => handlePrefChange('language', e.target.value)} className="input cursor-pointer bg-white">
+                  <option>English</option><option>Hindi</option><option>Spanish</option><option>French</option>
                 </select>
               </div>
               <div>
-                <label style={labelStyle}>Timezone</label>
-                <select
-                  value={prefs.timezone}
-                  onChange={e => handlePrefChange('timezone', e.target.value)}
-                  style={{ ...inputStyle, background: '#fff', border: '1px solid #e2e8f0', cursor: 'pointer' }}
-                >
-                  <option>Asia/Kolkata (IST)</option>
-                  <option>UTC</option>
-                  <option>America/New_York</option>
-                  <option>Europe/London</option>
+                <label className="text-[12px] font-semibold t-secondary uppercase tracking-[0.05em] block mb-2">Timezone</label>
+                <select value={prefs.timezone} onChange={e => handlePrefChange('timezone', e.target.value)} className="input cursor-pointer bg-white">
+                  <option>Asia/Kolkata (IST)</option><option>UTC</option><option>America/New_York</option><option>Europe/London</option>
                 </select>
               </div>
             </div>
-          </Card>
+          </div>
 
-          {/* Notifications Card */}
-          <Card>
+          {/* Notifications card */}
+          <div className="card p-7">
             <SectionHeading title="Notifications" icon={<Bell size={20} color="#4f46e5" strokeWidth={2.5} />} />
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div className="flex flex-col gap-5">
               {[
-                { k: 'push_notifs', title: 'Push Notifications', desc: 'Real-time alerts on your device' },
-                { k: 'email_notifs', title: 'Email Notifications', desc: 'Summary and critical event emails' },
-                { k: 'weekly_analytics', title: 'Weekly Analytics', desc: 'Detailed weekly usage reports' },
+                { k: 'push_notifs',      title: 'Push Notifications',  desc: 'Real-time alerts on your device' },
+                { k: 'email_notifs',     title: 'Email Notifications', desc: 'Summary and critical event emails' },
+                { k: 'weekly_analytics', title: 'Weekly Analytics',    desc: 'Detailed weekly usage reports' },
               ].map(n => (
-                <div
-                  key={n.k}
-                  onClick={() => handlePrefChange(n.k, !prefs[n.k])}
-                  style={{ display: 'flex', alignItems: 'flex-start', gap: 14, cursor: 'pointer' }}
-                >
-                  <div style={{ pointerEvents: 'none' }}>
-                    <Checkbox checked={prefs[n.k]} onChange={() => { }} />
-                  </div>
-                  <div style={{ marginTop: -2 }}>
-                    <div style={pjs(14, 700, '19px', '#0f172a')}>{n.title}</div>
-                    <div style={inter(12, 400, '16px', '#64748b')}>{n.desc}</div>
+                <div key={n.k} onClick={() => handlePrefChange(n.k, !prefs[n.k])} className="flex items-start gap-3.5 cursor-pointer">
+                  <div className="pointer-events-none"><Checkbox checked={prefs[n.k]} onChange={() => {}} /></div>
+                  <div className="-mt-0.5">
+                    <div className="t-base font-bold t-primary">{n.title}</div>
+                    <div className="t-xs t-secondary">{n.desc}</div>
                   </div>
                 </div>
               ))}
             </div>
-          </Card>
-
+          </div>
         </div>
       </div>
 
+      {/* Change password modal */}
       <Modal isOpen={pwModal} onClose={closePwModal} title="Change Password">
-        <form onSubmit={handlePasswordUpdate} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <form onSubmit={handlePasswordUpdate} className="flex flex-col gap-4">
           {pwError && (
-            <div style={{ padding: '10px 14px', borderRadius: 8, background: '#fef2f2', border: '1px solid #fee2e2', color: '#b91c1c', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="px-3.5 py-2.5 rounded-lg bg-danger-light border border-danger-border text-danger text-[13px] font-medium flex items-center gap-2">
               <span>⚠️</span> {pwError}
             </div>
           )}
-          <div>
-            <label style={labelStyle}>Current Password</label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showPwd.current ? 'text' : 'password'}
-                required
-                style={{ ...inputStyle, paddingRight: 44 }}
-                value={pwForm.current}
-                onChange={e => setPwForm({ ...pwForm, current: e.target.value })}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPwd({ ...showPwd, current: !showPwd.current })}
-                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }}
-              >
-                {showPwd.current ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+          {[
+            { field: 'current', label: 'Current Password' },
+            { field: 'next',    label: 'New Password' },
+            { field: 'confirm', label: 'Confirm New Password' },
+          ].map(({ field, label }) => (
+            <div key={field}>
+              <label className="text-[12px] font-semibold t-secondary uppercase tracking-[0.05em] block mb-2">{label}</label>
+              <div className="relative">
+                <input
+                  type={showPwd[field] ? 'text' : 'password'} required
+                  value={pwForm[field]}
+                  onChange={e => setPwForm({ ...pwForm, [field]: e.target.value })}
+                  className="input pr-11"
+                  style={field === 'confirm' && pwForm.confirm && pwForm.next && pwForm.confirm !== pwForm.next ? { borderColor: '#ef4444' } : {}}
+                />
+                <button type="button" onClick={() => setShowPwd({ ...showPwd, [field]: !showPwd[field] })}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-none border-none cursor-pointer t-subtle flex items-center">
+                  {showPwd[field] ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {field === 'confirm' && pwForm.confirm && pwForm.next && pwForm.confirm !== pwForm.next && (
+                <p className="text-[11px] text-danger mt-1">Passwords do not match</p>
+              )}
             </div>
-          </div>
-          <div>
-            <label style={labelStyle}>New Password</label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showPwd.next ? 'text' : 'password'}
-                required
-                style={{ ...inputStyle, paddingRight: 44 }}
-                value={pwForm.next}
-                onChange={e => setPwForm({ ...pwForm, next: e.target.value })}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPwd({ ...showPwd, next: !showPwd.next })}
-                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }}
-              >
-                {showPwd.next ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
-          <div>
-            <label style={labelStyle}>Confirm New Password</label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showPwd.confirm ? 'text' : 'password'}
-                required
-                style={{ ...inputStyle, paddingRight: 44, borderColor: pwForm.confirm && pwForm.next && pwForm.confirm !== pwForm.next ? '#ef4444' : '#e2e8f0' }}
-                value={pwForm.confirm}
-                onChange={e => setPwForm({ ...pwForm, confirm: e.target.value })}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPwd({ ...showPwd, confirm: !showPwd.confirm })}
-                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }}
-              >
-                {showPwd.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-            {pwForm.confirm && pwForm.next && pwForm.confirm !== pwForm.next && (
-              <p style={{ fontSize: 11, color: '#ef4444', margin: '4px 0 0', fontFamily: "'Inter', sans-serif" }}>Passwords do not match</p>
-            )}
-          </div>
-          <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end', gap: 14 }}>
-            <button
-              type="button"
-              onClick={() => setPwModal(false)}
-              style={secondaryButtonStyle}
-              onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-              onMouseLeave={e => e.currentTarget.style.background = '#ffffff'}
-            >
+          ))}
+          <div className="mt-5 flex justify-end gap-3.5">
+            <button type="button" onClick={() => setPwModal(false)}
+              className="px-8 py-3 rounded-2xl border border-ink-border bg-white cursor-pointer t-heading-md t-primary hover:bg-surface transition-colors">
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={savingPwd}
-              style={primaryButtonStyle}
-              onMouseEnter={e => e.currentTarget.style.background = '#4338ca'}
-              onMouseLeave={e => e.currentTarget.style.background = '#4f46e5'}
-            >
+            <button type="submit" disabled={savingPwd}
+              className="px-8 py-3 rounded-2xl border-none bg-brand text-white cursor-pointer t-heading-md hover:bg-brand-dark transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed">
               {savingPwd ? 'Updating...' : 'Update Password'}
             </button>
           </div>
         </form>
       </Modal>
-
     </PageLayout>
   )
 }

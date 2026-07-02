@@ -2,57 +2,34 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
-import {
-  BookOpen,
-  ClipboardList,
-  Megaphone,
-  Users,
-  ChevronLeft,
-  Plus,
-  Star,
-  Edit,
-  Trash2,
-} from 'lucide-react'
-
-const pjs = (size, weight, lh, color) => ({
-  fontFamily: "'Plus Jakarta Sans', sans-serif",
-  fontSize: size,
-  fontWeight: weight,
-  lineHeight: lh,
-  color,
-})
+import { BookOpen, ClipboardList, Megaphone, Users, ChevronLeft, Plus, Star } from 'lucide-react'
 
 const TABS = [
-  { key: 'assignments', label: 'Assignments', icon: ClipboardList },
+  { key: 'assignments',  label: 'Assignments',  icon: ClipboardList },
   { key: 'announcements', label: 'Announcements', icon: Megaphone },
-  { key: 'students', label: 'Students', icon: Users },
+  { key: 'students',    label: 'Students',     icon: Users },
 ]
+
+const fieldCls = 'w-full px-3 py-[9px] rounded-[8px] border border-slate-200 text-[13px] outline-none bg-white focus:border-brand transition-colors'
+const labelCls = 'text-[12px] font-semibold text-slate-700 block mb-1.5'
 
 export default function LMSCourseDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
 
-  const [activeTab, setActiveTab] = useState('assignments')
-  const [course, setCourse] = useState(null)
+  const [activeTab, setActiveTab]     = useState('assignments')
+  const [course, setCourse]           = useState(null)
   const [assignments, setAssignments] = useState([])
   const [announcements, setAnnouncements] = useState([])
-  const [students, setStudents] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [students, setStudents]       = useState([])
+  const [loading, setLoading]         = useState(true)
+  const [error, setError]             = useState(null)
 
-  // New assignment form
   const [showAssignForm, setShowAssignForm] = useState(false)
-  const [assignForm, setAssignForm] = useState({
-    title: '',
-    description: '',
-    due_date: '',
-    max_marks: '',
-    publish_at: '',
-  })
+  const [assignForm, setAssignForm] = useState({ title: '', description: '', due_date: '', max_marks: '', publish_at: '' })
   const [assignSubmitting, setAssignSubmitting] = useState(false)
   const [assignError, setAssignError] = useState(null)
 
-  // New announcement form
   const [showAnnForm, setShowAnnForm] = useState(false)
   const [annForm, setAnnForm] = useState({ title: '', message: '', is_pinned: false })
   const [annSubmitting, setAnnSubmitting] = useState(false)
@@ -86,9 +63,7 @@ export default function LMSCourseDetail() {
       try {
         const res = await api.get(`/api/lms/courses/${id}/students`)
         setStudents(res.data || [])
-      } catch (err) {
-        setStudents([])
-      }
+      } catch { setStudents([]) }
     }
     fetchStudents()
   }, [activeTab, id])
@@ -106,7 +81,7 @@ export default function LMSCourseDetail() {
         max_marks: Number(assignForm.max_marks),
         publish_at: assignForm.publish_at || undefined,
       })
-      setAssignments((prev) => [res.data, ...prev])
+      setAssignments(prev => [res.data, ...prev])
       setAssignForm({ title: '', description: '', due_date: '', max_marks: '', publish_at: '' })
       setShowAssignForm(false)
     } catch (err) {
@@ -127,7 +102,7 @@ export default function LMSCourseDetail() {
         message: annForm.message,
         is_pinned: annForm.is_pinned,
       })
-      setAnnouncements((prev) => [res.data, ...prev])
+      setAnnouncements(prev => [res.data, ...prev])
       setAnnForm({ title: '', message: '', is_pinned: false })
       setShowAnnForm(false)
     } catch (err) {
@@ -137,519 +112,216 @@ export default function LMSCourseDetail() {
     }
   }
 
-  const styles = {
-    page: { padding: '32px 40px', maxWidth: 1100, margin: '0 auto' },
-    backBtn: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 4,
-      background: 'none',
-      border: 'none',
-      cursor: 'pointer',
-      marginBottom: 24,
-      padding: '4px 0',
-      ...pjs('14px', 500, '20px', '#6B7280'),
-    },
-    courseHeader: {
-      background: '#fff',
-      borderRadius: 16,
-      padding: '28px 32px',
-      marginBottom: 28,
-      border: '1px solid #E5E7EB',
-      display: 'flex',
-      alignItems: 'flex-start',
-      gap: 20,
-    },
-    courseIcon: {
-      width: 52,
-      height: 52,
-      borderRadius: 14,
-      background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexShrink: 0,
-    },
-    courseTitle: { ...pjs('22px', 700, '30px', '#111827'), marginBottom: 6 },
-    courseMeta: { ...pjs('13px', 400, '18px', '#6B7280'), display: 'flex', gap: 20, flexWrap: 'wrap' },
-    metaItem: { display: 'flex', alignItems: 'center', gap: 4 },
-    tabBar: {
-      display: 'flex',
-      gap: 4,
-      background: '#F3F4F6',
-      borderRadius: 12,
-      padding: '4px',
-      marginBottom: 28,
-      width: 'fit-content',
-    },
-    tabBtn: (active) => ({
-      display: 'flex',
-      alignItems: 'center',
-      gap: 6,
-      padding: '8px 20px',
-      borderRadius: 10,
-      border: 'none',
-      cursor: 'pointer',
-      background: active ? '#fff' : 'transparent',
-      boxShadow: active ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
-      ...pjs('14px', active ? 600 : 500, '20px', active ? '#111827' : '#6B7280'),
-      transition: 'all 0.15s',
-    }),
-    sectionHeader: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 20,
-    },
-    sectionTitle: { ...pjs('17px', 700, '24px', '#111827') },
-    addBtn: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 6,
-      padding: '9px 18px',
-      borderRadius: 10,
-      border: 'none',
-      cursor: 'pointer',
-      background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
-      ...pjs('13px', 600, '18px', '#fff'),
-    },
-    card: {
-      background: '#fff',
-      border: '1px solid #E5E7EB',
-      borderRadius: 14,
-      padding: '22px 26px',
-      marginBottom: 14,
-    },
-    formCard: {
-      background: '#F9FAFB',
-      border: '1px dashed #D1D5DB',
-      borderRadius: 14,
-      padding: '24px 28px',
-      marginBottom: 20,
-    },
-    formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 20px' },
-    formGroup: { display: 'flex', flexDirection: 'column', gap: 6 },
-    label: { ...pjs('12px', 600, '16px', '#374151') },
-    input: {
-      padding: '9px 12px',
-      borderRadius: 8,
-      border: '1px solid #D1D5DB',
-      ...pjs('13px', 400, '18px', '#111827'),
-      outline: 'none',
-      background: '#fff',
-    },
-    textarea: {
-      padding: '9px 12px',
-      borderRadius: 8,
-      border: '1px solid #D1D5DB',
-      ...pjs('13px', 400, '18px', '#111827'),
-      outline: 'none',
-      background: '#fff',
-      resize: 'vertical',
-      minHeight: 80,
-    },
-    formActions: { display: 'flex', gap: 10, marginTop: 18, justifyContent: 'flex-end' },
-    cancelBtn: {
-      padding: '9px 18px',
-      borderRadius: 9,
-      border: '1px solid #D1D5DB',
-      background: '#fff',
-      cursor: 'pointer',
-      ...pjs('13px', 500, '18px', '#6B7280'),
-    },
-    submitBtn: {
-      padding: '9px 20px',
-      borderRadius: 9,
-      border: 'none',
-      background: '#6366F1',
-      cursor: 'pointer',
-      ...pjs('13px', 600, '18px', '#fff'),
-    },
-    assignRow: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      gap: 12,
-    },
-    assignTitle: { ...pjs('15px', 600, '22px', '#111827'), marginBottom: 4 },
-    assignMeta: { display: 'flex', gap: 16, flexWrap: 'wrap' },
-    metaChip: { ...pjs('12px', 500, '16px', '#6B7280') },
-    gradeBtn: {
-      padding: '7px 16px',
-      borderRadius: 8,
-      border: '1.5px solid #6366F1',
-      background: '#fff',
-      cursor: 'pointer',
-      ...pjs('12px', 600, '16px', '#6366F1'),
-      whiteSpace: 'nowrap',
-    },
-    annTitle: { ...pjs('15px', 700, '22px', '#111827'), marginBottom: 6 },
-    annMessage: { ...pjs('13px', 400, '20px', '#4B5563'), marginBottom: 10 },
-    pinnedBadge: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 3,
-      background: '#FEF3C7',
-      borderRadius: 6,
-      padding: '2px 8px',
-      ...pjs('11px', 600, '16px', '#D97706'),
-    },
-    table: { width: '100%', borderCollapse: 'collapse' },
-    th: {
-      padding: '10px 16px',
-      textAlign: 'left',
-      background: '#F9FAFB',
-      ...pjs('12px', 600, '16px', '#6B7280'),
-      borderBottom: '1px solid #E5E7EB',
-    },
-    td: {
-      padding: '12px 16px',
-      ...pjs('13px', 400, '18px', '#374151'),
-      borderBottom: '1px solid #F3F4F6',
-    },
-    errorText: { ...pjs('13px', 500, '18px', '#EF4444'), marginBottom: 12 },
-    emptyState: {
-      textAlign: 'center',
-      padding: '48px 24px',
-      ...pjs('14px', 400, '20px', '#9CA3AF'),
-    },
-    checkboxRow: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 },
-  }
-
   return (
     <PageLayout>
-      <div style={styles.page}>
-        <button style={styles.backBtn} onClick={() => navigate('/faculty/lms')}>
-          <ChevronLeft size={16} />
-          Back to LMS
-        </button>
+      <button onClick={() => navigate('/faculty/lms')} className="inline-flex items-center gap-1 bg-transparent border-0 cursor-pointer mb-6 p-1 text-[14px] font-medium text-slate-500">
+        <ChevronLeft size={16} /> Back to LMS
+      </button>
 
-        {loading ? (
-          <div style={styles.emptyState}>Loading course...</div>
-        ) : error ? (
-          <div style={{ ...styles.emptyState, color: '#EF4444' }}>{error}</div>
-        ) : (
-          <>
-            {/* Course Header */}
-            <div style={styles.courseHeader}>
-              <div style={styles.courseIcon}>
-                <BookOpen size={26} color="#fff" />
-              </div>
-              <div>
-                <div style={styles.courseTitle}>{course?.name || course?.title || 'Course'}</div>
-                <div style={styles.courseMeta}>
-                  {course?.course_code && (
-                    <span style={styles.metaItem}>Code: {course.course_code}</span>
-                  )}
-                  {course?.credits && (
-                    <span style={styles.metaItem}>{course.credits} Credits</span>
-                  )}
-                  {course?.semester && (
-                    <span style={styles.metaItem}>Semester {course.semester}</span>
-                  )}
-                  {course?.department && (
-                    <span style={styles.metaItem}>{course.department}</span>
-                  )}
-                </div>
+      {loading ? (
+        <div className="text-center py-[48px] text-[14px] t-muted">Loading course...</div>
+      ) : error ? (
+        <div className="text-center py-[48px] text-[14px] text-red-500">{error}</div>
+      ) : (
+        <>
+          <div className="bg-white rounded-[16px] border border-slate-200 px-8 py-7 mb-7 flex items-start gap-5">
+            <div className="w-[52px] h-[52px] rounded-[14px] flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}>
+              <BookOpen size={26} color="#fff" />
+            </div>
+            <div>
+              <div className="text-[22px] font-bold t-primary mb-1.5">{course?.name || course?.title || 'Course'}</div>
+              <div className="flex gap-5 flex-wrap text-[13px] t-muted">
+                {course?.course_code && <span>Code: {course.course_code}</span>}
+                {course?.credits    && <span>{course.credits} Credits</span>}
+                {course?.semester   && <span>Semester {course.semester}</span>}
+                {course?.department && <span>{course.department}</span>}
               </div>
             </div>
+          </div>
 
-            {/* Tab Bar */}
-            <div style={styles.tabBar}>
-              {TABS.map(({ key, label, icon: Icon }) => (
-                <button
-                  key={key}
-                  style={styles.tabBtn(activeTab === key)}
-                  onClick={() => setActiveTab(key)}
-                >
-                  <Icon size={15} />
-                  {label}
+          <div className="flex gap-1 bg-slate-100 rounded-[12px] p-1 mb-7 w-fit">
+            {TABS.map(({ key, label, icon: Icon }) => (
+              <button key={key} onClick={() => setActiveTab(key)}
+                className={`flex items-center gap-1.5 px-5 py-2 rounded-[10px] border-0 cursor-pointer text-[14px] transition-all ${activeTab === key ? 'bg-white text-slate-900 font-semibold shadow-[0_1px_4px_rgba(0,0,0,0.08)]' : 'bg-transparent text-slate-500 font-medium'}`}>
+                <Icon size={15} /> {label}
+              </button>
+            ))}
+          </div>
+
+          {activeTab === 'assignments' && (
+            <div>
+              <div className="flex justify-between items-center mb-5">
+                <div className="text-[17px] font-bold t-primary">Assignments ({assignments.length})</div>
+                <button onClick={() => setShowAssignForm(v => !v)}
+                  className="inline-flex items-center gap-1.5 px-[18px] py-[9px] rounded-[10px] border-0 cursor-pointer text-[13px] font-semibold text-white"
+                  style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}>
+                  <Plus size={15} /> New Assignment
                 </button>
+              </div>
+
+              {showAssignForm && (
+                <div className="bg-slate-50 border border-dashed border-slate-300 rounded-[14px] px-7 py-6 mb-5">
+                  <div className="text-[15px] font-bold t-primary mb-4">Create Assignment</div>
+                  {assignError && <div className="text-[13px] text-red-500 mb-3">{assignError}</div>}
+                  <form onSubmit={handleCreateAssignment}>
+                    <div className="grid grid-cols-2 gap-x-5 gap-y-3.5">
+                      <div className="col-span-2">
+                        <label className={labelCls}>Title *</label>
+                        <input className={fieldCls} value={assignForm.title} onChange={e => setAssignForm(f => ({ ...f, title: e.target.value }))} placeholder="Assignment title" required />
+                      </div>
+                      <div className="col-span-2">
+                        <label className={labelCls}>Description</label>
+                        <textarea className={`${fieldCls} min-h-[80px] resize-y`} value={assignForm.description} onChange={e => setAssignForm(f => ({ ...f, description: e.target.value }))} placeholder="Assignment instructions..." />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Due Date *</label>
+                        <input type="datetime-local" className={fieldCls} value={assignForm.due_date} onChange={e => setAssignForm(f => ({ ...f, due_date: e.target.value }))} required />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Max Marks *</label>
+                        <input type="number" min={1} className={fieldCls} value={assignForm.max_marks} onChange={e => setAssignForm(f => ({ ...f, max_marks: e.target.value }))} placeholder="e.g. 100" required />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Publish At (optional)</label>
+                        <input type="datetime-local" className={fieldCls} value={assignForm.publish_at} onChange={e => setAssignForm(f => ({ ...f, publish_at: e.target.value }))} />
+                      </div>
+                    </div>
+                    <div className="flex gap-2.5 mt-[18px] justify-end">
+                      <button type="button" onClick={() => { setShowAssignForm(false); setAssignError(null) }}
+                        className="px-[18px] py-[9px] rounded-[9px] border border-slate-200 bg-white cursor-pointer text-[13px] font-medium t-muted">Cancel</button>
+                      <button type="submit" disabled={assignSubmitting}
+                        className="px-5 py-[9px] rounded-[9px] border-0 bg-brand cursor-pointer text-[13px] font-semibold text-white">
+                        {assignSubmitting ? 'Creating...' : 'Create Assignment'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {assignments.length === 0 ? (
+                <div className="text-center py-[48px] text-[14px] t-muted">No assignments yet. Create one to get started.</div>
+              ) : assignments.map(a => (
+                <div key={a.id} className="bg-white border border-slate-200 rounded-[14px] px-[26px] py-[22px] mb-3.5">
+                  <div className="flex justify-between items-center flex-wrap gap-3">
+                    <div>
+                      <div className="text-[15px] font-semibold t-primary mb-1">{a.title}</div>
+                      <div className="flex gap-4 flex-wrap">
+                        {a.due_date && <span className="text-[12px] font-medium t-muted">Due: {new Date(a.due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>}
+                        <span className="text-[12px] font-medium t-muted">Max: {a.max_marks} marks</span>
+                        {a.submission_count !== undefined && <span className="text-[12px] font-medium t-muted">{a.submission_count} submission{a.submission_count !== 1 ? 's' : ''}</span>}
+                      </div>
+                    </div>
+                    <button onClick={() => navigate(`/faculty/lms/assignments/${a.id}/grade`)}
+                      className="px-4 py-[7px] rounded-[8px] border-[1.5px] border-brand bg-white cursor-pointer text-[12px] font-semibold text-brand whitespace-nowrap">
+                      Grade
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
+          )}
 
-            {/* Assignments Tab */}
-            {activeTab === 'assignments' && (
-              <div>
-                <div style={styles.sectionHeader}>
-                  <div style={styles.sectionTitle}>
-                    Assignments ({assignments.length})
-                  </div>
-                  <button style={styles.addBtn} onClick={() => setShowAssignForm((v) => !v)}>
-                    <Plus size={15} />
-                    New Assignment
-                  </button>
-                </div>
-
-                {showAssignForm && (
-                  <div style={styles.formCard}>
-                    <div style={{ ...pjs('15px', 700, '22px', '#111827'), marginBottom: 18 }}>
-                      Create Assignment
-                    </div>
-                    {assignError && <div style={styles.errorText}>{assignError}</div>}
-                    <form onSubmit={handleCreateAssignment}>
-                      <div style={styles.formGrid}>
-                        <div style={{ ...styles.formGroup, gridColumn: '1 / -1' }}>
-                          <label style={styles.label}>Title *</label>
-                          <input
-                            style={styles.input}
-                            value={assignForm.title}
-                            onChange={(e) => setAssignForm((f) => ({ ...f, title: e.target.value }))}
-                            placeholder="Assignment title"
-                            required
-                          />
-                        </div>
-                        <div style={{ ...styles.formGroup, gridColumn: '1 / -1' }}>
-                          <label style={styles.label}>Description</label>
-                          <textarea
-                            style={styles.textarea}
-                            value={assignForm.description}
-                            onChange={(e) => setAssignForm((f) => ({ ...f, description: e.target.value }))}
-                            placeholder="Assignment instructions..."
-                          />
-                        </div>
-                        <div style={styles.formGroup}>
-                          <label style={styles.label}>Due Date *</label>
-                          <input
-                            style={styles.input}
-                            type="datetime-local"
-                            value={assignForm.due_date}
-                            onChange={(e) => setAssignForm((f) => ({ ...f, due_date: e.target.value }))}
-                            required
-                          />
-                        </div>
-                        <div style={styles.formGroup}>
-                          <label style={styles.label}>Max Marks *</label>
-                          <input
-                            style={styles.input}
-                            type="number"
-                            min={1}
-                            value={assignForm.max_marks}
-                            onChange={(e) => setAssignForm((f) => ({ ...f, max_marks: e.target.value }))}
-                            placeholder="e.g. 100"
-                            required
-                          />
-                        </div>
-                        <div style={styles.formGroup}>
-                          <label style={styles.label}>Publish At (optional)</label>
-                          <input
-                            style={styles.input}
-                            type="datetime-local"
-                            value={assignForm.publish_at}
-                            onChange={(e) => setAssignForm((f) => ({ ...f, publish_at: e.target.value }))}
-                          />
-                        </div>
-                      </div>
-                      <div style={styles.formActions}>
-                        <button
-                          type="button"
-                          style={styles.cancelBtn}
-                          onClick={() => {
-                            setShowAssignForm(false)
-                            setAssignError(null)
-                          }}
-                        >
-                          Cancel
-                        </button>
-                        <button type="submit" style={styles.submitBtn} disabled={assignSubmitting}>
-                          {assignSubmitting ? 'Creating...' : 'Create Assignment'}
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                )}
-
-                {assignments.length === 0 ? (
-                  <div style={styles.emptyState}>
-                    No assignments yet. Create one to get started.
-                  </div>
-                ) : (
-                  assignments.map((a) => (
-                    <div key={a.id} style={styles.card}>
-                      <div style={styles.assignRow}>
-                        <div>
-                          <div style={styles.assignTitle}>{a.title}</div>
-                          <div style={styles.assignMeta}>
-                            {a.due_date && (
-                              <span style={styles.metaChip}>
-                                Due: {new Date(a.due_date).toLocaleDateString('en-IN', {
-                                  day: 'numeric',
-                                  month: 'short',
-                                  year: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
-                              </span>
-                            )}
-                            <span style={styles.metaChip}>Max: {a.max_marks} marks</span>
-                            {a.submission_count !== undefined && (
-                              <span style={styles.metaChip}>
-                                {a.submission_count} submission{a.submission_count !== 1 ? 's' : ''}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <button
-                          style={styles.gradeBtn}
-                          onClick={() => navigate(`/faculty/lms/assignments/${a.id}/grade`)}
-                        >
-                          Grade
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
+          {activeTab === 'announcements' && (
+            <div>
+              <div className="flex justify-between items-center mb-5">
+                <div className="text-[17px] font-bold t-primary">Announcements ({announcements.length})</div>
+                <button onClick={() => setShowAnnForm(v => !v)}
+                  className="inline-flex items-center gap-1.5 px-[18px] py-[9px] rounded-[10px] border-0 cursor-pointer text-[13px] font-semibold text-white"
+                  style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}>
+                  <Plus size={15} /> New Announcement
+                </button>
               </div>
-            )}
 
-            {/* Announcements Tab */}
-            {activeTab === 'announcements' && (
-              <div>
-                <div style={styles.sectionHeader}>
-                  <div style={styles.sectionTitle}>
-                    Announcements ({announcements.length})
-                  </div>
-                  <button style={styles.addBtn} onClick={() => setShowAnnForm((v) => !v)}>
-                    <Plus size={15} />
-                    New Announcement
-                  </button>
-                </div>
-
-                {showAnnForm && (
-                  <div style={styles.formCard}>
-                    <div style={{ ...pjs('15px', 700, '22px', '#111827'), marginBottom: 18 }}>
-                      Create Announcement
-                    </div>
-                    {annError && <div style={styles.errorText}>{annError}</div>}
-                    <form onSubmit={handleCreateAnnouncement}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                        <div style={styles.formGroup}>
-                          <label style={styles.label}>Title *</label>
-                          <input
-                            style={styles.input}
-                            value={annForm.title}
-                            onChange={(e) => setAnnForm((f) => ({ ...f, title: e.target.value }))}
-                            placeholder="Announcement title"
-                            required
-                          />
-                        </div>
-                        <div style={styles.formGroup}>
-                          <label style={styles.label}>Message *</label>
-                          <textarea
-                            style={styles.textarea}
-                            value={annForm.message}
-                            onChange={(e) => setAnnForm((f) => ({ ...f, message: e.target.value }))}
-                            placeholder="Write your announcement..."
-                            required
-                          />
-                        </div>
-                        <div style={styles.checkboxRow}>
-                          <input
-                            type="checkbox"
-                            id="is_pinned"
-                            checked={annForm.is_pinned}
-                            onChange={(e) => setAnnForm((f) => ({ ...f, is_pinned: e.target.checked }))}
-                            style={{ width: 16, height: 16, accentColor: '#6366F1' }}
-                          />
-                          <label htmlFor="is_pinned" style={{ ...pjs('13px', 500, '18px', '#374151'), cursor: 'pointer' }}>
-                            Pin this announcement
-                          </label>
-                        </div>
+              {showAnnForm && (
+                <div className="bg-slate-50 border border-dashed border-slate-300 rounded-[14px] px-7 py-6 mb-5">
+                  <div className="text-[15px] font-bold t-primary mb-4">Create Announcement</div>
+                  {annError && <div className="text-[13px] text-red-500 mb-3">{annError}</div>}
+                  <form onSubmit={handleCreateAnnouncement}>
+                    <div className="flex flex-col gap-3.5">
+                      <div>
+                        <label className={labelCls}>Title *</label>
+                        <input className={fieldCls} value={annForm.title} onChange={e => setAnnForm(f => ({ ...f, title: e.target.value }))} placeholder="Announcement title" required />
                       </div>
-                      <div style={styles.formActions}>
-                        <button
-                          type="button"
-                          style={styles.cancelBtn}
-                          onClick={() => {
-                            setShowAnnForm(false)
-                            setAnnError(null)
-                          }}
-                        >
-                          Cancel
-                        </button>
-                        <button type="submit" style={styles.submitBtn} disabled={annSubmitting}>
-                          {annSubmitting ? 'Posting...' : 'Post Announcement'}
-                        </button>
+                      <div>
+                        <label className={labelCls}>Message *</label>
+                        <textarea className={`${fieldCls} min-h-[80px] resize-y`} value={annForm.message} onChange={e => setAnnForm(f => ({ ...f, message: e.target.value }))} placeholder="Write your announcement..." required />
                       </div>
-                    </form>
-                  </div>
-                )}
-
-                {announcements.length === 0 ? (
-                  <div style={styles.emptyState}>No announcements yet.</div>
-                ) : (
-                  announcements.map((a) => (
-                    <div key={a.id} style={styles.card}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                            <span style={styles.annTitle}>{a.title}</span>
-                            {a.is_pinned && (
-                              <span style={styles.pinnedBadge}>
-                                <Star size={10} />
-                                Pinned
-                              </span>
-                            )}
-                          </div>
-                          <div style={styles.annMessage}>{a.message}</div>
-                          {a.created_at && (
-                            <div style={pjs('11px', 400, '16px', '#9CA3AF')}>
-                              {new Date(a.created_at).toLocaleDateString('en-IN', {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                              })}
-                            </div>
-                          )}
-                        </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <input type="checkbox" id="is_pinned" checked={annForm.is_pinned} onChange={e => setAnnForm(f => ({ ...f, is_pinned: e.target.checked }))} className="w-4 h-4 accent-brand" />
+                        <label htmlFor="is_pinned" className="text-[13px] font-medium t-primary cursor-pointer">Pin this announcement</label>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
-            )}
+                    <div className="flex gap-2.5 mt-[18px] justify-end">
+                      <button type="button" onClick={() => { setShowAnnForm(false); setAnnError(null) }}
+                        className="px-[18px] py-[9px] rounded-[9px] border border-slate-200 bg-white cursor-pointer text-[13px] font-medium t-muted">Cancel</button>
+                      <button type="submit" disabled={annSubmitting}
+                        className="px-5 py-[9px] rounded-[9px] border-0 bg-brand cursor-pointer text-[13px] font-semibold text-white">
+                        {annSubmitting ? 'Posting...' : 'Post Announcement'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
 
-            {/* Students Tab */}
-            {activeTab === 'students' && (
-              <div>
-                <div style={styles.sectionHeader}>
-                  <div style={styles.sectionTitle}>
-                    Enrolled Students ({students.length})
+              {announcements.length === 0 ? (
+                <div className="text-center py-[48px] text-[14px] t-muted">No announcements yet.</div>
+              ) : announcements.map(a => (
+                <div key={a.id} className="bg-white border border-slate-200 rounded-[14px] px-[26px] py-[22px] mb-3.5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2.5 mb-1.5">
+                        <span className="text-[15px] font-bold t-primary">{a.title}</span>
+                        {a.is_pinned && (
+                          <span className="inline-flex items-center gap-1 bg-amber-100 rounded-[6px] px-2 py-[2px] text-[11px] font-semibold text-amber-600">
+                            <Star size={10} /> Pinned
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[13px] text-slate-600 leading-5 mb-2.5">{a.message}</div>
+                      {a.created_at && (
+                        <div className="text-[11px] t-muted">
+                          {new Date(a.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+          )}
 
-                {students.length === 0 ? (
-                  <div style={styles.emptyState}>No students enrolled yet.</div>
-                ) : (
-                  <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E5E7EB', overflow: 'hidden' }}>
-                    <table style={styles.table}>
-                      <thead>
-                        <tr>
-                          <th style={styles.th}>#</th>
-                          <th style={styles.th}>Name</th>
-                          <th style={styles.th}>Email</th>
-                          <th style={styles.th}>Enrollment No.</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {students.map((s, idx) => (
-                          <tr key={s.student_id || idx}>
-                            <td style={{ ...styles.td, color: '#9CA3AF', width: 48 }}>{idx + 1}</td>
-                            <td style={styles.td}>{s.full_name || '—'}</td>
-                            <td style={styles.td}>{s.email || '—'}</td>
-                            <td style={styles.td}>{s.enrollment_no || s.roll_no || '—'}</td>
-                          </tr>
+          {activeTab === 'students' && (
+            <div>
+              <div className="text-[17px] font-bold t-primary mb-5">Enrolled Students ({students.length})</div>
+              {students.length === 0 ? (
+                <div className="text-center py-[48px] text-[14px] t-muted">No students enrolled yet.</div>
+              ) : (
+                <div className="bg-white rounded-[14px] border border-slate-200 overflow-hidden">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr>
+                        {['#', 'Name', 'Email', 'Enrollment No.'].map(h => (
+                          <th key={h} className="px-4 py-2.5 text-left bg-slate-50 text-[12px] font-semibold t-muted border-b border-slate-200">{h}</th>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            )}
-          </>
-        )}
-      </div>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {students.map((s, idx) => (
+                        <tr key={s.student_id || idx} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-4 py-3 text-[13px] text-slate-400 border-b border-slate-50 w-12">{idx + 1}</td>
+                          <td className="px-4 py-3 text-[13px] t-primary border-b border-slate-50">{s.full_name || '—'}</td>
+                          <td className="px-4 py-3 text-[13px] t-muted border-b border-slate-50">{s.email || '—'}</td>
+                          <td className="px-4 py-3 text-[13px] t-muted border-b border-slate-50">{s.enrollment_no || s.roll_no || '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
     </PageLayout>
   )
 }

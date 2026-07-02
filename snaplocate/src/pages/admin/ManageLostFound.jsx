@@ -3,7 +3,6 @@ import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
 import { Search, Trash2, CheckCircle2, AlertCircle, MapPin, ExternalLink, Package, RefreshCw, LayoutGrid, MonitorSmartphone, Key, Contact, Shirt, Book, Backpack, Wallet, Activity, Box } from 'lucide-react'
 
-// ─── Config ──────────────────────────────────────────────────
 const CATS = [
   { value: 'electronics', label: 'Electronics', icon: MonitorSmartphone, color: '#4f46e5', bg: '#eef2ff' },
   { value: 'keys',        label: 'Keys',        icon: Key,               color: '#d97706', bg: '#fffbeb' },
@@ -19,67 +18,72 @@ const CATS = [
 const catInfo = v => CATS.find(c => c.value === v) || CATS[CATS.length - 1]
 
 const STATUS = {
-  lost: { label: 'Lost', color: '#c2410c', bg: '#fff7ed', border: '#fed7aa' },
-  found: { label: 'Found', color: '#15803d', bg: '#f0fdf4', border: '#bbf7d0' },
-  resolved: { label: 'Resolved', color: '#0369a1', bg: '#f0f9ff', border: '#bae6fd' },
+  lost:     { label: 'Lost',     cls: 'bg-orange-50 text-orange-700 border border-orange-200' },
+  found:    { label: 'Found',    cls: 'bg-green-50 text-green-700 border border-green-200' },
+  resolved: { label: 'Resolved', cls: 'bg-sky-50 text-sky-700 border border-sky-200' },
 }
 
+const CLAIM_STATUS_CLS = {
+  pending:  'bg-amber-50 text-amber-800 border border-amber-200',
+  approved: 'bg-green-50 text-green-800 border border-green-200',
+  rejected: 'bg-slate-100 text-slate-600 border border-slate-200',
+}
 
-// ─── Small components ────────────────────────────────────────
+const EMAIL_LOG_CLS = {
+  success:   { cls: 'bg-green-50 text-green-700 border border-green-200',  label: '✅ Success'   },
+  failed:    { cls: 'bg-red-50 text-red-600 border border-red-200',        label: '❌ Failed'    },
+  duplicate: { cls: 'bg-amber-50 text-amber-700 border border-amber-200',  label: '🟡 Duplicate' },
+  skipped:   { cls: 'bg-slate-50 text-slate-600 border border-slate-200',  label: '⚫ Skipped'  },
+}
+
 function Avatar({ name, url, size = 28 }) {
   const initials = (name || '?').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-  if (url) return <img src={url} alt={name} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-  return <div style={{ width: size, height: size, borderRadius: '50%', background: '#e0e7ff', color: '#4f46e5', fontSize: size * 0.38, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{initials}</div>
+  const sz = `${size}px`
+  if (url) return <img src={url} alt={name} className="rounded-full object-cover shrink-0" style={{ width: sz, height: sz }} />
+  return (
+    <div className="rounded-full bg-indigo-100 text-brand font-bold flex items-center justify-center shrink-0" style={{ width: sz, height: sz, fontSize: size * 0.38 }}>
+      {initials}
+    </div>
+  )
 }
 
 function StatusBadge({ status }) {
   const s = STATUS[status] || STATUS.lost
-  return <span style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}`, padding: '2px 9px', borderRadius: 20, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{s.label}</span>
+  return <span className={`${s.cls} px-[9px] py-[2px] rounded-[20px] text-[11px] font-bold uppercase whitespace-nowrap`}>{s.label}</span>
 }
 
 function CatChip({ category }) {
   const c = catInfo(category)
   const Icon = c.icon
   return (
-    <span style={{ background: c.bg, color: c.color, padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+    <span className="inline-flex items-center gap-1 px-2 py-[2px] rounded-[6px] text-[11px] font-semibold whitespace-nowrap" style={{ background: c.bg, color: c.color }}>
       <Icon size={12} strokeWidth={2.5} /> {c.label}
     </span>
   )
 }
 
-// ─── Main page ───────────────────────────────────────────────
 export default function ManageLostFound() {
-  const [tab, setTab] = useState('items')
-  const [allItems, setAllItems] = useState([])   // raw from API
-  const [claims, setClaims] = useState([])
-  const [stats, setStats] = useState(null)
+  const [tab, setTab]         = useState('items')
+  const [allItems, setAllItems] = useState([])
+  const [claims, setClaims]   = useState([])
+  const [stats, setStats]     = useState(null)
   const [loading, setLoading] = useState(true)
   const [claimsLoad, setClaimsLoad] = useState(false)
-
-  // Email Sync tab state
-  const [gmailStatus, setGmailStatus]   = useState(null)
-  const [emailLogs,   setEmailLogs]     = useState([])
-  const [logsLoading, setLogsLoading]   = useState(false)
-  const [logFilter,   setLogFilter]     = useState('all')
-  // Filters — applied client-side on items
+  const [gmailStatus, setGmailStatus] = useState(null)
+  const [emailLogs, setEmailLogs]     = useState([])
+  const [logsLoading, setLogsLoading] = useState(false)
+  const [logFilter, setLogFilter]     = useState('all')
   const [statusF, setStatusF] = useState('all')
-  const [catF, setCatF] = useState('all')
-  const [search, setSearch] = useState('')
+  const [catF, setCatF]       = useState('all')
+  const [search, setSearch]   = useState('')
+  const [claimF, setClaimF]   = useState('pending')
 
-  // Claims filter
-  const [claimF, setClaimF] = useState('pending')
-
-  // ── Fetchers ─────────────────────────────────────────────
   const loadItems = useCallback(async () => {
     setLoading(true)
     try {
       const res = await api.get('/api/admin/lost-found')
       setAllItems(res.success ? (res.data || []) : [])
-    } catch {
-      setAllItems([])
-    } finally {
-      setLoading(false)
-    }
+    } catch { setAllItems([]) } finally { setLoading(false) }
   }, [])
 
   const loadStats = useCallback(async () => {
@@ -114,11 +118,10 @@ export default function ManageLostFound() {
   useEffect(() => { if (tab === 'claims')    loadClaims()    }, [tab, loadClaims])
   useEffect(() => { if (tab === 'emailSync') loadEmailLogs() }, [tab, loadEmailLogs])
 
-  // ── Client-side filtering ─────────────────────────────────
   const filtered = useMemo(() => {
     let list = allItems
     if (statusF !== 'all') list = list.filter(i => i.status === statusF)
-    if (catF !== 'all') list = list.filter(i => (i.category || 'other') === catF)
+    if (catF !== 'all')    list = list.filter(i => (i.category || 'other') === catF)
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(i =>
@@ -131,7 +134,6 @@ export default function ManageLostFound() {
     return list
   }, [allItems, statusF, catF, search])
 
-  // ── Actions ───────────────────────────────────────────────
   const handleDelete = async (id, title) => {
     if (!window.confirm(`Remove "${title}"?`)) return
     await api.delete(`/api/admin/lost-found/${id}`)
@@ -152,92 +154,84 @@ export default function ManageLostFound() {
 
   const pendingCount = stats?.pending_claims || 0
 
-  // ── Render ────────────────────────────────────────────────
+  const statCards = [
+    { label: 'Total',         value: stats?.total    ?? allItems.length,                                 cls: 'bg-indigo-50  text-brand        border-indigo-100' },
+    { label: 'Lost',          value: stats?.lost     ?? allItems.filter(i => i.status === 'lost').length,     cls: 'bg-orange-50  text-orange-700  border-orange-100' },
+    { label: 'Found',         value: stats?.found    ?? allItems.filter(i => i.status === 'found').length,    cls: 'bg-green-50   text-green-700   border-green-100'  },
+    { label: 'Resolved',      value: stats?.resolved ?? allItems.filter(i => i.status === 'resolved').length, cls: 'bg-sky-50     text-sky-700     border-sky-100'    },
+    { label: 'Pending Claims', value: pendingCount,                                                       cls: pendingCount > 0 ? 'bg-amber-50 text-amber-800 border-amber-100' : 'bg-slate-50 text-slate-500 border-slate-100' },
+  ]
+
+  const TABS_DEF = [
+    { id: 'items',     label: `All Items (${filtered.length}${filtered.length !== allItems.length ? `/${allItems.length}` : ''})` },
+    { id: 'claims',    label: 'Claims' },
+    { id: 'emailSync', label: '📧 Email Sync' },
+  ]
+
+  const claimFilters = [
+    { v: 'all',      label: 'All Claims', activeCls: 'border-indigo-200 bg-indigo-50 text-brand font-bold'        },
+    { v: 'pending',  label: 'Pending',    activeCls: 'border-amber-200  bg-amber-50  text-amber-800 font-bold'    },
+    { v: 'approved', label: 'Approved',   activeCls: 'border-green-200  bg-green-50  text-green-800 font-bold'   },
+    { v: 'rejected', label: 'Rejected',   activeCls: 'border-red-200    bg-red-50    text-red-600 font-bold'      },
+  ]
+
+  const logFilters = [
+    { v: 'all',       label: 'All',         activeCls: 'border-indigo-200 bg-indigo-50 text-brand font-bold'      },
+    { v: 'success',   label: '✅ Success',   activeCls: 'border-green-200  bg-green-50  text-green-700 font-bold' },
+    { v: 'failed',    label: '❌ Failed',    activeCls: 'border-red-200    bg-red-50    text-red-600 font-bold'    },
+    { v: 'duplicate', label: '🟡 Duplicate', activeCls: 'border-amber-200  bg-amber-50  text-amber-700 font-bold' },
+    { v: 'skipped',   label: '⚫ Skipped',  activeCls: 'border-slate-200  bg-slate-100 text-slate-600 font-bold' },
+  ]
+
   return (
     <PageLayout>
-
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 10 }}>
+      <div className="flex justify-between items-start flex-wrap gap-2.5">
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', margin: 0 }}>Lost & Found</h1>
-          <p style={{ fontSize: 14, color: '#64748b', marginTop: 4, marginBottom: 0 }}>Moderate posts and manage claims across campus.</p>
+          <h1 className="text-[24px] font-extrabold t-primary m-0">Lost &amp; Found</h1>
+          <p className="text-[14px] t-muted mt-1 mb-0">Moderate posts and manage claims across campus.</p>
         </div>
-        <button onClick={() => { loadItems(); loadStats() }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+        <button onClick={() => { loadItems(); loadStats() }} className="flex items-center gap-1.5 px-4 py-[9px] rounded-[10px] border-[1.5px] border-slate-200 bg-white text-slate-600 text-[13px] font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
           <RefreshCw size={14} /> Refresh
         </button>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14 }}>
-        {[
-          { label: 'Total', value: stats?.total ?? allItems.length, color: '#4f46e5', bg: '#eef2ff', border: '#e0e7ff' },
-          { label: 'Lost', value: stats?.lost ?? allItems.filter(i => i.status === 'lost').length, color: '#c2410c', bg: '#fff7ed', border: '#fed7aa' },
-          { label: 'Found', value: stats?.found ?? allItems.filter(i => i.status === 'found').length, color: '#15803d', bg: '#f0fdf4', border: '#bbf7d0' },
-          { label: 'Resolved', value: stats?.resolved ?? allItems.filter(i => i.status === 'resolved').length, color: '#0369a1', bg: '#f0f9ff', border: '#bae6fd' },
-          { label: 'Pending Claims', value: pendingCount, color: pendingCount > 0 ? '#92400e' : '#64748b', bg: pendingCount > 0 ? '#fffbeb' : '#f8fafc', border: pendingCount > 0 ? '#fde68a' : '#f1f5f9' },
-        ].map((s, i) => (
-          <div key={i} style={{ background: s.bg, borderRadius: 14, border: `1px solid ${s.border}`, padding: '14px 18px' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: s.color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{s.label}</div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: s.color }}>{s.value}</div>
+      <div className="grid grid-cols-5 gap-3.5">
+        {statCards.map((s, i) => (
+          <div key={i} className={`${s.cls} rounded-[14px] border px-[18px] py-3.5`}>
+            <div className="text-[10px] font-bold uppercase tracking-[0.06em] mb-1.5">{s.label}</div>
+            <div className="text-[26px] font-extrabold">{s.value}</div>
           </div>
         ))}
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid #f1f5f9' }}>
-        {[
-          { id: 'items',     label: `All Items (${filtered.length}${filtered.length !== allItems.length ? `/${allItems.length}` : ''})` },
-          { id: 'claims',    label: 'Claims' },
-          { id: 'emailSync', label: '📧 Email Sync' },
-        ].map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} style={{
-            padding: '11px 22px', background: 'none', border: 'none', cursor: 'pointer',
-            fontSize: 14, fontWeight: tab === t.id ? 700 : 500,
-            color: tab === t.id ? '#4f46e5' : '#64748b',
-            borderBottom: tab === t.id ? '2px solid #4f46e5' : '2px solid transparent',
-            marginBottom: -2, display: 'flex', alignItems: 'center', gap: 8,
-          }}>
+      <div className="flex gap-0 border-b-2 border-slate-100">
+        {TABS_DEF.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className={`flex items-center gap-2 px-[22px] py-[11px] bg-transparent border-0 cursor-pointer text-[14px] -mb-[2px] transition-colors ${tab === t.id ? 'font-bold text-brand border-b-2 border-b-brand' : 'font-medium text-slate-500 border-b-2 border-b-transparent'}`}>
             {t.label}
             {t.id === 'claims' && pendingCount > 0 && (
-              <span style={{ background: '#f59e0b', color: '#fff', borderRadius: 10, padding: '1px 7px', fontSize: 11, fontWeight: 700 }}>{pendingCount}</span>
+              <span className="bg-amber-400 text-white rounded-[10px] px-[7px] py-[1px] text-[11px] font-bold">{pendingCount}</span>
             )}
             {t.id === 'emailSync' && gmailStatus && !gmailStatus.configured && (
-              <span style={{ background: '#fee2e2', color: '#dc2626', borderRadius: 10, padding: '1px 7px', fontSize: 10, fontWeight: 700 }}>Setup needed</span>
+              <span className="bg-red-100 text-red-600 rounded-[10px] px-[7px] py-[1px] text-[10px] font-bold">Setup needed</span>
             )}
           </button>
         ))}
       </div>
 
-      {/* ══ ITEMS TAB ═══════════════════════════════════════ */}
+      {/* ITEMS TAB */}
       {tab === 'items' && (
         <>
-          {/* Filter bar */}
-          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #f1f5f9', padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-
-            {/* Row 1: search + status chips */}
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ position: 'relative', width: '300px', flexShrink: 0 }}>
-                <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} />
+          <div className="bg-white rounded-[14px] border border-slate-100 px-[18px] py-3.5 flex flex-col gap-3">
+            <div className="flex gap-2.5 flex-wrap items-center justify-between">
+              <div className="relative w-[300px] shrink-0">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by title, location, reporter..."
-                  style={{ width: '100%', padding: '10px 16px 10px 34px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: "'Inter', sans-serif", transition: '0.2s' }}
-                  onFocus={e => e.target.style.borderColor = '#4f46e5'}
-                  onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                  className="w-full py-2.5 pl-[34px] pr-4 rounded-[10px] border-[1.5px] border-slate-200 text-[14px] outline-none box-border focus:border-brand transition-colors" />
               </div>
-              
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                <select
-                  value={statusF}
-                  onChange={(e) => setStatusF(e.target.value)}
-                  style={{
-                    padding: '10px 36px 10px 16px', borderRadius: 10, border: '1.5px solid #e2e8f0',
-                    fontSize: 14, fontWeight: 500, color: '#0f172a', background: '#fff',
-                    outline: 'none', cursor: 'pointer', appearance: 'none', fontFamily: "'Inter', sans-serif",
-                    transition: '0.2s', backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%2364748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>')`,
-                    backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center',
-                  }}
-                  onFocus={e => e.target.style.borderColor = '#4f46e5'}
-                  onBlur={e => e.target.style.borderColor = '#e2e8f0'}
-                >
+              <div className="flex gap-2.5 items-center">
+                <select value={statusF} onChange={e => setStatusF(e.target.value)}
+                  className="px-4 py-2.5 rounded-[10px] border-[1.5px] border-slate-200 text-[14px] font-medium t-primary bg-white outline-none cursor-pointer focus:border-brand transition-colors">
                   <option value="all">All Status</option>
                   <option value="lost">Lost</option>
                   <option value="found">Found</option>
@@ -245,116 +239,89 @@ export default function ManageLostFound() {
                 </select>
                 {(statusF !== 'all' || catF !== 'all' || search) && (
                   <button onClick={() => { setStatusF('all'); setCatF('all'); setSearch('') }}
-                    style={{ padding: '7px 12px', borderRadius: 9, border: '1.5px solid #fee2e2', background: '#fef2f2', color: '#dc2626', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    className="px-3 py-[7px] rounded-[9px] border-[1.5px] border-red-200 bg-red-50 text-red-600 text-[12px] font-semibold cursor-pointer whitespace-nowrap">
                     Clear filters
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Row 2: category chips — horizontal scroll */}
-            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2, scrollbarWidth: 'none' }}>
-              <button onClick={() => setCatF('all')} style={{
-                flexShrink: 0, padding: '7px 14px', borderRadius: 10, cursor: 'pointer',
-                border: `1.5px solid ${catF === 'all' ? '#4f46e5' : '#e2e8f0'}`,
-                background: catF === 'all' ? '#eef2ff' : '#fff',
-                color: catF === 'all' ? '#4f46e5' : '#64748b',
-                fontSize: 12, fontWeight: catF === 'all' ? 700 : 600, display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s'
-              }}>
-                <LayoutGrid size={14} strokeWidth={catF === 'all' ? 2.5 : 2} />
-                All
+            <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
+              <button onClick={() => setCatF('all')} className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-[7px] rounded-[10px] border-[1.5px] cursor-pointer text-[12px] font-semibold transition-all ${catF === 'all' ? 'border-brand bg-indigo-50 text-brand' : 'border-slate-200 bg-white text-slate-500'}`}>
+                <LayoutGrid size={14} /> All
               </button>
               {CATS.map(c => {
                 const isSel = catF === c.value
                 const Icon = c.icon
                 return (
-                  <button key={c.value} onClick={() => setCatF(c.value)} style={{
-                    flexShrink: 0, padding: '7px 14px', borderRadius: 10, cursor: 'pointer',
-                    border: `1.5px solid ${isSel ? c.color : '#e2e8f0'}`,
-                    background: isSel ? c.bg : '#fff', color: isSel ? c.color : '#64748b',
-                    fontSize: 12, fontWeight: isSel ? 700 : 600, display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s'
-                  }}>
-                    <Icon size={14} strokeWidth={isSel ? 2.5 : 2} />
-                    {c.label}
+                  <button key={c.value} onClick={() => setCatF(c.value)}
+                    className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-[7px] rounded-[10px] border-[1.5px] cursor-pointer text-[12px] font-semibold transition-all"
+                    style={{ borderColor: isSel ? c.color : '#e2e8f0', background: isSel ? c.bg : '#fff', color: isSel ? c.color : '#64748b' }}>
+                    <Icon size={14} strokeWidth={isSel ? 2.5 : 2} /> {c.label}
                   </button>
                 )
               })}
             </div>
           </div>
 
-          {/* Table */}
-          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9' }}>
+          <div className="bg-white rounded-[16px] border border-slate-100">
             {loading ? (
-              <div style={{ padding: '56px 0', textAlign: 'center', color: '#94a3b8', fontSize: 14 }}>Loading items...</div>
+              <div className="py-[56px] text-center text-[14px] text-slate-400">Loading items...</div>
             ) : filtered.length === 0 ? (
-              <div style={{ padding: '56px 0', textAlign: 'center', color: '#94a3b8' }}>
-                <Package size={34} style={{ opacity: 0.2, margin: '0 auto 12px', display: 'block' }} />
-                <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>No items match your filters</p>
-                <p style={{ fontSize: 12, marginTop: 6, color: '#cbd5e1' }}>Try a different status or category</p>
+              <div className="py-[56px] text-center text-slate-400">
+                <Package size={34} className="opacity-20 mx-auto mb-3 block" />
+                <p className="text-[14px] font-semibold m-0">No items match your filters</p>
+                <p className="text-[12px] mt-1.5 text-slate-300">Try a different status or category</p>
               </div>
             ) : (
-              <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: 'calc(100dvh - 380px)' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 680 }}>
+              <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: 'calc(100dvh - 380px)' }}>
+                <table className="w-full border-collapse" style={{ minWidth: 680 }}>
                   <thead>
-                    <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                    <tr className="bg-slate-50 border-b border-slate-200">
                       {['Item', 'Category', 'Reporter', 'Status', 'Location', 'Date', 'Claims', 'Actions'].map(h => (
-                        <th key={h} style={{ padding: '11px 14px', textAlign: h === 'Actions' ? 'right' : 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{h}</th>
+                        <th key={h} className={`px-3.5 py-[11px] text-[11px] font-bold text-slate-500 uppercase tracking-[0.04em] whitespace-nowrap ${h === 'Actions' ? 'text-right' : 'text-left'}`}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {filtered.map(item => (
-                      <tr key={item.id} style={{ borderBottom: '1px solid #f8fafc' }}
-                        onMouseEnter={e => e.currentTarget.style.background = '#fafafa'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-
-                        <td style={{ padding: '13px 14px', maxWidth: 200 }}>
-                          <div style={{ fontWeight: 600, fontSize: 13, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
-                          {item.description && <div style={{ fontSize: 11, color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 2 }}>{item.description}</div>}
+                      <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                        <td className="px-3.5 py-[13px] max-w-[200px]">
+                          <div className="font-semibold text-[13px] t-primary truncate">{item.title}</div>
+                          {item.description && <div className="text-[11px] text-slate-400 truncate mt-0.5">{item.description}</div>}
                         </td>
-
-                        <td style={{ padding: '13px 14px' }}><CatChip category={item.category} /></td>
-
-                        <td style={{ padding: '13px 14px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                        <td className="px-3.5 py-[13px]"><CatChip category={item.category} /></td>
+                        <td className="px-3.5 py-[13px]">
+                          <div className="flex items-center gap-[7px]">
                             <Avatar name={item.reporter?.full_name} url={item.reporter?.avatar_url} />
-                            <span style={{ fontSize: 12, color: '#475569', whiteSpace: 'nowrap', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.reporter?.full_name || '—'}</span>
+                            <span className="text-[12px] text-slate-600 whitespace-nowrap max-w-[110px] overflow-hidden text-ellipsis">{item.reporter?.full_name || '—'}</span>
                           </div>
                         </td>
-
-                        <td style={{ padding: '13px 14px' }}><StatusBadge status={item.status} /></td>
-
-                        <td style={{ padding: '13px 14px', fontSize: 12, color: '#64748b', whiteSpace: 'nowrap' }}>
-                          {item.location ? <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={11} color="#94a3b8" />{item.location}</span> : '—'}
+                        <td className="px-3.5 py-[13px]"><StatusBadge status={item.status} /></td>
+                        <td className="px-3.5 py-[13px] text-[12px] t-muted whitespace-nowrap">
+                          {item.location ? <span className="flex items-center gap-1"><MapPin size={11} color="#94a3b8" />{item.location}</span> : '—'}
                         </td>
-
-                        <td style={{ padding: '13px 14px', fontSize: 12, color: '#64748b', whiteSpace: 'nowrap' }}>
+                        <td className="px-3.5 py-[13px] text-[12px] t-muted whitespace-nowrap">
                           {item.date ? new Date(item.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '—'}
                         </td>
-
-                        <td style={{ padding: '13px 14px' }}>
+                        <td className="px-3.5 py-[13px]">
                           {item.claim_counts?.total > 0 ? (
                             <div>
-                              <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>{item.claim_counts.total}</span>
-                              {item.claim_counts.pending > 0 && <span style={{ display: 'block', fontSize: 10, color: '#d97706', fontWeight: 700 }}>{item.claim_counts.pending} pending</span>}
+                              <span className="text-[12px] font-semibold text-slate-600">{item.claim_counts.total}</span>
+                              {item.claim_counts.pending > 0 && <span className="block text-[10px] text-amber-600 font-bold">{item.claim_counts.pending} pending</span>}
                             </div>
-                          ) : <span style={{ fontSize: 12, color: '#cbd5e1' }}>—</span>}
+                          ) : <span className="text-[12px] text-slate-300">—</span>}
                         </td>
-
-                        <td style={{ padding: '13px 14px' }}>
-                          <div style={{ display: 'flex', gap: 5, justifyContent: 'flex-end' }}>
+                        <td className="px-3.5 py-[13px]">
+                          <div className="flex gap-[5px] justify-end">
                             {item.status !== 'resolved' && (
                               <button onClick={() => handleResolve(item.id)} title="Mark resolved"
-                                style={{ padding: '6px', borderRadius: 8, border: '1px solid #bbf7d0', background: '#fff', cursor: 'pointer', color: '#15803d', display: 'flex', alignItems: 'center' }}
-                                onMouseEnter={e => e.currentTarget.style.background = '#f0fdf4'}
-                                onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
+                                className="p-[6px] rounded-[8px] border border-green-200 bg-white cursor-pointer text-green-700 flex items-center hover:bg-green-50 transition-colors">
                                 <CheckCircle2 size={14} />
                               </button>
                             )}
                             <button onClick={() => handleDelete(item.id, item.title)} title="Delete"
-                              style={{ padding: '6px', borderRadius: 8, border: '1px solid #fee2e2', background: '#fff', cursor: 'pointer', color: '#ef4444', display: 'flex', alignItems: 'center' }}
-                              onMouseEnter={e => e.currentTarget.style.background = '#fef2f2'}
-                              onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
+                              className="p-[6px] rounded-[8px] border border-red-200 bg-white cursor-pointer text-red-500 flex items-center hover:bg-red-50 transition-colors">
                               <Trash2 size={14} />
                             </button>
                           </div>
@@ -369,99 +336,78 @@ export default function ManageLostFound() {
         </>
       )}
 
-      {/* ══ CLAIMS TAB ══════════════════════════════════════ */}
+      {/* CLAIMS TAB */}
       {tab === 'claims' && (
         <>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {[
-              { v: 'all', label: 'All Claims', color: '#4f46e5', bg: '#eef2ff', border: '#e0e7ff' },
-              { v: 'pending', label: 'Pending', color: '#92400e', bg: '#fffbeb', border: '#fde68a' },
-              { v: 'approved', label: 'Approved', color: '#15803d', bg: '#f0fdf4', border: '#bbf7d0' },
-              { v: 'rejected', label: 'Rejected', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
-            ].map(s => (
-              <button key={s.v} onClick={() => setClaimF(s.v)} style={{
-                padding: '8px 16px', borderRadius: 10, cursor: 'pointer',
-                border: `1.5px solid ${claimF === s.v ? s.border : '#e2e8f0'}`,
-                background: claimF === s.v ? s.bg : '#fff',
-                color: claimF === s.v ? s.color : '#475569',
-                fontSize: 13, fontWeight: claimF === s.v ? 700 : 500,
-              }}>{s.label}</button>
+          <div className="flex gap-1.5 flex-wrap">
+            {claimFilters.map(s => (
+              <button key={s.v} onClick={() => setClaimF(s.v)}
+                className={`px-4 py-2 rounded-[10px] border-[1.5px] cursor-pointer text-[13px] transition-all ${claimF === s.v ? s.activeCls : 'border-slate-200 bg-white text-slate-600 font-medium'}`}>
+                {s.label}
+              </button>
             ))}
           </div>
 
           {claimsLoad ? (
-            <div style={{ textAlign: 'center', padding: '56px 0', color: '#94a3b8', fontSize: 14 }}>Loading claims...</div>
+            <div className="text-center py-[56px] text-[14px] text-slate-400">Loading claims...</div>
           ) : claims.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '56px 0' }}>
-              <AlertCircle size={34} style={{ opacity: 0.2, margin: '0 auto 12px', display: 'block' }} />
-              <p style={{ fontSize: 14, color: '#64748b', fontWeight: 600, margin: 0 }}>No {claimF !== 'all' ? claimF : ''} claims</p>
+            <div className="text-center py-[56px]">
+              <AlertCircle size={34} className="opacity-20 mx-auto mb-3 block" />
+              <p className="text-[14px] t-muted font-semibold m-0">No {claimF !== 'all' ? claimF : ''} claims</p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="flex flex-col gap-3">
               {claims.map(claim => {
                 const ci = catInfo(claim.item?.category)
                 return (
-                  <div key={claim.id} style={{
-                    background: '#fff', borderRadius: 16,
-                    border: `1.5px solid ${claim.status === 'pending' ? '#fde68a' : '#f1f5f9'}`,
-                    padding: '18px 22px',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap', justifyContent: 'space-between' }}>
-                      {/* Item */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: '1 1 200px' }}>
-                        <div style={{ width: 44, height: 44, borderRadius: 12, background: ci.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: ci.color, flexShrink: 0 }}>
+                  <div key={claim.id} className={`bg-white rounded-[16px] border-[1.5px] px-[22px] py-[18px] ${claim.status === 'pending' ? 'border-amber-200' : 'border-slate-100'}`}>
+                    <div className="flex items-start gap-3.5 flex-wrap justify-between">
+                      <div className="flex items-center gap-2.5 flex-[1_1_200px]">
+                        <div className="w-11 h-11 rounded-[12px] flex items-center justify-center shrink-0" style={{ background: ci.bg, color: ci.color }}>
                           <ci.icon size={22} strokeWidth={2.5} />
                         </div>
                         <div>
-                          <div style={{ fontWeight: 700, fontSize: 14, color: '#0f172a' }}>{claim.item?.title || '—'}</div>
-                          <div style={{ display: 'flex', gap: 5, marginTop: 3, flexWrap: 'wrap' }}>
-                            {claim.item?.status && <StatusBadge status={claim.item.status} />}
+                          <div className="font-bold text-[14px] t-primary">{claim.item?.title || '—'}</div>
+                          <div className="flex gap-[5px] mt-0.5 flex-wrap">
+                            {claim.item?.status   && <StatusBadge status={claim.item.status} />}
                             {claim.item?.category && <CatChip category={claim.item.category} />}
                           </div>
                         </div>
                       </div>
-                      {/* Claimer + badge */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div className="flex items-center gap-2.5">
                         <Avatar name={claim.claimer?.full_name} url={claim.claimer?.avatar_url} size={30} />
                         <div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{claim.claimer?.full_name || '—'}</div>
-                          <div style={{ fontSize: 11, color: '#94a3b8' }}>{new Date(claim.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                          <div className="text-[13px] font-bold t-primary">{claim.claimer?.full_name || '—'}</div>
+                          <div className="text-[11px] text-slate-400">{new Date(claim.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
                         </div>
-                        <span style={{
-                          fontSize: 11, fontWeight: 700, textTransform: 'uppercase', padding: '3px 10px', borderRadius: 20, marginLeft: 6,
-                          background: claim.status === 'pending' ? '#fffbeb' : claim.status === 'approved' ? '#f0fdf4' : '#f8fafc',
-                          color: claim.status === 'pending' ? '#92400e' : claim.status === 'approved' ? '#15803d' : '#64748b',
-                          border: `1px solid ${claim.status === 'pending' ? '#fde68a' : claim.status === 'approved' ? '#bbf7d0' : '#e2e8f0'}`,
-                        }}>{claim.status}</span>
+                        <span className={`text-[11px] font-bold uppercase px-[10px] py-[3px] rounded-[20px] ml-1.5 ${CLAIM_STATUS_CLS[claim.status] || CLAIM_STATUS_CLS.rejected}`}>
+                          {claim.status}
+                        </span>
                       </div>
                     </div>
 
-                    <div style={{ margin: '12px 0 0', padding: '10px 14px', background: '#f8fafc', borderRadius: 9, fontSize: 13, color: '#374151', lineHeight: '1.55' }}>
+                    <div className="mt-3 px-3.5 py-2.5 bg-slate-50 rounded-[9px] text-[13px] text-slate-700 leading-[1.55]">
                       {claim.message}
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, flexWrap: 'wrap', gap: 8 }}>
+                    <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
                       <div>
                         {claim.proof_url && (
                           <a href={claim.proof_url} target="_blank" rel="noopener noreferrer"
-                            style={{ fontSize: 12, color: '#4f46e5', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}>
+                            className="text-[12px] text-brand font-semibold inline-flex items-center gap-1 no-underline">
                             <ExternalLink size={12} /> View proof
                           </a>
                         )}
-                        {claim.admin_note && <p style={{ fontSize: 12, color: '#94a3b8', margin: '4px 0 0', fontStyle: 'italic' }}>Note: {claim.admin_note}</p>}
+                        {claim.admin_note && <p className="text-[12px] text-slate-400 m-0 mt-1 italic">Note: {claim.admin_note}</p>}
                       </div>
                       {claim.status === 'pending' && (
-                        <div style={{ display: 'flex', gap: 8 }}>
+                        <div className="flex gap-2">
                           <button onClick={() => handleClaimAction(claim.id, 'approve')}
-                            style={{ padding: '8px 18px', borderRadius: 9, border: 'none', background: '#15803d', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-                            onMouseEnter={e => e.currentTarget.style.background = '#166534'}
-                            onMouseLeave={e => e.currentTarget.style.background = '#15803d'}>
+                            className="px-[18px] py-2 rounded-[9px] border-0 bg-green-700 text-white text-[13px] font-bold cursor-pointer hover:bg-green-800 transition-colors">
                             ✓ Approve
                           </button>
                           <button onClick={() => handleClaimAction(claim.id, 'reject')}
-                            style={{ padding: '8px 16px', borderRadius: 9, border: '1.5px solid #fca5a5', background: '#fff', color: '#dc2626', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-                            onMouseEnter={e => e.currentTarget.style.background = '#fef2f2'}
-                            onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
+                            className="px-4 py-2 rounded-[9px] border-[1.5px] border-red-300 bg-white text-red-600 text-[13px] font-semibold cursor-pointer hover:bg-red-50 transition-colors">
                             ✗ Reject
                           </button>
                         </div>
@@ -474,134 +420,84 @@ export default function ManageLostFound() {
           )}
         </>
       )}
-      {/* ══ EMAIL SYNC TAB ══════════════════════════════════ */}
+
+      {/* EMAIL SYNC TAB */}
       {tab === 'emailSync' && (
         <>
-          {/* Connection Status Banner */}
           {gmailStatus ? (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
-              padding: '16px 20px', borderRadius: 16,
-              background: gmailStatus.configured ? '#f0fdf4' : '#fef2f2',
-              border: `1px solid ${gmailStatus.configured ? '#bbf7d0' : '#fecaca'}`,
-            }}>
-              <div style={{ fontSize: 24 }}>{gmailStatus.configured ? '✅' : '⚠️'}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, fontSize: 14, color: gmailStatus.configured ? '#15803d' : '#dc2626', marginBottom: 3 }}>
+            <div className={`flex items-center gap-4 flex-wrap px-5 py-4 rounded-[16px] border ${gmailStatus.configured ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+              <div className="text-[24px]">{gmailStatus.configured ? '✅' : '⚠️'}</div>
+              <div className="flex-1">
+                <div className={`font-bold text-[14px] mb-0.5 ${gmailStatus.configured ? 'text-green-700' : 'text-red-600'}`}>
                   {gmailStatus.configured ? 'Gmail Connected' : 'Gmail Not Configured'}
                 </div>
                 {gmailStatus.configured ? (
-                  <div style={{ fontSize: 12, color: '#64748b' }}>
+                  <div className="text-[12px] t-muted">
                     Monitoring: <strong>{gmailStatus.whitelist?.join(', ')}</strong>
                     {gmailStatus.last_polled_at && (
                       <> · Last poll: <strong>{new Date(gmailStatus.last_polled_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</strong></>
                     )}
                   </div>
                 ) : (
-                  <div style={{ fontSize: 12, color: '#64748b' }}>
-                    Follow the setup guide in <code style={{ background: '#fee2e2', padding: '1px 6px', borderRadius: 4, fontSize: 11 }}>server/.env</code> to connect Gmail.
-                    Then visit <code style={{ background: '#fee2e2', padding: '1px 6px', borderRadius: 4, fontSize: 11 }}>http://65.1.111.102:3001/api/gmail-auth/setup?secret=snaplocate_gmail_setup_2026</code>
+                  <div className="text-[12px] t-muted">
+                    Follow the setup guide in <code className="bg-red-100 px-1.5 py-[1px] rounded text-[11px]">server/.env</code> to connect Gmail.
                   </div>
                 )}
               </div>
-              <button onClick={loadEmailLogs}
-                style={{ padding: '8px 16px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#475569', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button onClick={loadEmailLogs} className="flex items-center gap-1.5 px-4 py-2 rounded-[10px] border-[1.5px] border-slate-200 bg-white text-[13px] font-semibold cursor-pointer text-slate-600 hover:bg-slate-50 transition-colors">
                 <RefreshCw size={13} /> Refresh
               </button>
             </div>
           ) : (
-            <div style={{ padding: '20px', background: '#f8fafc', borderRadius: 14, border: '1px solid #f1f5f9', fontSize: 14, color: '#94a3b8' }}>Loading Gmail status...</div>
+            <div className="p-5 bg-slate-50 rounded-[14px] border border-slate-100 text-[14px] text-slate-400">Loading Gmail status...</div>
           )}
 
-          {/* Log Filter Chips */}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {[
-              { v: 'all',       label: 'All',       color: '#4f46e5', bg: '#eef2ff', border: '#e0e7ff' },
-              { v: 'success',   label: '✅ Success',   color: '#15803d', bg: '#f0fdf4', border: '#bbf7d0' },
-              { v: 'failed',    label: '❌ Failed',    color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
-              { v: 'duplicate', label: '🟡 Duplicate', color: '#92400e', bg: '#fffbeb', border: '#fde68a' },
-              { v: 'skipped',   label: '⚫ Skipped',  color: '#64748b', bg: '#f8fafc', border: '#e2e8f0' },
-            ].map(s => (
-              <button key={s.v} onClick={() => setLogFilter(s.v)} style={{
-                padding: '7px 14px', borderRadius: 10, cursor: 'pointer',
-                border: `1.5px solid ${logFilter === s.v ? s.border : '#e2e8f0'}`,
-                background: logFilter === s.v ? s.bg : '#fff',
-                color: logFilter === s.v ? s.color : '#475569',
-                fontSize: 12, fontWeight: logFilter === s.v ? 700 : 500,
-              }}>{s.label}</button>
+          <div className="flex gap-2 flex-wrap">
+            {logFilters.map(s => (
+              <button key={s.v} onClick={() => setLogFilter(s.v)}
+                className={`px-3.5 py-[7px] rounded-[10px] border-[1.5px] cursor-pointer text-[12px] transition-all ${logFilter === s.v ? s.activeCls : 'border-slate-200 bg-white text-slate-600 font-medium'}`}>
+                {s.label}
+              </button>
             ))}
           </div>
 
-          {/* Logs Table */}
-          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', overflow: 'hidden' }}>
+          <div className="bg-white rounded-[16px] border border-slate-100 overflow-hidden">
             {logsLoading ? (
-              <div style={{ padding: '56px 0', textAlign: 'center', color: '#94a3b8', fontSize: 14 }}>Loading logs...</div>
+              <div className="py-[56px] text-center text-[14px] text-slate-400">Loading logs...</div>
             ) : emailLogs.length === 0 ? (
-              <div style={{ padding: '56px 0', textAlign: 'center' }}>
-                <div style={{ fontSize: 36, marginBottom: 12 }}>📭</div>
-                <p style={{ fontSize: 14, color: '#64748b', fontWeight: 600, margin: 0 }}>No email logs yet</p>
-                <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>
-                  {gmailStatus?.configured
-                    ? 'Waiting for the first email from adminofficer@thapar.edu'
-                    : 'Complete Gmail setup first'}
-                </p>
+              <div className="py-[56px] text-center">
+                <div className="text-[36px] mb-3">📭</div>
+                <p className="text-[14px] t-muted font-semibold m-0">No email logs yet</p>
+                <p className="text-[12px] text-slate-400 mt-1.5">{gmailStatus?.configured ? 'Waiting for the first email from adminofficer@thapar.edu' : 'Complete Gmail setup first'}</p>
               </div>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse" style={{ minWidth: 700 }}>
                   <thead>
-                    <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                    <tr className="bg-slate-50 border-b border-slate-200">
                       {['Time', 'From', 'Subject', 'Status', 'Item Created'].map(h => (
-                        <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{h}</th>
+                        <th key={h} className="px-3.5 py-[11px] text-left text-[11px] font-bold text-slate-500 uppercase tracking-[0.04em] whitespace-nowrap">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {emailLogs.map(log => {
-                      const STATUS_STYLES = {
-                        success:   { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0', label: '✅ Success'   },
-                        failed:    { bg: '#fef2f2', color: '#dc2626', border: '#fecaca', label: '❌ Failed'    },
-                        duplicate: { bg: '#fffbeb', color: '#92400e', border: '#fde68a', label: '🟡 Duplicate' },
-                        skipped:   { bg: '#f8fafc', color: '#64748b', border: '#e2e8f0', label: '⚫ Skipped'  },
-                      }
-                      const ss = STATUS_STYLES[log.status] || STATUS_STYLES.skipped
+                      const ls = EMAIL_LOG_CLS[log.status] || EMAIL_LOG_CLS.skipped
                       return (
-                        <tr key={log.id} style={{ borderBottom: '1px solid #f8fafc' }}
-                          onMouseEnter={e => e.currentTarget.style.background = '#fafafa'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-
-                          <td style={{ padding: '12px 14px', fontSize: 12, color: '#64748b', whiteSpace: 'nowrap' }}>
-                            {new Date(log.processed_at).toLocaleString('en-IN', {
-                              timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short',
-                              hour: '2-digit', minute: '2-digit'
-                            })}
+                        <tr key={log.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                          <td className="px-3.5 py-3 text-[12px] t-muted whitespace-nowrap">
+                            {new Date(log.processed_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                           </td>
-
-                          <td style={{ padding: '12px 14px', fontSize: 12, color: '#475569', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {log.sender_email}
+                          <td className="px-3.5 py-3 text-[12px] text-slate-600 max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap">{log.sender_email}</td>
+                          <td className="px-3.5 py-3 max-w-[260px]">
+                            <div className="text-[13px] font-semibold t-primary truncate">{log.subject || '—'}</div>
+                            {log.error_message && <div className="text-[11px] text-red-500 mt-0.5 truncate">{log.error_message}</div>}
                           </td>
-
-                          <td style={{ padding: '12px 14px', maxWidth: 260 }}>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {log.subject || '—'}
-                            </div>
-                            {log.error_message && (
-                              <div style={{ fontSize: 11, color: '#dc2626', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {log.error_message}
-                              </div>
-                            )}
+                          <td className="px-3.5 py-3">
+                            <span className={`${ls.cls} px-[9px] py-[2px] rounded-[20px] text-[11px] font-bold whitespace-nowrap`}>{ls.label}</span>
                           </td>
-
-                          <td style={{ padding: '12px 14px' }}>
-                            <span style={{ background: ss.bg, color: ss.color, border: `1px solid ${ss.border}`, padding: '2px 9px', borderRadius: 20, fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>
-                              {ss.label}
-                            </span>
-                          </td>
-
-                          <td style={{ padding: '12px 14px', fontSize: 12, color: '#475569' }}>
-                            {log.item?.title ? (
-                              <span style={{ fontWeight: 600, color: '#4f46e5' }}>{log.item.title}</span>
-                            ) : '—'}
+                          <td className="px-3.5 py-3 text-[12px] text-slate-600">
+                            {log.item?.title ? <span className="font-semibold text-brand">{log.item.title}</span> : '—'}
                           </td>
                         </tr>
                       )

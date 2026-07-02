@@ -4,19 +4,27 @@ import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
 import { ArrowLeft, Plus, Eye, Edit, Trash2, Heart, MoreVertical, Package } from 'lucide-react'
 
-const FONT = "'Plus Jakarta Sans', 'Inter', sans-serif"
-
 const STATUS_TABS = [
   { id: 'Active',   label: 'Active',   emoji: '🟢' },
   { id: 'Reserved', label: 'Reserved', emoji: '🔒' },
   { id: 'Sold',     label: 'Sold',     emoji: '🎉' },
   { id: 'Draft',    label: 'Draft',    emoji: '📝' },
 ]
-const STATUS_STYLE = {
-  Active:   { bg: '#dcfce7', color: '#16a34a' },
-  Reserved: { bg: '#fef3c7', color: '#d97706' },
-  Sold:     { bg: '#fee2e2', color: '#dc2626' },
-  Draft:    { bg: '#f1f5f9', color: '#64748b' },
+
+// Used for status badge chips on listing rows
+const STATUS_BADGE = {
+  Active:   'bg-green-100 text-green-700',
+  Reserved: 'bg-amber-100 text-amber-700',
+  Sold:     'bg-red-100 text-red-700',
+  Draft:    'bg-slate-100 text-slate-500',
+}
+
+// Status sub-tab active Tailwind class strings
+const STATUS_TAB_CLS = {
+  Active:   { btnCls: 'border-b-[2.5px] border-b-green-600 bg-green-100/40 text-green-600 font-bold',   countCls: 'bg-green-600 text-white' },
+  Reserved: { btnCls: 'border-b-[2.5px] border-b-amber-600 bg-amber-100/40 text-amber-600 font-bold',   countCls: 'bg-amber-600 text-white' },
+  Sold:     { btnCls: 'border-b-[2.5px] border-b-red-600 bg-red-100/40 text-red-600 font-bold',         countCls: 'bg-red-600 text-white' },
+  Draft:    { btnCls: 'border-b-[2.5px] border-b-slate-500 bg-slate-100/40 text-slate-500 font-bold',   countCls: 'bg-slate-500 text-white' },
 }
 
 function price(p) {
@@ -24,17 +32,16 @@ function price(p) {
 }
 function ago(d) {
   const s = (Date.now() - new Date(d)) / 1000
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`
+  if (s < 3600)  return `${Math.floor(s / 60)}m ago`
   if (s < 86400) return `${Math.floor(s / 3600)}h ago`
   return `${Math.floor(s / 86400)}d ago`
 }
 
-// ─── Listing Row ──────────────────────────────────────────────
 function ListingRow({ item, onDelete, onStatusChange, onView, onEdit }) {
-  const [menuOpen, setMenuOpen]       = useState(false)
+  const [menuOpen, setMenuOpen]         = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
-  const sc = STATUS_STYLE[item.status] || STATUS_STYLE.Active
-  const isFree = item.price === null || Number(item.price) === 0
+  const badgeCls = STATUS_BADGE[item.status] || STATUS_BADGE.Active
+  const isFree   = item.price === null || Number(item.price) === 0
 
   const doStatus = async (s) => {
     setMenuOpen(false)
@@ -44,75 +51,59 @@ function ListingRow({ item, onDelete, onStatusChange, onView, onEdit }) {
   }
 
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: '52px 1fr auto',
-      gap: 14,
-      alignItems: 'center',
-      padding: '13px 18px',
-      borderBottom: '1px solid #f8fafc',
-      transition: 'background 0.15s',
-      opacity: item.status === 'Sold' ? 0.7 : 1,
-    }}
-      onMouseEnter={e => e.currentTarget.style.background = '#fafbff'}
-      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-    >
+    <div className={`grid gap-3.5 items-center px-4 sm:px-5 py-3.5 border-b border-slate-50 transition-colors hover:bg-[#fafbff] ${item.status === 'Sold' ? 'opacity-70' : ''}`}
+      style={{ gridTemplateColumns: '52px 1fr auto' }}>
       {/* Thumbnail */}
-      <div style={{ width: 52, height: 52, borderRadius: 12, overflow: 'hidden', background: '#f8fafc', border: '1.5px solid #f1f5f9', flexShrink: 0 }}>
+      <div className="w-[52px] h-[52px] rounded-xl overflow-hidden bg-surface shrink-0 border-[1.5px] border-slate-100">
         {item.images?.[0]
-          ? <img src={item.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>📦</div>
+          ? <img src={item.images[0]} alt="" className="w-full h-full object-cover" />
+          : <div className="w-full h-full flex items-center justify-center text-[22px]">📦</div>
         }
       </div>
 
       {/* Info */}
-      <div style={{ minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-          <span style={{ fontFamily: FONT, fontWeight: 700, fontSize: 14, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 280 }}>
-            {item.title}
-          </span>
-          <span style={{ padding: '2px 8px', borderRadius: 20, background: sc.bg, color: sc.color, fontFamily: FONT, fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
-            {item.status}
-          </span>
+      <div className="min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-[14px] font-bold t-primary truncate max-w-[280px]">{item.title}</span>
+          <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0 ${badgeCls}`}>{item.status}</span>
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={{ fontFamily: FONT, fontWeight: 800, fontSize: 15, color: isFree ? '#10b981' : '#6366f1' }}>{price(item.price)}</span>
-          <span style={{ fontFamily: FONT, fontSize: 12, color: '#cbd5e1' }}>·</span>
-          <span style={{ fontFamily: FONT, fontSize: 12, color: '#94a3b8' }}>{item.category}</span>
-          <span style={{ fontFamily: FONT, fontSize: 12, color: '#cbd5e1' }}>·</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Eye size={11} color="#94a3b8" />
-            <span style={{ fontFamily: FONT, fontSize: 12, color: '#94a3b8' }}>{item.views_count || 0} views</span>
+        <div className="flex gap-2 items-center flex-wrap">
+          <span className={`text-[15px] font-extrabold ${isFree ? 'text-emerald-500' : 'text-indigo-500'}`}>{price(item.price)}</span>
+          <span className="text-[12px] text-slate-200">·</span>
+          <span className="text-[12px] t-subtle">{item.category}</span>
+          <span className="text-[12px] text-slate-200">·</span>
+          <div className="flex items-center gap-1">
+            <Eye size={11} className="text-slate-400" />
+            <span className="text-[12px] t-subtle">{item.views_count || 0} views</span>
           </div>
-          <span style={{ fontFamily: FONT, fontSize: 12, color: '#cbd5e1' }}>·</span>
-          <span style={{ fontFamily: FONT, fontSize: 12, color: '#cbd5e1' }}>{ago(item.created_at)}</span>
+          <span className="text-[12px] text-slate-200">·</span>
+          <span className="text-[12px] text-slate-300">{ago(item.created_at)}</span>
         </div>
       </div>
 
       {/* Actions */}
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
-        <button onClick={() => onView(item.id)} title="View listing" style={{ padding: '7px 12px', borderRadius: 10, background: '#eef2ff', border: 'none', color: '#6366f1', fontFamily: FONT, fontWeight: 700, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+      <div className="flex gap-1.5 items-center shrink-0">
+        <button onClick={() => onView(item.id)}
+          className="px-3 py-1.5 rounded-[10px] bg-indigo-50 border-none text-indigo-500 text-[12px] font-bold cursor-pointer flex items-center gap-1">
           <Eye size={13} /> View
         </button>
-        <button onClick={() => onEdit(item.id)} title="Edit listing" style={{ padding: '7px 12px', borderRadius: 10, background: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569', fontFamily: FONT, fontWeight: 700, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+        <button onClick={() => onEdit(item.id)}
+          className="px-3 py-1.5 rounded-[10px] bg-surface border border-slate-200 t-secondary text-[12px] font-bold cursor-pointer flex items-center gap-1">
           <Edit size={13} />
         </button>
-
-        {/* Status dropdown */}
-        <div style={{ position: 'relative' }}>
-          <button onClick={() => setMenuOpen(o => !o)} disabled={actionLoading} style={{ padding: '7px 9px', borderRadius: 10, background: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+        <div className="relative">
+          <button onClick={() => setMenuOpen(o => !o)} disabled={actionLoading}
+            className="px-2.5 py-1.5 rounded-[10px] bg-surface border border-slate-200 t-secondary cursor-pointer flex items-center">
             <MoreVertical size={14} />
           </button>
           {menuOpen && (
-            <div
-              onMouseLeave={() => setMenuOpen(false)}
-              style={{ position: 'absolute', right: 0, top: '110%', background: '#fff', borderRadius: 14, boxShadow: '0 8px 30px rgba(0,0,0,0.12)', border: '1px solid #f1f5f9', zIndex: 50, minWidth: 170, overflow: 'hidden' }}
-            >
-              {item.status !== 'Active'   && <button onClick={() => doStatus('Active')}   style={menuBtnStyle('#16a34a')}>✅ Mark Active</button>}
-              {item.status !== 'Reserved' && item.status !== 'Sold' && <button onClick={() => doStatus('Reserved')} style={menuBtnStyle('#d97706')}>🔒 Mark Reserved</button>}
-              {item.status !== 'Sold'     && <button onClick={() => doStatus('Sold')}     style={menuBtnStyle('#6366f1')}>🎉 Mark Sold</button>}
-              <div style={{ height: 1, background: '#f1f5f9', margin: '4px 0' }} />
-              <button onClick={() => { setMenuOpen(false); onDelete(item.id, item.title) }} style={menuBtnStyle('#ef4444')}>🗑 Remove</button>
+            <div onMouseLeave={() => setMenuOpen(false)}
+              className="absolute right-0 top-[110%] bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-100 z-50 min-w-[170px] overflow-hidden">
+              {item.status !== 'Active'   && <button onClick={() => doStatus('Active')}   className="w-full px-4 py-2.5 text-left bg-transparent border-none text-[13px] font-semibold text-green-600  cursor-pointer hover:bg-surface block">✅ Mark Active</button>}
+              {item.status !== 'Reserved' && item.status !== 'Sold' && <button onClick={() => doStatus('Reserved')} className="w-full px-4 py-2.5 text-left bg-transparent border-none text-[13px] font-semibold text-amber-600 cursor-pointer hover:bg-surface block">🔒 Mark Reserved</button>}
+              {item.status !== 'Sold'     && <button onClick={() => doStatus('Sold')}     className="w-full px-4 py-2.5 text-left bg-transparent border-none text-[13px] font-semibold text-indigo-500 cursor-pointer hover:bg-surface block">🎉 Mark Sold</button>}
+              <div className="h-px bg-slate-100 my-1" />
+              <button onClick={() => { setMenuOpen(false); onDelete(item.id, item.title) }} className="w-full px-4 py-2.5 text-left bg-transparent border-none text-[13px] font-semibold text-danger cursor-pointer hover:bg-surface block">🗑 Remove</button>
             </div>
           )}
         </div>
@@ -121,46 +112,27 @@ function ListingRow({ item, onDelete, onStatusChange, onView, onEdit }) {
   )
 }
 
-function menuBtnStyle(color) {
-  return {
-    width: '100%', padding: '9px 16px', textAlign: 'left', background: 'none', border: 'none',
-    fontFamily: FONT, fontSize: 13, fontWeight: 600, color, cursor: 'pointer', display: 'block',
-  }
-}
-
-// ─── Saved Card Grid ──────────────────────────────────────────
 function SavedCard({ s, onUnsave, onClick }) {
-  const item = s.listing
+  const item  = s.listing
   if (!item) return null
   const isFree = item.price === null || Number(item.price) === 0
 
   return (
-    <div
-      onClick={onClick}
-      style={{
-        background: '#fff', borderRadius: 18, overflow: 'hidden',
-        border: '1px solid #f1f5f9', cursor: 'pointer',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-        transition: 'transform 0.18s, box-shadow 0.18s',
-      }}
-      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(99,102,241,0.1)' }}
-      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)' }}
-    >
-      <div style={{ position: 'relative', paddingTop: '75%', background: '#f8fafc' }}>
+    <div onClick={onClick}
+      className="bg-white rounded-[18px] overflow-hidden border border-slate-100 cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(99,102,241,0.1)]">
+      <div className="relative pt-[75%] bg-surface">
         {item.images?.[0]
-          ? <img src={item.images[0]} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-          : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36 }}>📦</div>
+          ? <img src={item.images[0]} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          : <div className="absolute inset-0 flex items-center justify-center text-4xl">📦</div>
         }
-        <button
-          onClick={e => { e.stopPropagation(); onUnsave(s.listing_id) }}
-          style={{ position: 'absolute', top: 8, right: 8, width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.95)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.12)' }}
-        >
+        <button onClick={e => { e.stopPropagation(); onUnsave(s.listing_id) }}
+          className="absolute top-2 right-2 w-[30px] h-[30px] rounded-full bg-white/95 border-none cursor-pointer flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.12)]">
           <Heart size={14} fill="#ef4444" color="#ef4444" />
         </button>
       </div>
-      <div style={{ padding: '11px 13px 13px' }}>
-        <p style={{ fontFamily: FONT, fontWeight: 700, fontSize: 13, color: '#0f172a', margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</p>
-        <span style={{ fontFamily: FONT, fontWeight: 800, fontSize: 16, color: isFree ? '#10b981' : '#6366f1' }}>
+      <div className="px-3 pt-2.5 pb-3">
+        <p className="text-[13px] font-bold t-primary m-0 mb-1 truncate">{item.title}</p>
+        <span className={`text-[16px] font-extrabold ${isFree ? 'text-emerald-500' : 'text-indigo-500'}`}>
           {isFree ? 'Free' : `₹${Number(item.price).toLocaleString('en-IN')}`}
         </span>
       </div>
@@ -210,145 +182,124 @@ export default function MyListings() {
   }
 
   const summaryMap = {
-    Active: listings.filter(l => l.status === 'Active').length,
+    Active:   listings.filter(l => l.status === 'Active').length,
     Reserved: listings.filter(l => l.status === 'Reserved').length,
-    Sold: listings.filter(l => l.status === 'Sold').length,
-    Draft: listings.filter(l => l.status === 'Draft').length,
+    Sold:     listings.filter(l => l.status === 'Sold').length,
+    Draft:    listings.filter(l => l.status === 'Draft').length,
   }
+  const totalListings = Object.values(summaryMap).reduce((a, b) => a + b, 0)
 
   return (
     <PageLayout>
-      <style>{`
-        @keyframes spin { from {transform:rotate(0deg)} to {transform:rotate(360deg)} }
-        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-      `}</style>
-
-      <div style={{ width: '100%', maxWidth: '100%', padding: '0 24px', fontFamily: FONT, boxSizing: 'border-box' }}>
-
-        {/* Back + Header row */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <button onClick={() => navigate('/marketplace')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT, fontWeight: 600, fontSize: 14, color: '#6366f1', padding: 0 }}>
-              <ArrowLeft size={16} /> Back
-            </button>
-            <div>
-              <h1 style={{ fontFamily: FONT, fontWeight: 800, fontSize: 22, color: '#0f172a', margin: 0 }}>My Marketplace</h1>
-              <p style={{ fontFamily: FONT, fontSize: 13, color: '#94a3b8', margin: '2px 0 0' }}>Manage listings and saved items</p>
-            </div>
-          </div>
-          <button onClick={() => navigate('/marketplace/create')} style={{
-            padding: '10px 20px', borderRadius: 12,
-            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-            border: 'none', color: '#fff', fontFamily: FONT,
-            fontWeight: 700, fontSize: 13, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: 7,
-            boxShadow: '0 3px 12px rgba(99,102,241,0.3)',
-          }}>
-            <Plus size={14} /> New Listing
+      {/* Back + Header */}
+      <div className="flex justify-between items-center mb-7 flex-wrap gap-3">
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate('/marketplace')}
+            className="flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[14px] font-semibold text-indigo-500 p-0">
+            <ArrowLeft size={16} /> Back
           </button>
-        </div>
-
-        {/* Tab strip */}
-        <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: '#f1f5f9', padding: 4, borderRadius: 14, width: 'fit-content' }}>
-          {[
-            { id: 'listings', label: 'My Listings', count: Object.values(summaryMap).reduce((a, b) => a + b, 0) },
-            { id: 'saved', label: '❤️ Saved', count: saved.length },
-          ].map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{
-              padding: '8px 18px', borderRadius: 10, border: 'none', cursor: 'pointer',
-              background: tab === t.id ? '#fff' : 'transparent',
-              boxShadow: tab === t.id ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
-              fontFamily: FONT, fontWeight: tab === t.id ? 700 : 500,
-              fontSize: 13, color: tab === t.id ? '#6366f1' : '#64748b',
-              display: 'flex', alignItems: 'center', gap: 6,
-            }}>
-              {t.label}
-              <span style={{ background: tab === t.id ? '#6366f1' : '#e2e8f0', color: tab === t.id ? '#fff' : '#64748b', borderRadius: 20, fontSize: 11, fontWeight: 800, padding: '1px 7px' }}>{t.count}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* ─── MY LISTINGS ─── */}
-        {tab === 'listings' && (
-          <div style={{ background: '#fff', borderRadius: 20, overflow: 'visible', boxShadow: '0 2px 16px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9' }}>
-
-            {/* Status sub-tabs */}
-            <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #f1f5f9', overflowX: 'auto' }}>
-              {STATUS_TABS.map(s => {
-                const sc = STATUS_STYLE[s.id]
-                const isActive = statusFilter === s.id
-                return (
-                  <button key={s.id} onClick={() => setStatus(s.id)} style={{
-                    flex: '1 1 auto', padding: '12px 16px', border: 'none',
-                    borderBottom: `2.5px solid ${isActive ? sc.color : 'transparent'}`,
-                    background: isActive ? sc.bg + '40' : 'transparent',
-                    fontFamily: FONT, fontWeight: isActive ? 700 : 500, fontSize: 13,
-                    color: isActive ? sc.color : '#64748b', cursor: 'pointer',
-                    transition: 'all 0.15s', whiteSpace: 'nowrap',
-                    display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center',
-                  }}>
-                    {s.emoji} {s.label}
-                    <span style={{ background: isActive ? sc.color : '#e2e8f0', color: isActive ? '#fff' : '#64748b', borderRadius: 20, fontSize: 10, fontWeight: 800, padding: '1px 7px' }}>
-                      {summaryMap[s.id] || 0}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* List */}
-            {loading ? (
-              <div style={{ padding: '20px' }}>
-                {[1, 2, 3].map(i => <div key={i} style={{ height: 70, background: '#f1f5f9', borderRadius: 14, marginBottom: 12, animation: 'pulse 1.5s infinite' }} />)}
-              </div>
-            ) : listings.length === 0 ? (
-              <div style={{ padding: '48px 32px', textAlign: 'center' }}>
-                <Package size={36} color="#e2e8f0" style={{ marginBottom: 12 }} />
-                <h3 style={{ fontFamily: FONT, fontWeight: 700, fontSize: 17, color: '#0f172a', margin: '0 0 6px' }}>No {statusFilter} listings</h3>
-                <p style={{ fontFamily: FONT, fontSize: 13, color: '#94a3b8', margin: '0 0 18px' }}>Items you sell will appear here.</p>
-                {statusFilter === 'Active' && (
-                  <button onClick={() => navigate('/marketplace/create')} style={{ padding: '10px 22px', borderRadius: 12, background: '#6366f1', border: 'none', color: '#fff', fontFamily: FONT, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
-                    + Post a Listing
-                  </button>
-                )}
-              </div>
-            ) : (
-              listings.map(item => (
-                <ListingRow
-                  key={item.id}
-                  item={item}
-                  onDelete={handleDelete}
-                  onStatusChange={handleStatusChange}
-                  onView={id => navigate(`/marketplace/listing/${id}`)}
-                  onEdit={id => navigate(`/marketplace/edit/${id}`)}
-                />
-              ))
-            )}
+          <div>
+            <h1 className="t-heading-xl t-primary m-0">My Marketplace</h1>
+            <p className="t-md t-subtle m-0 mt-0.5">Manage listings and saved items</p>
           </div>
-        )}
+        </div>
+        <button onClick={() => navigate('/marketplace/create')}
+          className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-white border-none text-[13px] font-bold cursor-pointer shadow-[0_3px_12px_rgba(99,102,241,0.3)] bg-gradient-to-br from-indigo-500 to-violet-500">
+          <Plus size={14} /> New Listing
+        </button>
+      </div>
 
-        {/* ─── SAVED ─── */}
-        {tab === 'saved' && (
-          saved.length === 0 ? (
-            <div style={{ padding: '60px 32px', textAlign: 'center', background: '#fff', borderRadius: 20, border: '2px dashed #e2e8f0' }}>
-              <div style={{ fontSize: 44, marginBottom: 12 }}>🤍</div>
-              <h3 style={{ fontFamily: FONT, fontWeight: 700, fontSize: 17, color: '#0f172a', margin: '0 0 6px' }}>No saved items yet</h3>
-              <p style={{ fontFamily: FONT, fontSize: 13, color: '#94a3b8', margin: 0 }}>Tap the ♡ on any listing to save it here.</p>
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 16 }}>
-              {saved.map(s => (
-                <SavedCard
-                  key={s.id}
-                  s={s}
-                  onUnsave={handleUnsave}
-                  onClick={() => navigate(`/marketplace/listing/${s.listing_id}`)}
-                />
+      {/* Tab strip */}
+      <div className="flex gap-1 mb-6 bg-slate-100 p-1 rounded-2xl w-fit">
+        {[
+          { id: 'listings', label: 'My Listings', count: totalListings },
+          { id: 'saved',    label: '❤️ Saved',    count: saved.length },
+        ].map(t => {
+          const active = tab === t.id
+          return (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`px-4 sm:px-5 py-2 rounded-xl border-none cursor-pointer flex items-center gap-1.5 text-[13px] transition-all ${active ? 'bg-white shadow-[0_1px_4px_rgba(0,0,0,0.08)] font-bold text-indigo-500' : 'bg-transparent font-medium t-secondary hover:bg-white/50'}`}>
+              {t.label}
+              <span className={`rounded-full text-[11px] font-extrabold px-1.5 py-0.5 ${active ? 'bg-indigo-500 text-white' : 'bg-slate-200 t-secondary'}`}>{t.count}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* MY LISTINGS */}
+      {tab === 'listings' && (
+        <div className="bg-white rounded-[20px] overflow-visible shadow-[0_2px_16px_rgba(0,0,0,0.06)] border border-slate-100">
+          {/* Status sub-tabs */}
+          <div className="flex border-b border-slate-100 overflow-x-auto">
+            {STATUS_TABS.map(s => {
+              const isActive = statusFilter === s.id
+              const sc = STATUS_TAB_CLS[s.id]
+              return (
+                <button key={s.id} onClick={() => setStatus(s.id)}
+                  className={`flex-1 min-w-0 py-3 px-4 border-none cursor-pointer transition-all text-[13px] whitespace-nowrap flex items-center gap-1.5 justify-center ${isActive ? sc.btnCls : 'border-b-[2.5px] border-b-transparent bg-transparent text-slate-500 font-medium'}`}>
+                  {s.emoji} {s.label}
+                  <span className={`rounded-full text-[10px] font-extrabold px-1.5 py-0.5 ${isActive ? sc.countCls : 'bg-slate-200 text-slate-500'}`}>
+                    {summaryMap[s.id] || 0}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          {loading ? (
+            <div className="p-5">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-[70px] bg-slate-100 rounded-2xl mb-3 animate-pulse" />
               ))}
             </div>
-          )
-        )}
-      </div>
+          ) : listings.length === 0 ? (
+            <div className="py-12 px-8 text-center">
+              <Package size={36} className="text-slate-200 mx-auto mb-3" />
+              <h3 className="t-base font-bold t-primary m-0 mb-1.5">No {statusFilter} listings</h3>
+              <p className="text-[13px] t-subtle m-0 mb-4">Items you sell will appear here.</p>
+              {statusFilter === 'Active' && (
+                <button onClick={() => navigate('/marketplace/create')}
+                  className="px-5 py-2.5 rounded-xl bg-indigo-500 border-none text-white t-base font-bold cursor-pointer">
+                  + Post a Listing
+                </button>
+              )}
+            </div>
+          ) : (
+            listings.map(item => (
+              <ListingRow
+                key={item.id}
+                item={item}
+                onDelete={handleDelete}
+                onStatusChange={handleStatusChange}
+                onView={id => navigate(`/marketplace/listing/${id}`)}
+                onEdit={id => navigate(`/marketplace/edit/${id}`)}
+              />
+            ))
+          )}
+        </div>
+      )}
+
+      {/* SAVED */}
+      {tab === 'saved' && (
+        saved.length === 0 ? (
+          <div className="py-16 px-8 text-center bg-white rounded-[20px] border-2 border-dashed border-slate-200">
+            <div className="text-[44px] mb-3">🤍</div>
+            <h3 className="t-base font-bold t-primary m-0 mb-1.5">No saved items yet</h3>
+            <p className="text-[13px] t-subtle m-0">Tap the ♡ on any listing to save it here.</p>
+          </div>
+        ) : (
+          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))' }}>
+            {saved.map(s => (
+              <SavedCard
+                key={s.id}
+                s={s}
+                onUnsave={handleUnsave}
+                onClick={() => navigate(`/marketplace/listing/${s.listing_id}`)}
+              />
+            ))}
+          </div>
+        )
+      )}
     </PageLayout>
   )
 }

@@ -4,26 +4,21 @@ import { useAuth } from '../../context/AuthContext'
 import api from '../../lib/api'
 import { Plus, Search, X } from 'lucide-react'
 
-const pjs = (size, weight, lh, color) => ({
-  fontFamily: "'Plus Jakarta Sans', sans-serif",
-  fontSize: size, fontWeight: weight, lineHeight: lh, color,
-})
-
 const REQUEST_TYPES = ['Office Hour', 'Attendance', 'Grade Review', 'Extension', 'Research Query']
 
-const statusConfig = {
-  pending:  { bg: '#fffbeb', color: '#d97706', border: '#fde68a', label: 'PENDING' },
-  accepted: { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0', label: 'ACCEPTED' },
-  rejected: { bg: '#fef2f2', color: '#ef4444', border: '#fecaca', label: 'REJECTED' },
+const STATUS_CLS = {
+  pending:  'bg-warning-light text-warning border border-[#fde68a]',
+  accepted: 'bg-success-light text-success border border-green-200',
+  rejected: 'bg-danger-light text-danger border border-red-200',
 }
+const STATUS_LABEL = { pending: 'PENDING', accepted: 'ACCEPTED', rejected: 'REJECTED' }
 
 export default function StudentRequests() {
   const { user, isGuest } = useAuth()
-  const [requests, setRequests] = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [showModal, setShowModal] = useState(false)
+  const [requests, setRequests]     = useState([])
+  const [loading, setLoading]       = useState(true)
+  const [showModal, setShowModal]   = useState(false)
 
-  // New request form state
   const [faculty, setFaculty]           = useState([])
   const [facultySearch, setFacultySearch] = useState('')
   const [selectedFaculty, setSelectedFaculty] = useState(null)
@@ -45,7 +40,6 @@ export default function StudentRequests() {
 
   useEffect(() => { fetchRequests() }, [fetchRequests])
 
-  // Load faculty list when modal opens
   useEffect(() => {
     if (!showModal) return
     setFacultyLoading(true)
@@ -65,7 +59,6 @@ export default function StudentRequests() {
   const handleSubmit = async (e) => {
     if (e) e.preventDefault()
     if (!selectedFaculty || !selectedFaculty.user_id) return
-    
     setSubmitting(true)
     try {
       await api.post('/api/requests', {
@@ -79,7 +72,7 @@ export default function StudentRequests() {
       setReqType(REQUEST_TYPES[0])
       setDetail('')
       fetchRequests()
-    } catch (err) {
+    } catch {
       alert('Failed to send request. Please try again.')
     } finally {
       setSubmitting(false)
@@ -100,24 +93,23 @@ export default function StudentRequests() {
 
   const pendingCount  = requests.filter(r => r.status === 'pending').length
   const acceptedCount = requests.filter(r => r.status === 'accepted').length
+  const canSend       = !!(selectedFaculty?.user_id)
 
   return (
     <PageLayout>
-      <div style={{ maxWidth: 860, margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div className="max-w-[860px] mx-auto w-full flex flex-col gap-6">
 
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', padding: '24px 32px', borderRadius: 24, boxShadow: '0 1px 4px rgba(0,0,0,.04)', border: '1px solid #f1f5f9' }}>
+        <div className="flex justify-between items-center bg-white px-6 sm:px-8 py-6 rounded-3xl shadow-[0_1px_4px_rgba(0,0,0,0.04)] border border-slate-100">
           <div>
-            <h1 style={{ ...pjs(24, 700, '32px', '#0f172a'), margin: 0 }}>My Requests</h1>
-            <p style={{ ...pjs(14, 500, '20px', '#64748b'), margin: '4px 0 0' }}>
+            <h1 className="t-heading-xl t-primary m-0">My Requests</h1>
+            <p className="t-base font-medium t-muted mt-1 m-0">
               {pendingCount > 0 ? `${pendingCount} pending · ` : ''}{acceptedCount} accepted
             </p>
           </div>
           {!isGuest && (
-            <button
-              onClick={() => setShowModal(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 12, background: '#4f46e5', color: '#fff', border: 'none', ...pjs(14, 700, '20px', '#fff'), cursor: 'pointer' }}
-            >
+            <button onClick={() => setShowModal(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand text-white border-none t-base font-bold cursor-pointer">
               <Plus size={16} /> New Request
             </button>
           )}
@@ -125,67 +117,62 @@ export default function StudentRequests() {
 
         {/* List */}
         {loading ? (
-          <div style={{ padding: 40, textAlign: 'center', ...pjs(16, 500, '24px', '#94a3b8') }}>Loading requests...</div>
+          <div className="py-10 text-center t-base font-medium t-subtle">Loading requests…</div>
         ) : requests.length === 0 ? (
-          <div style={{ padding: 60, textAlign: 'center', background: '#fff', borderRadius: 24, border: '1px dashed #cbd5e1' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📬</div>
-            <h2 style={pjs(18, 700, '24px', '#0f172a')}>No requests yet</h2>
+          <div className="py-16 text-center bg-white rounded-3xl border border-dashed border-slate-300">
+            <div className="text-5xl mb-4">📬</div>
+            <h2 className="t-heading-lg t-primary m-0 mb-2">No requests yet</h2>
             {isGuest ? (
-              <p style={{ ...pjs(14, 400, '20px', '#64748b'), margin: '8px 0 20px' }}>Register with a university email to send requests or book appointments with professors.</p>
+              <p className="t-base t-muted mx-auto max-w-[360px]">Register with a university email to send requests or book appointments with professors.</p>
             ) : (
               <>
-                <p style={{ ...pjs(14, 400, '20px', '#64748b'), margin: '8px 0 20px' }}>Send a request to a professor to get started.</p>
-                <button
-                  onClick={() => setShowModal(true)}
-                  style={{ padding: '10px 24px', borderRadius: 12, background: '#4f46e5', color: '#fff', border: 'none', ...pjs(14, 700, '20px', '#fff'), cursor: 'pointer' }}
-                >
+                <p className="t-base t-muted mb-5">Send a request to a professor to get started.</p>
+                <button onClick={() => setShowModal(true)}
+                  className="px-6 py-2.5 rounded-xl bg-brand text-white border-none t-base font-bold cursor-pointer">
                   + New Request
                 </button>
               </>
             )}
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="flex flex-col gap-4">
             {requests.map(req => {
-              const sc = statusConfig[req.status] || statusConfig.pending
+              const statusCls = STATUS_CLS[req.status] || STATUS_CLS.pending
+              const statusLbl = STATUS_LABEL[req.status] || 'PENDING'
               return (
-                <div key={req.id} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '20px 24px', background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', boxShadow: '0 1px 3px rgba(0,0,0,.02)' }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flex: 1, minWidth: 0 }}>
-                    <div style={{ width: 48, height: 48, background: '#f8fafc', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+                <div key={req.id} className="flex items-start justify-between px-5 sm:px-6 py-5 bg-white rounded-[20px] border border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+                  <div className="flex items-start gap-4 flex-1 min-w-0">
+                    <div className="w-12 h-12 bg-surface rounded-2xl flex items-center justify-center shrink-0 overflow-hidden">
                       <img
                         src={req.faculty_profile?.users?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.faculty_profile?.users?.full_name || 'F')}&background=eef2ff&color=4f46e5`}
-                        alt="Faculty"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        alt="Faculty" className="w-full h-full object-cover"
                       />
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
-                        <span style={pjs(15, 700, '20px', '#0f172a')}>{req.type}</span>
-                        <span style={{ ...pjs(11, 600, '14px', '#94a3b8') }}>· {new Date(req.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex gap-2 items-center mb-1">
+                        <span className="t-base font-bold t-primary">{req.type}</span>
+                        <span className="text-[11px] font-semibold t-subtle">· {new Date(req.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
                       </div>
-                      <div style={{ ...pjs(13, 500, '20px', '#475569'), wordBreak: 'break-word' }}>{req.detail || 'No additional details'}</div>
-                      <div style={{ ...pjs(12, 600, '16px', '#4f46e5'), marginTop: 6 }}>
+                      <div className="t-md font-medium text-slate-600 break-words">{req.detail || 'No additional details'}</div>
+                      <div className="text-[12px] font-semibold text-brand mt-1.5">
                         To: {req.faculty_profile?.users?.full_name || 'Faculty Member'}
                       </div>
                       {req.notes && (
-                        <div style={{ marginTop: 8, padding: '8px 12px', background: '#f8fafc', borderRadius: 8, borderLeft: '3px solid #4f46e5' }}>
-                          <span style={pjs(12, 700, '16px', '#64748b')}>Faculty note: </span>
-                          <span style={pjs(12, 400, '16px', '#475569')}>{req.notes}</span>
+                        <div className="mt-2 px-3 py-2 bg-surface rounded-lg border-l-[3px] border-brand">
+                          <span className="text-[12px] font-bold t-secondary">Faculty note: </span>
+                          <span className="text-[12px] t-muted">{req.notes}</span>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 12, flexShrink: 0, marginLeft: 20 }}>
-                    <span style={{
-                      ...pjs(10, 800, '14px', sc.color),
-                      background: sc.bg, border: `1px solid ${sc.border}`,
-                      padding: '5px 12px', borderRadius: 20, letterSpacing: '.06em',
-                    }}>
-                      {sc.label}
+                  <div className="flex flex-col items-end gap-3 shrink-0 ml-5">
+                    <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full tracking-[0.06em] ${statusCls}`}>
+                      {statusLbl}
                     </span>
                     {req.status === 'pending' && (
-                      <button onClick={() => handleCancel(req.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', ...pjs(12, 600, '16px', '#94a3b8'), textDecoration: 'underline', padding: 0 }}>
+                      <button onClick={() => handleCancel(req.id)}
+                        className="bg-transparent border-none cursor-pointer text-[12px] font-semibold t-subtle underline p-0">
                         Cancel
                       </button>
                     )}
@@ -199,88 +186,82 @@ export default function StudentRequests() {
 
       {/* New Request Modal */}
       {showModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-          <div style={{ background: '#fff', borderRadius: 28, width: '100%', maxWidth: 520, maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 40px rgba(0,0,0,0.14)' }}>
+        <div className="fixed inset-0 bg-ink/60 backdrop-blur-sm flex items-center justify-center z-[1000] p-5"
+          onClick={() => setShowModal(false)}>
+          <div className="bg-white rounded-[28px] w-full max-w-[520px] max-h-[90vh] overflow-hidden flex flex-col shadow-[0_20px_40px_rgba(0,0,0,0.14)]"
+            onClick={e => e.stopPropagation()}>
             {/* Modal header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px 28px', borderBottom: '1px solid #f1f5f9' }}>
+            <div className="flex justify-between items-center px-7 py-6 border-b border-slate-100">
               <div>
-                <h2 style={{ ...pjs(20, 800, '28px', '#0f172a'), margin: 0 }}>Request Appointment</h2>
-                <p style={{ ...pjs(13, 400, '18px', '#64748b'), margin: 0, marginTop: 2 }}>
+                <h2 className="t-heading-lg t-primary m-0">Request Appointment</h2>
+                <p className="t-md t-muted m-0 mt-0.5">
                   {selectedFaculty ? `Sending to ${selectedFaculty.full_name}` : 'Send a request to a professor'}
                 </p>
               </div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }}>
-                <svg width="22" height="22" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              <button onClick={() => setShowModal(false)} className="bg-transparent border-none cursor-pointer t-subtle flex items-center">
+                <svg width="22" height="22" viewBox="0 0 14 14" fill="none">
+                  <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
               </button>
             </div>
 
-            <div style={{ overflowY: 'auto', flex: 1, padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
-
+            <div className="overflow-y-auto flex-1 px-7 py-6 flex flex-col gap-6">
               {/* Step 1: Pick faculty */}
               <div>
-                <label style={{ ...pjs(11, 700, '16px', '#475569'), display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  Select Professor
-                </label>
+                <label className="block mb-2 text-[11px] font-bold text-slate-500 uppercase tracking-[0.08em]">Select Professor</label>
                 {selectedFaculty ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: '#f8fafc', borderRadius: 16, border: '1.5px solid #4f46e5' }}>
-                      <div style={{ width: 40, height: 40, borderRadius: 10, background: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                  <div className="flex flex-col gap-2.5">
+                    <div className="flex items-center gap-3 px-3.5 py-3 bg-surface rounded-2xl border-[1.5px] border-brand">
+                      <div className="w-10 h-10 rounded-[10px] bg-brand flex items-center justify-center overflow-hidden shrink-0">
                         {selectedFaculty.avatar_url
-                          ? <img src={selectedFaculty.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          : <span style={pjs(14, 700, '16px', '#fff')}>{(selectedFaculty.full_name || 'F').charAt(0)}</span>
+                          ? <img src={selectedFaculty.avatar_url} alt="" className="w-full h-full object-cover" />
+                          : <span className="text-[14px] font-bold text-white">{(selectedFaculty.full_name || 'F').charAt(0)}</span>
                         }
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={pjs(14, 700, '18px', '#0f172a')}>{selectedFaculty.full_name}</div>
-                        <div style={pjs(12, 400, '16px', '#64748b')}>{selectedFaculty.designation} · {selectedFaculty.dept}</div>
+                      <div className="flex-1">
+                        <div className="t-base font-bold t-primary">{selectedFaculty.full_name}</div>
+                        <div className="t-md t-muted">{selectedFaculty.designation} · {selectedFaculty.dept}</div>
                       </div>
-                      <button onClick={() => setSelectedFaculty(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4f46e5' }}>
+                      <button onClick={() => setSelectedFaculty(null)} className="bg-transparent border-none cursor-pointer text-brand flex items-center">
                         <X size={18} />
                       </button>
                     </div>
                     {!selectedFaculty.user_id && (
-                      <div style={{ padding: '12px', background: '#fef2f2', borderRadius: 12, border: '1px solid #fecaca', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" style={{ flexShrink: 0, marginTop: 2 }}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                        <div style={pjs(13, 500, '18px', '#b91c1c')}>This faculty member has not yet registered on SnapLocate. Requests cannot be sent to unregistered accounts.</div>
+                      <div className="px-3 py-3 bg-danger-light rounded-xl border border-red-200 flex items-start gap-2">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" className="shrink-0 mt-0.5">
+                          <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        <p className="t-md font-medium text-red-700 m-0">This faculty member has not yet registered on SnapLocate. Requests cannot be sent to unregistered accounts.</p>
                       </div>
                     )}
                   </div>
                 ) : (
                   <div>
-                    <div style={{ position: 'relative', marginBottom: 10 }}>
-                      <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                      <input
-                        type="text" value={facultySearch}
-                        onChange={e => setFacultySearch(e.target.value)}
-                        placeholder="Search by name, department..."
+                    <div className="relative mb-2.5">
+                      <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input type="text" value={facultySearch} onChange={e => setFacultySearch(e.target.value)}
+                        placeholder="Search by name, department…"
                         autoFocus
-                        style={{ width: '100%', padding: '12px 14px 12px 36px', borderRadius: 12, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-                        onFocus={e => e.target.style.borderColor = '#4f46e5'}
-                        onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                        className="w-full pl-9 pr-4 py-3 rounded-xl border-[1.5px] border-slate-200 t-base t-primary outline-none focus:border-brand box-border"
                       />
                     </div>
-                    <div style={{ maxHeight: 180, overflowY: 'auto', borderRadius: 12, border: '1px solid #f1f5f9' }}>
+                    <div className="max-h-44 overflow-y-auto rounded-xl border border-slate-100">
                       {facultyLoading ? (
-                        <div style={{ padding: 20, textAlign: 'center', ...pjs(13, 400, '18px', '#94a3b8') }}>Loading faculty...</div>
+                        <div className="py-5 text-center t-md t-subtle">Loading faculty…</div>
                       ) : filteredFaculty.length === 0 ? (
-                        <div style={{ padding: 20, textAlign: 'center', ...pjs(13, 400, '18px', '#94a3b8') }}>No faculty found</div>
+                        <div className="py-5 text-center t-md t-subtle">No faculty found</div>
                       ) : filteredFaculty.map(f => (
-                        <div
-                          key={f.id}
-                          onClick={() => { setSelectedFaculty(f); setFacultySearch('') }}
-                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid #f8fafc', transition: 'background 0.1s' }}
-                          onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                        >
-                          <div style={{ width: 32, height: 32, borderRadius: 8, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                        <div key={f.id} onClick={() => { setSelectedFaculty(f); setFacultySearch('') }}
+                          className="flex items-center gap-2.5 px-3.5 py-2.5 cursor-pointer border-b border-slate-50 hover:bg-surface transition-colors">
+                          <div className="w-8 h-8 rounded-lg bg-brand-light flex items-center justify-center overflow-hidden shrink-0">
                             {f.avatar_url
-                              ? <img src={f.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              : <span style={pjs(12, 700, '16px', '#4f46e5')}>{(f.full_name || 'F').charAt(0)}</span>
+                              ? <img src={f.avatar_url} alt="" className="w-full h-full object-cover" />
+                              : <span className="text-[12px] font-bold text-brand">{(f.full_name || 'F').charAt(0)}</span>
                             }
                           </div>
                           <div>
-                            <div style={pjs(13, 700, '16px', '#0f172a')}>{f.full_name}</div>
-                            <div style={pjs(11, 400, '14px', '#64748b')}>{f.designation} · {f.dept}</div>
+                            <div className="text-[13px] font-bold t-primary">{f.full_name}</div>
+                            <div className="text-[11px] t-muted">{f.designation} · {f.dept}</div>
                           </div>
                         </div>
                       ))}
@@ -291,20 +272,11 @@ export default function StudentRequests() {
 
               {/* Step 2: Request type */}
               <div>
-                <label style={{ ...pjs(11, 700, '16px', '#475569'), display: 'block', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Request Type</label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                <label className="block mb-2.5 text-[11px] font-bold text-slate-500 uppercase tracking-[0.08em]">Request Type</label>
+                <div className="flex flex-wrap gap-2">
                   {REQUEST_TYPES.map(t => (
-                    <button
-                      key={t} type="button"
-                      onClick={() => setReqType(t)}
-                      style={{
-                        padding: '8px 18px', borderRadius: 20, cursor: 'pointer',
-                        border: reqType === t ? 'none' : '1px solid #e2e8f0',
-                        background: reqType === t ? '#4f46e5' : '#fff',
-                        ...pjs(12, 600, '16px', reqType === t ? '#fff' : '#64748b'),
-                        transition: 'all 0.15s',
-                      }}
-                    >
+                    <button key={t} type="button" onClick={() => setReqType(t)}
+                      className={`px-4 py-2 rounded-full cursor-pointer text-[12px] font-semibold transition-all ${reqType === t ? 'bg-brand text-white border-none' : 'bg-white text-slate-500 border border-slate-200 hover:bg-surface'}`}>
                       {t}
                     </button>
                   ))}
@@ -313,32 +285,21 @@ export default function StudentRequests() {
 
               {/* Step 3: Details */}
               <div>
-                <label style={{ ...pjs(11, 700, '16px', '#475569'), display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Details</label>
-                <textarea
-                  value={detail} onChange={e => setDetail(e.target.value)}
-                  rows={4}
-                  placeholder="Describe your request in detail..."
-                  style={{ width: '100%', padding: '14px 16px', borderRadius: 14, border: '1.5px solid #e2e8f0', background: '#f8fafc', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: "'Plus Jakarta Sans', sans-serif", resize: 'none', lineHeight: '20px' }}
-                  onFocus={e => e.target.style.borderColor = '#4f46e5'}
-                  onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                <label className="block mb-2 text-[11px] font-bold text-slate-500 uppercase tracking-[0.08em]">Details</label>
+                <textarea value={detail} onChange={e => setDetail(e.target.value)} rows={4}
+                  placeholder="Describe your request in detail…"
+                  className="w-full px-4 py-3.5 rounded-2xl border-[1.5px] border-slate-200 bg-surface t-md t-primary outline-none focus:border-brand resize-none leading-[20px] box-border"
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  style={{ flex: 1, padding: '13px', borderRadius: 14, background: '#fff', border: '1.5px solid #e2e8f0', cursor: 'pointer', ...pjs(14, 600, '20px', '#64748b') }}
-                >
+              <div className="flex gap-3 mt-2">
+                <button type="button" onClick={() => setShowModal(false)}
+                  className="flex-1 py-3.5 rounded-2xl bg-white border-[1.5px] border-slate-200 cursor-pointer t-base font-semibold t-secondary">
                   Cancel
                 </button>
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={!selectedFaculty || !selectedFaculty.user_id || submitting}
-                  style={{ flex: 2, padding: '13px', borderRadius: 14, background: (selectedFaculty && selectedFaculty.user_id) ? '#4f46e5' : '#cbd5e1', color: '#fff', border: 'none', ...pjs(14, 700, '20px', '#fff'), cursor: (selectedFaculty && selectedFaculty.user_id) && !submitting ? 'pointer' : 'not-allowed', transition: 'all 0.2s', boxShadow: (selectedFaculty && selectedFaculty.user_id) ? '0 4px 12px rgba(79,70,229,0.3)' : 'none' }}
-                >
-                  {submitting ? 'Sending...' : 'Send Request →'}
+                <button type="button" onClick={handleSubmit} disabled={!canSend || submitting}
+                  className={`flex-[2] py-3.5 rounded-2xl text-white border-none t-base font-bold transition-all ${canSend ? 'bg-brand cursor-pointer shadow-[0_4px_12px_rgba(79,70,229,0.3)]' : 'bg-slate-300 cursor-not-allowed'}`}>
+                  {submitting ? 'Sending…' : 'Send Request →'}
                 </button>
               </div>
             </div>

@@ -5,8 +5,6 @@ import api from '../../lib/api'
 import { useAuth } from '../../context/AuthContext'
 import { ArrowLeft, Send, MessageCircle, Archive, Package, Loader } from 'lucide-react'
 
-const FONT = "'Plus Jakarta Sans', 'Inter', sans-serif"
-
 function timeAgo(d) {
   if (!d) return ''
   const diff = (Date.now() - new Date(d)) / 1000
@@ -24,57 +22,39 @@ function formatPrice(p) {
 // ─── Chat Inbox Panel ─────────────────────────────────────────
 function ChatInbox({ chats, activeId, onSelect }) {
   if (chats.length === 0) return (
-    <div style={{ padding: '48px 20px', textAlign: 'center' }}>
-      <MessageCircle size={36} color="#e2e8f0" style={{ marginBottom: 12 }} />
-      <p style={{ fontFamily: FONT, fontWeight: 700, fontSize: 15, color: '#0f172a', margin: '0 0 6px' }}>No chats yet</p>
-      <p style={{ fontFamily: FONT, fontSize: 13, color: '#94a3b8', margin: 0 }}>Open a listing and tap "Chat with Seller".</p>
+    <div className="py-12 px-5 text-center">
+      <MessageCircle size={36} className="text-slate-200 mx-auto mb-3" />
+      <p className="t-base font-bold t-primary m-0 mb-1.5">No chats yet</p>
+      <p className="t-md t-subtle m-0">Open a listing and tap "Chat with Seller".</p>
     </div>
   )
 
   return (
-    <div style={{ overflowY: 'auto', flex: 1 }}>
+    <div className="overflow-y-auto flex-1">
       {chats.map(chat => {
         const isActive = chat.id === activeId
         const listing  = chat.listing
-
         return (
-          <button key={chat.id} onClick={() => onSelect(chat)} style={{
-            width: '100%', textAlign: 'left',
-            background: isActive ? 'linear-gradient(90deg, #eef2ff, #f5f3ff)' : 'transparent',
-            borderLeft: `3px solid ${isActive ? '#6366f1' : 'transparent'}`,
-            border: 'none',
-            borderBottom: '1px solid #f1f5f9',
-            padding: '14px 18px', cursor: 'pointer',
-            display: 'flex', gap: 12, alignItems: 'center',
-            transition: 'background 0.15s',
-          }}>
-            {/* Listing thumbnail */}
-            <div style={{ width: 46, height: 46, borderRadius: 12, overflow: 'hidden', background: '#f8fafc', flexShrink: 0, border: '1.5px solid #f1f5f9' }}>
+          <button key={chat.id} onClick={() => onSelect(chat)}
+            className={`w-full text-left px-4 py-3.5 flex gap-3 items-center border-b border-slate-100 cursor-pointer transition-colors ${isActive ? 'bg-gradient-to-r from-indigo-50 to-violet-50 border-l-[3px] border-l-indigo-500' : 'bg-transparent border-l-[3px] border-l-transparent hover:bg-surface'}`}>
+            <div className="w-11 h-11 rounded-xl overflow-hidden bg-surface shrink-0 border-[1.5px] border-slate-100">
               {listing?.images?.[0]
-                ? <img src={listing.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Package size={18} color="#cbd5e1" /></div>
+                ? <img src={listing.images[0]} alt="" className="w-full h-full object-cover" />
+                : <div className="w-full h-full flex items-center justify-center"><Package size={18} className="text-slate-300" /></div>
               }
             </div>
-
-            {/* Info */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 4 }}>
-                <p style={{ fontFamily: FONT, fontWeight: 700, fontSize: 13, color: isActive ? '#6366f1' : '#0f172a', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
+            <div className="flex-1 min-w-0">
+              <div className="flex justify-between items-start gap-1">
+                <p className={`text-[13px] font-bold m-0 truncate max-w-[140px] ${isActive ? 'text-indigo-500' : 't-primary'}`}>
                   {listing?.title || 'Listing'}
                 </p>
-                <span style={{ fontFamily: FONT, fontSize: 11, color: '#94a3b8', flexShrink: 0 }}>
-                  {timeAgo(chat.last_message_at)}
-                </span>
+                <span className="text-[11px] t-subtle shrink-0">{timeAgo(chat.last_message_at)}</span>
               </div>
-              <p style={{ fontFamily: FONT, fontSize: 12, fontWeight: 700, color: '#10b981', margin: '3px 0 0' }}>
-                {formatPrice(listing?.price)}
-              </p>
+              <p className="text-[12px] font-bold text-emerald-500 m-0 mt-0.5">{formatPrice(listing?.price)}</p>
             </div>
-
-            {/* Unread badge */}
             {chat.unread_count > 0 && (
-              <div style={{ minWidth: 20, height: 20, borderRadius: 10, background: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: '0 5px' }}>
-                <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 800, color: '#fff' }}>{chat.unread_count}</span>
+              <div className="min-w-[20px] h-5 rounded-full bg-indigo-500 flex items-center justify-center shrink-0 px-1.5">
+                <span className="text-[10px] font-extrabold text-white">{chat.unread_count}</span>
               </div>
             )}
           </button>
@@ -90,9 +70,9 @@ function ChatThread({ chat, currentUserId, onMarkRead, onToggleArchive }) {
   const [loading, setLoading]   = useState(true)
   const [input, setInput]       = useState('')
   const [sending, setSending]   = useState(false)
-  const bottomRef = useRef(null)
+  const bottomRef  = useRef(null)
   const pollingRef = useRef(null)
-  const inputRef = useRef(null)
+  const inputRef   = useRef(null)
 
   const loadMessages = useCallback(async (silent = false) => {
     if (!silent) setLoading(true)
@@ -120,10 +100,8 @@ function ChatThread({ chat, currentUserId, onMarkRead, onToggleArchive }) {
     const text = input.trim()
     setInput('')
     setSending(true)
-
     const temp = { id: `temp-${Date.now()}`, sender_id: currentUserId, content: text, created_at: new Date().toISOString() }
     setMessages(p => [...p, temp])
-
     try {
       const res = await api.post(`/api/marketplace-chat/chats/${chat.id}/messages`, { content: text })
       setMessages(p => p.map(m => m.id === temp.id ? res.data : m))
@@ -138,42 +116,29 @@ function ChatThread({ chat, currentUserId, onMarkRead, onToggleArchive }) {
   }
 
   const listing = chat.listing
-  const other = currentUserId === chat.buyer_id ? chat.seller : chat.buyer
+  const other   = currentUserId === chat.buyer_id ? chat.seller : chat.buyer
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+    <div className="flex flex-col h-full min-h-0">
       {/* Thread header */}
-      <div style={{
-        padding: '14px 20px', borderBottom: '1px solid #f1f5f9',
-        display: 'flex', alignItems: 'center', gap: 14,
-        background: '#fff', flexShrink: 0,
-      }}>
-        <div style={{ width: 42, height: 42, borderRadius: 11, overflow: 'hidden', background: '#f8fafc', flexShrink: 0, border: '1.5px solid #f1f5f9' }}>
+      <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-3.5 bg-white shrink-0">
+        <div className="w-[42px] h-[42px] rounded-[11px] overflow-hidden bg-surface shrink-0 border-[1.5px] border-slate-100 flex items-center justify-center">
           {listing?.images?.[0]
-            ? <img src={listing.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            : <Package size={18} color="#cbd5e1" style={{ margin: '12px' }} />
+            ? <img src={listing.images[0]} alt="" className="w-full h-full object-cover" />
+            : <Package size={18} className="text-slate-300" />
           }
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontFamily: FONT, fontWeight: 700, fontSize: 14, color: '#0f172a', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {listing?.title}
-          </p>
-          <div style={{ display: 'flex', gap: 8, marginTop: 2, alignItems: 'center' }}>
-            <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 800, color: '#6366f1' }}>{formatPrice(listing?.price)}</span>
-            <span style={{ fontFamily: FONT, fontSize: 12, color: '#94a3b8' }}>with {other?.full_name || '...'}</span>
+        <div className="flex-1 min-w-0">
+          <p className="t-base font-bold t-primary m-0 truncate">{listing?.title}</p>
+          <div className="flex gap-2 mt-0.5 items-center flex-wrap">
+            <span className="text-[12px] font-extrabold text-indigo-500">{formatPrice(listing?.price)}</span>
+            <span className="text-[12px] t-subtle">with {other?.full_name || '…'}</span>
             {chat.is_archived && (
-              <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 700, background: '#fef3c7', color: '#d97706', padding: '2px 8px', borderRadius: 10 }}>Archived</span>
+              <span className="text-[10px] font-bold bg-warning-light text-warning px-2 py-0.5 rounded-full">Archived</span>
             )}
             <button
               onClick={() => onToggleArchive?.(chat.id, !chat.is_archived)}
-              style={{
-                background: 'none', border: '1px solid #e2e8f0', borderRadius: 6, padding: '2px 8px',
-                fontFamily: FONT, fontSize: 10, fontWeight: 700, color: '#64748b', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto', transition: 'background 0.15s'
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
-              onMouseLeave={e => e.currentTarget.style.background = 'none'}
-            >
+              className="flex items-center gap-1 ml-auto px-2 py-0.5 rounded-md border border-slate-200 bg-transparent text-[10px] font-bold t-secondary cursor-pointer hover:bg-surface transition-colors">
               <Archive size={10} /> {chat.is_archived ? 'Unarchive' : 'Archive'}
             </button>
           </div>
@@ -181,36 +146,24 @@ function ChatThread({ chat, currentUserId, onMarkRead, onToggleArchive }) {
       </div>
 
       {/* Messages area */}
-      <div style={{
-        flex: 1, overflowY: 'auto', padding: '20px',
-        display: 'flex', flexDirection: 'column', gap: 8,
-        background: '#fafaff',
-      }}>
+      <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-2 bg-[#fafaff]">
         {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 60 }}>
-            <Loader size={22} color="#6366f1" style={{ animation: 'spin 1s linear infinite' }} />
+          <div className="flex justify-center pt-16">
+            <Loader size={22} className="text-indigo-500 animate-spin" />
           </div>
         ) : messages.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>👋</div>
-            <p style={{ fontFamily: FONT, fontSize: 14, color: '#94a3b8', margin: 0 }}>No messages yet. Say hello!</p>
+          <div className="text-center py-16 px-5">
+            <div className="text-4xl mb-3">👋</div>
+            <p className="t-base t-subtle m-0">No messages yet. Say hello!</p>
           </div>
         ) : (
           messages.map(msg => {
             const isMe = msg.sender_id === currentUserId
             return (
-              <div key={msg.id} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
-                <div style={{
-                  maxWidth: '68%', padding: '10px 14px',
-                  borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                  background: isMe ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : '#fff',
-                  boxShadow: isMe ? '0 2px 10px rgba(99,102,241,0.22)' : '0 1px 6px rgba(0,0,0,0.06)',
-                  border: isMe ? 'none' : '1px solid #f1f5f9',
-                }}>
-                  <p style={{ margin: 0, fontFamily: FONT, fontSize: 14, color: isMe ? '#fff' : '#0f172a', lineHeight: 1.5, wordBreak: 'break-word' }}>
-                    {msg.content}
-                  </p>
-                  <p style={{ margin: '3px 0 0', fontFamily: FONT, fontSize: 10, color: isMe ? 'rgba(255,255,255,0.6)' : '#94a3b8', textAlign: 'right' }}>
+              <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[68%] px-3.5 py-2.5 ${isMe ? 'rounded-[18px_18px_4px_18px] bg-gradient-to-br from-indigo-500 to-violet-500 shadow-[0_2px_10px_rgba(99,102,241,0.22)]' : 'rounded-[18px_18px_18px_4px] bg-white border border-slate-100 shadow-[0_1px_6px_rgba(0,0,0,0.06)]'}`}>
+                  <p className={`m-0 text-[14px] leading-[1.5] break-words ${isMe ? 'text-white' : 't-primary'}`}>{msg.content}</p>
+                  <p className={`m-0 mt-0.5 text-[10px] text-right ${isMe ? 'text-white/60' : 't-subtle'}`}>
                     {new Date(msg.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
@@ -223,38 +176,21 @@ function ChatThread({ chat, currentUserId, onMarkRead, onToggleArchive }) {
 
       {/* Input bar */}
       {chat.is_archived ? (
-        <div style={{ padding: '14px 20px', background: '#fffbeb', borderTop: '1px solid #fef3c7', textAlign: 'center', flexShrink: 0 }}>
-          <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: '#d97706', margin: 0 }}>
-            🗄️ This chat is archived and read-only.
-          </p>
+        <div className="px-5 py-3.5 bg-warning-light border-t border-[#fef3c7] text-center shrink-0">
+          <p className="t-md font-semibold text-warning m-0">🗄️ This chat is archived and read-only.</p>
         </div>
       ) : (
-        <form onSubmit={handleSend} style={{
-          padding: '12px 16px', borderTop: '1px solid #f1f5f9',
-          display: 'flex', gap: 10, background: '#fff', flexShrink: 0, alignItems: 'center',
-        }}>
+        <form onSubmit={handleSend} className="px-4 py-3 border-t border-slate-100 flex gap-2.5 bg-white shrink-0 items-center">
           <input
             ref={inputRef}
             value={input} onChange={e => setInput(e.target.value)}
             placeholder="Type a message…"
-            style={{
-              flex: 1, padding: '11px 16px', borderRadius: 24, border: '1.5px solid #e2e8f0',
-              outline: 'none', fontFamily: FONT, fontSize: 14, color: '#0f172a',
-              background: '#f8fafc', transition: 'border-color 0.15s',
-            }}
-            onFocus={e => e.target.style.borderColor = '#6366f1'}
-            onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+            className="flex-1 px-4 py-2.5 rounded-full border-[1.5px] border-slate-200 outline-none t-base t-primary bg-surface focus:border-indigo-400 transition-colors"
           />
-          <button type="submit" disabled={!input.trim() || sending} style={{
-            width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
-            background: input.trim() ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : '#e2e8f0',
-            border: 'none', cursor: input.trim() ? 'pointer' : 'not-allowed',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: input.trim() ? '0 4px 12px rgba(99,102,241,0.3)' : 'none',
-            transition: 'all 0.18s',
-          }}>
+          <button type="submit" disabled={!input.trim() || sending}
+            className={`w-11 h-11 rounded-full shrink-0 border-none flex items-center justify-center transition-all duration-200 ${input.trim() ? 'bg-gradient-to-br from-indigo-500 to-violet-500 shadow-[0_4px_12px_rgba(99,102,241,0.3)] cursor-pointer' : 'bg-slate-200 cursor-not-allowed'}`}>
             {sending
-              ? <Loader size={16} color="#fff" style={{ animation: 'spin 1s linear infinite' }} />
+              ? <Loader size={16} color="#fff" className="animate-spin" />
               : <Send size={16} color={input.trim() ? '#fff' : '#94a3b8'} />
             }
           </button>
@@ -270,17 +206,16 @@ export default function MarketplaceChat() {
   const location = useLocation()
   const { user } = useAuth()
 
-  const [chats, setChats]           = useState([])
-  const [loading, setLoading]       = useState(true)
-  const [activeChat, setActiveChat] = useState(null)
+  const [chats, setChats]               = useState([])
+  const [loading, setLoading]           = useState(true)
+  const [activeChat, setActiveChat]     = useState(null)
   const [showArchived, setShowArchived] = useState(false)
 
   const loadChats = useCallback(async () => {
     try {
-      const res = await api.get(`/api/marketplace-chat/chats?archived=${showArchived}`)
+      const res  = await api.get(`/api/marketplace-chat/chats?archived=${showArchived}`)
       const data = res.data || []
       setChats(data)
-
       if (location.state?.chatId && !activeChat) {
         const target = data.find(c => c.id === location.state.chatId)
         if (target) setActiveChat(target)
@@ -310,100 +245,78 @@ export default function MarketplaceChat() {
 
   return (
     <PageLayout>
-      <style>{`
-        .mc-input { font-family: 'Plus Jakarta Sans', sans-serif; }
-        @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-      `}</style>
-
-      <div style={{ width: '100%', maxWidth: '100%', padding: '0 24px', fontFamily: FONT, boxSizing: 'border-box' }}>
-
-        {/* Back + Title row */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <button onClick={() => navigate('/marketplace')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT, fontWeight: 600, fontSize: 14, color: '#6366f1', padding: 0 }}>
-              <ArrowLeft size={16} /> Back
-            </button>
-            <div>
-              <h1 style={{ fontFamily: FONT, fontWeight: 800, fontSize: 22, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-                My Chats
-                {totalUnread > 0 && (
-                  <span style={{ background: '#6366f1', color: '#fff', borderRadius: 20, padding: '1px 10px', fontSize: 13, fontWeight: 800 }}>{totalUnread}</span>
-                )}
-              </h1>
-              <p style={{ fontFamily: FONT, fontSize: 13, color: '#94a3b8', margin: '2px 0 0' }}>
-                Marketplace messages · {chats.length} {showArchived ? 'archived' : 'active'}
-              </p>
-            </div>
-          </div>
-          <button onClick={() => setShowArchived(a => !a)} style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px',
-            borderRadius: 12, border: '1.5px solid #e2e8f0',
-            background: showArchived ? '#eef2ff' : '#fff',
-            color: showArchived ? '#6366f1' : '#475569',
-            fontFamily: FONT, fontWeight: 600, fontSize: 13, cursor: 'pointer',
-          }}>
-            <Archive size={14} /> {showArchived ? 'Hide Archived' : 'Archived'}
+      {/* Back + Title */}
+      <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate('/marketplace')}
+            className="flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[14px] font-semibold text-indigo-500 p-0">
+            <ArrowLeft size={16} /> Back
           </button>
+          <div>
+            <h1 className="t-heading-xl t-primary m-0 flex items-center gap-2.5">
+              My Chats
+              {totalUnread > 0 && (
+                <span className="bg-indigo-500 text-white rounded-full px-2.5 py-0.5 text-[13px] font-extrabold">{totalUnread}</span>
+              )}
+            </h1>
+            <p className="t-md t-subtle m-0 mt-0.5">
+              Marketplace messages · {chats.length} {showArchived ? 'archived' : 'active'}
+            </p>
+          </div>
+        </div>
+        <button onClick={() => setShowArchived(a => !a)}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl border-[1.5px] border-slate-200 text-[13px] font-semibold cursor-pointer transition-colors ${showArchived ? 'bg-indigo-50 text-indigo-500' : 'bg-white t-secondary hover:bg-surface'}`}>
+          <Archive size={14} /> {showArchived ? 'Hide Archived' : 'Archived'}
+        </button>
+      </div>
+
+      {/* Two-panel layout */}
+      <div className="grid bg-white rounded-3xl overflow-hidden shadow-[0_4px_28px_rgba(0,0,0,0.08)] border border-slate-200 min-h-[500px] max-h-[720px]"
+        style={{ gridTemplateColumns: '310px 1fr', height: 'calc(100dvh - 220px)' }}>
+
+        {/* Left: Inbox */}
+        <div className="border-r border-slate-100 flex flex-col overflow-hidden bg-[#fdfdff]">
+          <div className="px-4.5 py-4 border-b border-slate-100 shrink-0">
+            <p className="text-[12px] font-bold t-subtle m-0 uppercase tracking-[0.8px]">
+              {showArchived ? '🗄 Archived' : '✉️ Active'} ({chats.length})
+            </p>
+          </div>
+          {loading ? (
+            <div className="p-4">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="h-14 bg-slate-100 rounded-xl mb-2.5 animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <ChatInbox
+              chats={chats}
+              activeId={activeChat?.id}
+              onSelect={c => { setActiveChat(c); handleMarkRead(c.id) }}
+            />
+          )}
         </div>
 
-        {/* Two-panel layout — fills viewport height sensibly */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '310px 1fr',
-          height: 'calc(100dvh - 220px)',
-          minHeight: 500,
-          maxHeight: 720,
-          background: '#fff',
-          borderRadius: 24,
-          overflow: 'hidden',
-          boxShadow: '0 4px 28px rgba(0,0,0,0.08)',
-          border: '1px solid #e2e8f0',
-        }}>
-          {/* ── Left: Inbox ── */}
-          <div style={{ borderRight: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#fdfdff' }}>
-            <div style={{ padding: '16px 18px', borderBottom: '1px solid #f1f5f9', flexShrink: 0 }}>
-              <p style={{ fontFamily: FONT, fontWeight: 700, fontSize: 12, color: '#94a3b8', margin: 0, textTransform: 'uppercase', letterSpacing: 0.8 }}>
-                {showArchived ? '🗄 Archived' : '✉️ Active'} ({chats.length})
+        {/* Right: Thread */}
+        <div className="overflow-hidden flex flex-col">
+          {activeChat ? (
+            <ChatThread
+              key={activeChat.id}
+              chat={activeChat}
+              currentUserId={user?.id}
+              onMarkRead={handleMarkRead}
+              onToggleArchive={handleToggleArchive}
+            />
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center gap-2.5 bg-[#fafaff]">
+              <div className="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center mb-1">
+                <MessageCircle size={30} className="text-indigo-500" />
+              </div>
+              <h3 className="t-heading-lg t-primary m-0">Select a conversation</h3>
+              <p className="t-base t-subtle m-0 text-center max-w-[260px]">
+                Pick a chat from the left to start messaging
               </p>
             </div>
-            {loading ? (
-              <div style={{ padding: '16px' }}>
-                {[1, 2, 3, 4].map(i => (
-                  <div key={i} style={{ height: 60, background: '#f1f5f9', borderRadius: 12, marginBottom: 10, animation: 'pulse 1.5s infinite' }} />
-                ))}
-              </div>
-            ) : (
-              <ChatInbox
-                chats={chats}
-                activeId={activeChat?.id}
-                onSelect={c => { setActiveChat(c); handleMarkRead(c.id) }}
-              />
-            )}
-          </div>
-
-          {/* ── Right: Thread ── */}
-          <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            {activeChat ? (
-              <ChatThread
-                key={activeChat.id}
-                chat={activeChat}
-                currentUserId={user?.id}
-                onMarkRead={handleMarkRead}
-                onToggleArchive={handleToggleArchive}
-              />
-            ) : (
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fafaff' }}>
-                <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 4 }}>
-                  <MessageCircle size={30} color="#6366f1" />
-                </div>
-                <h3 style={{ fontFamily: FONT, fontWeight: 700, fontSize: 18, color: '#0f172a', margin: 0 }}>Select a conversation</h3>
-                <p style={{ fontFamily: FONT, fontSize: 14, color: '#94a3b8', margin: 0, textAlign: 'center', maxWidth: 260 }}>
-                  Pick a chat from the left to start messaging
-                </p>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </PageLayout>

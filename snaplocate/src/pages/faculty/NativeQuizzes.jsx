@@ -1,25 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
-import {
-  FileQuestion, Plus, Search, HelpCircle,
-  Settings, Save, BookOpen, Clock
-} from 'lucide-react'
+import { FileQuestion, Plus, HelpCircle, Clock } from 'lucide-react'
 
-const pjs = (sz, fw, lh, col) => ({
-  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: sz, fontWeight: fw, lineHeight: lh, color: col
-})
-
-const inp = {
-  width: '100%', padding: '9px 12px', borderRadius: 10,
-  border: '1.5px solid #e2e8f0', fontSize: 14,
-  fontFamily: "'Plus Jakarta Sans',sans-serif", outline: 'none', boxSizing: 'border-box',
-}
+const fieldCls = 'w-full px-3 py-[9px] rounded-[10px] border-[1.5px] border-slate-200 text-[14px] outline-none box-border focus:border-brand transition-colors'
 
 function Toast({ msg, type }) {
   if (!msg) return null
   return (
-    <div style={{ position: 'fixed', bottom: 24, right: 24, background: type === 'error' ? '#dc2626' : '#0f172a', color: '#fff', padding: '12px 20px', borderRadius: 12, zIndex: 9999, fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 600 }}>
+    <div className={`fixed bottom-6 right-6 z-[9999] px-5 py-3 rounded-[12px] text-white text-[14px] font-semibold ${type === 'error' ? 'bg-red-600' : 'bg-slate-900'}`}>
       {msg}
     </div>
   )
@@ -64,52 +53,53 @@ function QuestionBankModal({ onClose, courseId, onCreated }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ background: '#fff', borderRadius: 24, width: '100%', maxWidth: 600, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 24px 80px rgba(0,0,0,0.18)' }}>
-        <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={pjs(16, 800, '22px', '#0f172a')}>Add Question</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', ...pjs(13, 600, '18px', '#64748b') }}>Cancel</button>
+    <div className="fixed inset-0 bg-slate-900/55 z-[1000] flex items-center justify-center p-5">
+      <div className="bg-white rounded-[24px] w-full max-w-[600px] max-h-[90vh] overflow-auto shadow-[0_24px_80px_rgba(0,0,0,0.18)]">
+        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+          <div className="text-[16px] font-extrabold t-primary">Add Question</div>
+          <button onClick={onClose} className="text-[13px] font-semibold t-muted bg-transparent border-0 cursor-pointer">Cancel</button>
         </div>
-        <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className="px-6 py-5 flex flex-col gap-3.5">
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+          <div className="grid grid-cols-3 gap-3">
             <div>
-              <div style={{ ...pjs(12, 600, '16px', '#374151'), marginBottom: 6 }}>Topic Tag</div>
-              <input value={form.topic_tag} onChange={e => set('topic_tag', e.target.value)} style={inp} placeholder="e.g. Arrays" />
+              <div className="text-[12px] font-semibold text-slate-700 mb-1.5">Topic Tag</div>
+              <input value={form.topic_tag} onChange={e => set('topic_tag', e.target.value)} className={fieldCls} placeholder="e.g. Arrays" />
             </div>
             <div>
-              <div style={{ ...pjs(12, 600, '16px', '#374151'), marginBottom: 6 }}>Difficulty</div>
-              <select value={form.difficulty} onChange={e => set('difficulty', e.target.value)} style={inp}>
+              <div className="text-[12px] font-semibold text-slate-700 mb-1.5">Difficulty</div>
+              <select value={form.difficulty} onChange={e => set('difficulty', e.target.value)} className={fieldCls}>
                 <option value="easy">Easy</option>
                 <option value="medium">Medium</option>
                 <option value="hard">Hard</option>
               </select>
             </div>
             <div>
-              <div style={{ ...pjs(12, 600, '16px', '#374151'), marginBottom: 6 }}>Marks</div>
-              <input type="number" value={form.marks} onChange={e => set('marks', e.target.value)} style={inp} min={1} />
+              <div className="text-[12px] font-semibold text-slate-700 mb-1.5">Marks</div>
+              <input type="number" value={form.marks} onChange={e => set('marks', e.target.value)} className={fieldCls} min={1} />
             </div>
           </div>
 
           <div>
-            <div style={{ ...pjs(12, 600, '16px', '#374151'), marginBottom: 6 }}>Question Text *</div>
-            <textarea value={form.text} onChange={e => set('text', e.target.value)} rows={3} style={{ ...inp, resize: 'vertical' }} />
+            <div className="text-[12px] font-semibold text-slate-700 mb-1.5">Question Text *</div>
+            <textarea value={form.text} onChange={e => set('text', e.target.value)} rows={3} className={`${fieldCls} resize-y`} />
           </div>
 
           <div>
-            <div style={{ ...pjs(12, 600, '16px', '#374151'), marginBottom: 6 }}>Options * (Select the correct one)</div>
+            <div className="text-[12px] font-semibold text-slate-700 mb-1.5">Options * (Select the correct one)</div>
             {form.options.map((opt, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                <input type="radio" name="correct_idx" checked={form.correct_index === i} onChange={() => set('correct_index', i)} style={{ cursor: 'pointer', width: 16, height: 16 }} />
-                <input value={opt} onChange={e => setOpt(i, e.target.value)} style={inp} placeholder={`Option ${i + 1}`} />
+              <div key={i} className="flex items-center gap-2.5 mb-2">
+                <input type="radio" name="correct_idx" checked={form.correct_index === i} onChange={() => set('correct_index', i)} className="cursor-pointer w-4 h-4" />
+                <input value={opt} onChange={e => setOpt(i, e.target.value)} className={fieldCls} placeholder={`Option ${i + 1}`} />
               </div>
             ))}
           </div>
 
-          {error && <div style={{ ...pjs(13, 500, '18px', '#dc2626'), background: '#fef2f2', borderRadius: 10, padding: '10px 12px' }}>{error}</div>}
+          {error && <div className="text-[13px] font-medium text-red-600 bg-red-50 rounded-[10px] px-3 py-2.5">{error}</div>}
 
           <button onClick={save} disabled={loading}
-            style={{ padding: '11px 0', borderRadius: 12, border: 'none', background: loading ? '#e2e8f0' : 'linear-gradient(135deg,#4f46e5,#6366f1)', cursor: loading ? 'not-allowed' : 'pointer', ...pjs(14, 700, '20px', '#fff') }}>
+            className={`py-[11px] rounded-[12px] border-0 text-[14px] font-bold text-white ${loading ? 'bg-slate-200 cursor-not-allowed' : 'cursor-pointer'}`}
+            style={loading ? {} : { background: 'linear-gradient(135deg,#4f46e5,#6366f1)' }}>
             {loading ? 'Saving...' : 'Save Question'}
           </button>
         </div>
@@ -149,63 +139,63 @@ function CreateQuizModal({ onClose, sectionId, courseId, questions, onCreated })
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ background: '#fff', borderRadius: 24, width: '100%', maxWidth: 700, maxHeight: '90vh', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-          <div style={pjs(16, 800, '22px', '#0f172a')}>Create Quiz</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', ...pjs(13, 600, '18px', '#64748b') }}>Cancel</button>
+    <div className="fixed inset-0 bg-slate-900/55 z-[1000] flex items-center justify-center p-5">
+      <div className="bg-white rounded-[24px] w-full max-w-[700px] max-h-[90vh] overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.18)] flex flex-col">
+        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between shrink-0">
+          <div className="text-[16px] font-extrabold t-primary">Create Quiz</div>
+          <button onClick={onClose} className="text-[13px] font-semibold t-muted bg-transparent border-0 cursor-pointer">Cancel</button>
         </div>
 
-        <div style={{ padding: '20px 24px', overflow: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className="px-6 py-5 overflow-auto flex-1 flex flex-col gap-3.5">
           <div>
-            <div style={{ ...pjs(12, 600, '16px', '#374151'), marginBottom: 6 }}>Quiz Title *</div>
-            <input value={form.title} onChange={e => set('title', e.target.value)} style={inp} placeholder="e.g. Midterm Quiz" />
+            <div className="text-[12px] font-semibold text-slate-700 mb-1.5">Quiz Title *</div>
+            <input value={form.title} onChange={e => set('title', e.target.value)} className={fieldCls} placeholder="e.g. Midterm Quiz" />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+          <div className="grid grid-cols-3 gap-3">
             <div>
-              <div style={{ ...pjs(12, 600, '16px', '#374151'), marginBottom: 6 }}>Time Limit (mins)</div>
-              <input type="number" value={form.time_limit_mins} onChange={e => set('time_limit_mins', e.target.value)} style={inp} />
+              <div className="text-[12px] font-semibold text-slate-700 mb-1.5">Time Limit (mins)</div>
+              <input type="number" value={form.time_limit_mins} onChange={e => set('time_limit_mins', e.target.value)} className={fieldCls} />
             </div>
             <div>
-              <div style={{ ...pjs(12, 600, '16px', '#374151'), marginBottom: 6 }}>Start Window *</div>
-              <input type="datetime-local" value={form.start_at} onChange={e => set('start_at', e.target.value)} style={inp} />
+              <div className="text-[12px] font-semibold text-slate-700 mb-1.5">Start Window *</div>
+              <input type="datetime-local" value={form.start_at} onChange={e => set('start_at', e.target.value)} className={fieldCls} />
             </div>
             <div>
-              <div style={{ ...pjs(12, 600, '16px', '#374151'), marginBottom: 6 }}>End Window *</div>
-              <input type="datetime-local" value={form.end_at} onChange={e => set('end_at', e.target.value)} style={inp} />
+              <div className="text-[12px] font-semibold text-slate-700 mb-1.5">End Window *</div>
+              <input type="datetime-local" value={form.end_at} onChange={e => set('end_at', e.target.value)} className={fieldCls} />
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', padding: '10px 0' }}>
+          <div className="flex gap-4 flex-wrap py-2.5">
             {[
               { k: 'shuffle_questions', l: 'Shuffle Questions' },
               { k: 'shuffle_options', l: 'Shuffle Options' },
               { k: 'prevent_backtrack', l: 'Prevent Backtrack' },
               { k: 'fullscreen_mode', l: 'Fullscreen Mode' }
             ].map(({ k, l }) => (
-              <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', ...pjs(13, 500, '18px', '#374151') }}>
+              <label key={k} className="flex items-center gap-1.5 cursor-pointer text-[13px] font-medium text-slate-700">
                 <input type="checkbox" checked={form[k]} onChange={e => set(k, e.target.checked)} /> {l}
               </label>
             ))}
           </div>
 
-          <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 14 }}>
-            <div style={{ ...pjs(14, 700, '20px', '#0f172a'), marginBottom: 10 }}>Select Questions ({selQ.length} selected)</div>
-            <div style={{ maxHeight: 200, overflow: 'auto', border: '1.5px solid #e2e8f0', borderRadius: 12 }}>
+          <div className="border-t border-slate-100 pt-3.5">
+            <div className="text-[14px] font-extrabold t-primary mb-2.5">Select Questions ({selQ.length} selected)</div>
+            <div className="max-h-[200px] overflow-auto border-[1.5px] border-slate-200 rounded-[12px]">
               {questions.length === 0 ? (
-                <div style={{ padding: 20, textAlign: 'center', ...pjs(13, 400, '18px', '#94a3b8') }}>No questions in bank. Add some first.</div>
+                <div className="p-5 text-center text-[13px] t-muted">No questions in bank. Add some first.</div>
               ) : questions.map(q => {
                 const checked = selQ.includes(q.id)
                 return (
-                  <label key={q.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 14px', borderBottom: '1px solid #f1f5f9', cursor: 'pointer', background: checked ? '#eef2ff' : '#fff' }}>
+                  <label key={q.id} className={`flex items-start gap-2.5 px-3.5 py-2.5 border-b border-slate-100 cursor-pointer ${checked ? 'bg-indigo-50' : 'bg-white'}`}>
                     <input type="checkbox" checked={checked} onChange={e => {
                       if (e.target.checked) setSelQ([...selQ, q.id])
                       else setSelQ(selQ.filter(id => id !== q.id))
-                    }} style={{ marginTop: 3 }} />
+                    }} className="mt-[3px]" />
                     <div>
-                      <div style={pjs(13, 600, '18px', '#0f172a')}>{q.question_json?.text}</div>
-                      <div style={{ ...pjs(11, 400, '14px', '#64748b'), marginTop: 2 }}>
+                      <div className="text-[13px] font-semibold t-primary">{q.question_json?.text}</div>
+                      <div className="text-[11px] t-muted mt-0.5">
                         Marks: {q.marks} · Tag: {q.topic_tag || 'none'}
                       </div>
                     </div>
@@ -215,12 +205,13 @@ function CreateQuizModal({ onClose, sectionId, courseId, questions, onCreated })
             </div>
           </div>
 
-          {error && <div style={{ ...pjs(13, 500, '18px', '#dc2626'), background: '#fef2f2', borderRadius: 10, padding: '10px 12px' }}>{error}</div>}
+          {error && <div className="text-[13px] font-medium text-red-600 bg-red-50 rounded-[10px] px-3 py-2.5">{error}</div>}
         </div>
 
-        <div style={{ padding: '16px 24px', borderTop: '1px solid #f1f5f9', flexShrink: 0 }}>
+        <div className="px-6 py-4 border-t border-slate-100 shrink-0">
           <button onClick={save} disabled={loading}
-            style={{ width: '100%', padding: '11px 0', borderRadius: 12, border: 'none', background: loading ? '#e2e8f0' : 'linear-gradient(135deg,#4f46e5,#6366f1)', cursor: loading ? 'not-allowed' : 'pointer', ...pjs(14, 700, '20px', '#fff') }}>
+            className={`w-full py-[11px] rounded-[12px] border-0 text-[14px] font-bold text-white ${loading ? 'bg-slate-200 cursor-not-allowed' : 'cursor-pointer'}`}
+            style={loading ? {} : { background: 'linear-gradient(135deg,#4f46e5,#6366f1)' }}>
             {loading ? 'Publishing...' : 'Publish Quiz'}
           </button>
         </div>
@@ -275,70 +266,68 @@ export default function NativeQuizzes() {
       {showQB && selSection && <QuestionBankModal courseId={selSection.course_id} onClose={() => setShowQB(false)} onCreated={() => { showToast('Question added'); loadData() }} />}
       {showCQ && selSection && <CreateQuizModal courseId={selSection.course_id} sectionId={selSection.id} questions={questions} onClose={() => setShowCQ(false)} onCreated={() => { showToast('Quiz published'); loadData() }} />}
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-          <div style={{ width: 46, height: 46, borderRadius: 14, background: 'linear-gradient(135deg,#eef2ff,#e0e7ff)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div className="flex items-start gap-3.5">
+          <div className="w-[46px] h-[46px] rounded-[14px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#eef2ff,#e0e7ff)' }}>
             <FileQuestion size={22} color="#4f46e5" />
           </div>
           <div>
-            <h1 style={{ ...pjs(26, 800, '32px', '#0f172a'), margin: 0, letterSpacing: '-0.02em' }}>Quiz Engine</h1>
-            <p style={{ ...pjs(13, 400, '18px', '#64748b'), margin: '4px 0 0' }}>Build question banks · Create timed quizzes</p>
+            <h1 className="text-[26px] font-extrabold t-primary m-0 tracking-[-0.02em]">Quiz Engine</h1>
+            <p className="text-[13px] t-muted mt-1 mb-0">Build question banks · Create timed quizzes</p>
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 20, alignItems: 'start', marginTop: 24 }}>
+      <div className="grid gap-5 items-start mt-6" style={{ gridTemplateColumns: '220px 1fr' }}>
         {/* Section picker */}
-        <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', ...pjs(11, 700, '14px', '#94a3b8'), textTransform: 'uppercase', letterSpacing: '0.08em' }}>Sections</div>
+        <div className="bg-white rounded-[20px] border border-slate-100 overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+          <div className="px-4 py-3 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-[0.08em]">Sections</div>
           {sections.map(sec => {
             const active = selSection?.id === sec.id
             return (
               <div key={sec.id} onClick={() => setSelSection(sec)}
-                style={{ padding: '11px 16px', cursor: 'pointer', borderBottom: '1px solid #f8fafc', background: active ? '#eef2ff' : 'transparent', borderLeft: `3px solid ${active ? '#4f46e5' : 'transparent'}`, transition: 'all 0.15s' }}>
-                <div style={pjs(13, active ? 700 : 500, '18px', active ? '#4f46e5' : '#334155')}>{sec.course?.title}</div>
-                <div style={{ ...pjs(11, 400, '14px', '#94a3b8'), marginTop: 2 }}>Section {sec.section_name}</div>
+                className={`px-4 py-[11px] cursor-pointer border-b border-slate-50 transition-all ${active ? 'bg-indigo-50 border-l-[3px] border-l-brand' : 'bg-transparent border-l-[3px] border-l-transparent'}`}>
+                <div className={`text-[13px] leading-[18px] ${active ? 'font-bold text-brand' : 'font-medium text-slate-700'}`}>{sec.course?.title}</div>
+                <div className="text-[11px] t-muted mt-0.5">Section {sec.section_name}</div>
               </div>
             )
           })}
         </div>
 
         {/* Content */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div className="flex flex-col gap-5">
 
-          {/* Action Row */}
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div className="flex gap-2.5">
             <button onClick={() => setShowCQ(true)} disabled={!selSection}
-              style={{ flex: 1, padding: '14px', borderRadius: 16, border: 'none', background: 'linear-gradient(135deg,#4f46e5,#6366f1)', cursor: selSection ? 'pointer' : 'not-allowed', ...pjs(14, 700, '20px', '#fff'), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              className={`flex-1 py-3.5 rounded-[16px] border-0 text-[14px] font-bold text-white flex items-center justify-center gap-2 ${selSection ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+              style={{ background: 'linear-gradient(135deg,#4f46e5,#6366f1)' }}>
               <Plus size={16} /> Create New Quiz
             </button>
             <button onClick={() => setShowQB(true)} disabled={!selSection}
-              style={{ flex: 1, padding: '14px', borderRadius: 16, border: '1.5px solid #e2e8f0', background: '#fff', cursor: selSection ? 'pointer' : 'not-allowed', ...pjs(14, 700, '20px', '#0f172a'), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              className={`flex-1 py-3.5 rounded-[16px] border-[1.5px] border-slate-200 bg-white text-[14px] font-bold t-primary flex items-center justify-center gap-2 ${selSection ? 'cursor-pointer' : 'cursor-not-allowed'}`}>
               <HelpCircle size={16} /> Add to Question Bank ({questions.length})
             </button>
           </div>
 
-          {/* Quizzes List */}
-          <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', padding: '16px 20px' }}>
-            <div style={{ ...pjs(16, 800, '22px', '#0f172a'), marginBottom: 14 }}>Active Quizzes</div>
+          <div className="bg-white rounded-[20px] border border-slate-100 px-5 py-4">
+            <div className="text-[16px] font-extrabold t-primary mb-3.5">Active Quizzes</div>
             {quizzes.length === 0 ? (
-              <div style={{ padding: 30, textAlign: 'center', ...pjs(13, 400, '18px', '#94a3b8') }}>No quizzes created for this section yet.</div>
+              <div className="py-[30px] text-center text-[13px] t-muted">No quizzes created for this section yet.</div>
             ) : (
-              <div style={{ display: 'grid', gap: 10 }}>
+              <div className="grid gap-2.5">
                 {quizzes.map(qz => (
-                  <div key={qz.id} style={{ padding: '14px 16px', border: '1.5px solid #f1f5f9', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div key={qz.id} className="px-4 py-3.5 border-[1.5px] border-slate-100 rounded-[14px] flex items-center justify-between">
                     <div>
-                      <div style={pjs(14, 700, '20px', '#0f172a')}>{qz.title}</div>
-                      <div style={{ ...pjs(12, 500, '16px', '#64748b'), marginTop: 4, display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={13} /> {qz.time_limit_mins} mins</span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><HelpCircle size={13} /> {qz.question_ids?.length || 0} Qs</span>
+                      <div className="text-[14px] font-bold t-primary">{qz.title}</div>
+                      <div className="text-[12px] font-medium t-muted mt-1 flex items-center gap-2.5">
+                        <span className="flex items-center gap-1"><Clock size={13} /> {qz.time_limit_mins} mins</span>
+                        <span className="flex items-center gap-1"><HelpCircle size={13} /> {qz.question_ids?.length || 0} Qs</span>
                         <span>Starts: {new Date(qz.start_at).toLocaleDateString()}</span>
                       </div>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={pjs(18, 800, '24px', '#4f46e5')}>{qz.lms_quiz_attempts?.[0]?.count || 0}</div>
-                      <div style={pjs(11, 600, '14px', '#94a3b8')}>Attempts</div>
+                    <div className="text-right">
+                      <div className="text-[18px] font-extrabold text-brand">{qz.lms_quiz_attempts?.[0]?.count || 0}</div>
+                      <div className="text-[11px] font-semibold t-muted">Attempts</div>
                     </div>
                   </div>
                 ))}
