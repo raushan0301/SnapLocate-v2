@@ -127,11 +127,12 @@ export default function CampusSupportPage() {
   }, [])
 
   const activeTabObj = TABS.find(t => t.label === activeTab) || TABS[0]
+  const q = search.toLowerCase().trim()
 
   const filtered = sections.map(sec => {
     const filteredContacts = sec.contacts.filter(c => {
-      const tabMatch = activeTabObj.filter(c, sec)
-      const q = search.toLowerCase().trim()
+      // While searching, match across every category — not just the active tab.
+      const tabMatch = q ? true : activeTabObj.filter(c, sec)
       const searchMatch = !q ||
         (c.role  || '').toLowerCase().includes(q) ||
         (c.email || '').toLowerCase().includes(q) ||
@@ -142,12 +143,14 @@ export default function CampusSupportPage() {
     return { ...sec, contacts: filteredContacts }
   }).filter(sec => sec.contacts.length > 0)
 
-  const hostelDirSection = activeTab === 'Hostel' ? sections.find(s => s.title === 'Hostel Directory') : null
-  const hostelDirFiltered = hostelDirSection
-    ? (search
+  // Hostel Directory is excluded from `filtered` above and rendered as its own table.
+  // Show it whenever the Hostel tab is active, or whenever a search matches it (regardless of tab).
+  const hostelDirSection = sections.find(s => s.title === 'Hostel Directory')
+  const hostelDirFiltered = hostelDirSection && (activeTab === 'Hostel' || q)
+    ? (q
         ? hostelDirSection.contacts.filter(c =>
-            (c.role || '').toLowerCase().includes(search.toLowerCase()) ||
-            (c.email || '').toLowerCase().includes(search.toLowerCase()))
+            (c.role || '').toLowerCase().includes(q) ||
+            (c.email || '').toLowerCase().includes(q))
         : hostelDirSection.contacts)
     : []
 
