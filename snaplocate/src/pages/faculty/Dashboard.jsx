@@ -34,9 +34,9 @@ export default function FacultyDashboard() {
   const [now, setNow] = useState(new Date())
   const [allTimetable, setAllTimetable] = useState([])
   const [requests, setRequests] = useState([])
-  const [notifications, setNotifications] = useState([])
   const [stats, setStats] = useState({ pendingGrades: 0 })
   const [viewMode, setViewMode] = useState('day')
+  const [notifications, setNotifications] = useState([])
 
   const fetchData = useCallback(async () => {
     try {

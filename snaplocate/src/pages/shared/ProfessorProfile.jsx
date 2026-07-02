@@ -38,7 +38,7 @@ function RequestModal({ prof, onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 bg-slate-900/55 backdrop-blur-[4px] flex items-center justify-center z-[9999] p-5">
-      <div className="bg-white rounded-3xl px-9 py-8 w-full max-w-[480px] shadow-[0_24px_80px_rgba(0,0,0,.24)]"
+      <div className="bg-white rounded-3xl px-6 sm:px-9 py-8 w-full max-w-[480px] max-h-[90vh] overflow-y-auto shadow-[0_24px_80px_rgba(0,0,0,.24)]"
         style={{ animation: 'slideUp .25s ease' }}>
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -161,7 +161,7 @@ export default function ProfessorProfile() {
       <PageLayout>
         <div className="flex flex-col gap-5">
           <Skeleton h={200} r={24} />
-          <div className="grid grid-cols-4 gap-3.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
             {[1, 2, 3, 4].map(i => <Skeleton key={i} h={100} r={16} />)}
           </div>
           <Skeleton h={300} r={16} />
@@ -213,10 +213,10 @@ export default function ProfessorProfile() {
       {sentSuccess && <SuccessBanner onClose={() => setSentSuccess(false)} />}
 
       {/* Profile Overview */}
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_1px_8px_rgba(0,0,0,.04)] p-8">
-        <div className="flex items-start justify-between gap-6">
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_1px_8px_rgba(0,0,0,.04)] p-6 sm:p-8">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
           {/* Avatar & Info */}
-          <div className="flex items-start gap-7">
+          <div className="flex items-start gap-5 sm:gap-7 min-w-0">
             <div className="w-[120px] h-[120px] rounded-[20px] bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center shrink-0 overflow-hidden relative">
               {prof.users?.avatar_url || prof.avatar_url
                 ? <img src={prof.users?.avatar_url || prof.avatar_url} alt={fullName} className="w-full h-full object-cover" />
@@ -227,8 +227,8 @@ export default function ProfessorProfile() {
               )}
             </div>
 
-            <div className="flex-1">
-              <div className="flex items-center gap-2.5">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2.5 flex-wrap">
                 <h1 className="text-[28px] font-extrabold t-primary">{fullName}</h1>
                 {(prof.users?.is_verified || prof.is_verified) && (
                   <div className="w-7 h-7 flex items-center justify-center shrink-0 drop-shadow-[0_2px_6px_rgba(16,185,129,0.3)]" title="Verified Faculty">
@@ -244,14 +244,14 @@ export default function ProfessorProfile() {
               </div>
               <p className="text-[16px] font-medium text-slate-600 mt-1">{prof.dept}</p>
 
-              <div className="flex gap-10 mt-4.5">
-                <div>
+              <div className="flex flex-wrap gap-x-8 gap-y-4 mt-4.5">
+                <div className="min-w-0">
                   <div className="text-[10px] font-bold uppercase tracking-[.05em] text-slate-400">Teacher Code</div>
                   <div className="text-[14px] font-bold text-brand mt-1">{prof.teacher_code || '—'}</div>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="text-[10px] font-bold uppercase tracking-[.05em] text-slate-400">Specialization</div>
-                  <div className="text-[14px] font-bold t-primary mt-1 max-w-[300px] truncate">{researchInterests.join(', ') || '—'}</div>
+                  <div className="text-[14px] font-bold t-primary mt-1 max-w-full sm:max-w-[300px] truncate">{researchInterests.join(', ') || '—'}</div>
                 </div>
                 <div>
                   <div className="text-[10px] font-bold uppercase tracking-[.05em] text-slate-400">Location</div>
@@ -262,7 +262,7 @@ export default function ProfessorProfile() {
               <div className="mt-5">
                 <div className="text-[10px] font-bold uppercase tracking-[.05em] text-slate-400">Official Email</div>
                 <a href={`mailto:${prof.users?.email || prof.email}`}
-                  className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-brand no-underline mt-1">
+                  className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-brand no-underline mt-1 max-w-full break-all">
                   {prof.users?.email || prof.email}
                   <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M5 9a3 3 0 004.4 0l1.6-1.6a3 3 0 00-4.4-4.1L5.5 4.5" stroke="#4f46e5" strokeWidth="1.3" strokeLinecap="round" /><path d="M9 5a3 3 0 00-4.4 0L3 6.6a3 3 0 004.4 4.1l1-1" stroke="#4f46e5" strokeWidth="1.3" strokeLinecap="round" /></svg>
                 </a>
@@ -271,7 +271,7 @@ export default function ProfessorProfile() {
           </div>
 
           {/* Action buttons */}
-          <div className="flex flex-col gap-3 min-w-[200px]">
+          <div className="flex flex-col gap-3 w-full md:w-auto md:min-w-[200px] shrink-0">
             {user?.role === 'student' && !isGuest && (
               <button onClick={() => setShowModal(true)}
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-3xl border-none bg-brand cursor-pointer text-[14px] font-bold text-white shadow-[0_4px_16px_rgba(79,70,229,.3)]">
@@ -300,7 +300,7 @@ export default function ProfessorProfile() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
         {[
           { label: 'Ongoing projects', value: prof.citations || 0, sub: 'Active' },
           { label: 'CONFERENCE', value: prof.conferences || 0, sub: 'Verified' },
@@ -316,7 +316,7 @@ export default function ProfessorProfile() {
       </div>
 
       {/* Content grid */}
-      <div className="grid gap-5 items-start" style={{ gridTemplateColumns: '2fr 1fr' }}>
+      <div className="grid gap-5 items-start grid-cols-1 lg:grid-cols-[2fr_1fr]">
 
         {/* Left Column */}
         <div className="flex flex-col gap-5">

@@ -67,9 +67,9 @@ const facultyNav = [
   { label: 'My Profile', path: '/faculty/profile', icon: IdCard },
   { label: 'Office Hours', path: '/faculty/office-hours', icon: Clock },
   { label: 'Student Req', path: '/faculty/requests', icon: Inbox },
-  { label: 'Professors', path: '/professors', icon: Users },
 
   { section: 'Campus' },
+  { label: 'Professors', path: '/professors', icon: Users },
   { label: 'Classroom', path: '/classroom', icon: DoorOpen },
   { label: 'Resources', path: '/resources', icon: FileStack },
   { label: 'Calendar', path: '/faculty/calendar', icon: CalendarDays },
@@ -121,7 +121,7 @@ function NavRow({ label, path, icon: Icon, count }) {
     <NavLink to={path} end className="block no-underline rounded-lg">
       {({ isActive }) => (
         <div className={`flex items-center justify-between gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 ${
-          isActive ? 'bg-[rgba(79,70,229,0.08)]' : 'hover:bg-slate-100'
+          isActive ? 'bg-[rgba(79,70,229,0.08)]' : 'hover:bg-surface-muted'
         }`}>
           <div className="flex items-center gap-2.5">
             <span className={`w-5 h-5 flex items-center justify-center shrink-0 ${isActive ? 'text-brand' : 'text-ink-secondary'}`}>
@@ -177,8 +177,8 @@ export default function Sidebar({ isOpen, onClose }) {
       <aside className={`
         fixed inset-y-0 left-0 w-60 z-[999]
         flex flex-col shrink-0
-        bg-white/90 backdrop-blur-[10px] [-webkit-backdrop-filter:blur(10px)]
-        border-r border-slate-100
+        bg-surface-card/90 backdrop-blur-[10px] [-webkit-backdrop-filter:blur(10px)]
+        border-r border-ink-border
         shadow-[4px_0_16px_rgba(136,136,136,0.06)]
         overflow-y-auto
         transition-transform duration-300 ease-in-out
@@ -241,7 +241,7 @@ export default function Sidebar({ isOpen, onClose }) {
             <div onClick={() => { if (window.innerWidth <= 1024) onClose() }}>
               <NavLink to="/admin/settings" end className="block no-underline rounded-lg">
                 {({ isActive }) => (
-                  <div className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 ${isActive ? 'bg-[rgba(79,70,229,0.08)]' : 'hover:bg-slate-100'}`}>
+                  <div className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 ${isActive ? 'bg-[rgba(79,70,229,0.08)]' : 'hover:bg-surface-muted'}`}>
                     <span className={`w-5 h-5 flex items-center justify-center shrink-0 ${isActive ? 'text-brand' : 'text-ink-secondary'}`}>
                       <Settings size={17} strokeWidth={isActive ? 2.5 : 2} />
                     </span>

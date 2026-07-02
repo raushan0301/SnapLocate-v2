@@ -142,10 +142,10 @@ export default function StudentDashboard() {
         </div>
         <div className="flex gap-2 items-center shrink-0">
           <div className="bg-[rgba(118,118,128,0.12)] rounded-2xl px-3 py-1.5">
-            <span className="text-[15px] font-normal text-black font-['system-ui']">{dateStr}</span>
+            <span className="text-[15px] font-normal text-ink font-['system-ui']">{dateStr}</span>
           </div>
           <div className="bg-[rgba(118,118,128,0.12)] rounded-2xl px-3 py-1.5">
-            <span className="text-[15px] font-normal text-black font-['system-ui']">{timeStr}</span>
+            <span className="text-[15px] font-normal text-ink font-['system-ui']">{timeStr}</span>
           </div>
         </div>
       </div>
@@ -181,8 +181,8 @@ export default function StudentDashboard() {
                   <p className="t-lg t-secondary">{upNext.type}</p>
                 </div>
 
-                <div className="flex gap-2 items-center bg-slate-50 border border-slate-100 rounded-2xl p-3 flex-1 w-full sm:w-auto">
-                  <div className="w-10 h-10 bg-white rounded-2xl shadow-sm flex items-center justify-center p-2 shrink-0">
+                <div className="flex gap-2 items-center bg-surface-muted border border-ink-border rounded-2xl p-3 flex-1 w-full sm:w-auto">
+                  <div className="w-10 h-10 bg-surface-card rounded-2xl shadow-sm flex items-center justify-center p-2 shrink-0">
                     <img src="/images/img_background_shadow.svg" alt="" className="w-full h-full" />
                   </div>
                   <div className="flex-1">
@@ -251,14 +251,14 @@ export default function StudentDashboard() {
               {viewMode === 'day' ? "Today's Schedule" : "Weekly Overview"}
             </span>
             {/* Day / Week toggle */}
-            <div className="flex items-center bg-slate-100 rounded-xl p-1">
+            <div className="flex items-center bg-surface-muted rounded-xl p-1">
               {['day', 'week'].map(mode => (
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
                   className={`t-label-sm px-3.5 py-1 rounded-[7px] border-none cursor-pointer capitalize transition-all ${
                     viewMode === mode
-                      ? 'bg-white t-primary shadow-[0_1px_2px_rgba(0,0,0,0.08)]'
+                      ? 'bg-surface-card t-primary shadow-[0_1px_2px_rgba(0,0,0,0.08)]'
                       : 'bg-transparent t-secondary'
                   }`}
                 >
@@ -270,7 +270,7 @@ export default function StudentDashboard() {
 
           {viewMode === 'day' ? (
             <div className="relative pl-2 sm:pl-4 mt-2">
-              <div className="absolute top-2 bottom-2 left-[13px] sm:left-[21px] w-px bg-slate-200" />
+              <div className="absolute top-2 bottom-2 left-[13px] sm:left-[21px] w-px bg-ink-border" />
               <div className="flex flex-col gap-6 w-full">
                 {processedSchedule.length === 0 ? (
                   <div className="py-10 text-center t-md t-subtle font-medium">No classes scheduled for today.</div>
@@ -278,7 +278,7 @@ export default function StudentDashboard() {
                   <div key={i} className="flex gap-4 sm:gap-6 relative z-10">
                     <div className="flex flex-col items-center mt-1 shrink-0 w-3">
                       <div className={`w-3 h-3 rounded-full border-2 border-white ring-2 ${
-                        s.status === 'ongoing' ? 'bg-indigo-600 ring-indigo-200' : 'bg-slate-300 ring-transparent'
+                        s.status === 'ongoing' ? 'bg-brand ring-indigo-200' : 'bg-ink-subtle ring-transparent'
                       }`} />
                     </div>
                     <div className="flex-1 flex flex-col gap-2 min-w-0">
@@ -295,7 +295,7 @@ export default function StudentDashboard() {
                         </span>
                       </div>
                       <div
-                        className={`overflow-hidden rounded-2xl px-4 py-3.5 transition-all duration-300 border ${s.status === 'ongoing' ? 'bg-indigo-50/50 border-indigo-200' : 'bg-white border-slate-100'}`}
+                        className={`overflow-hidden rounded-2xl px-4 py-3.5 transition-all duration-300 border ${s.status === 'ongoing' ? 'bg-brand-light border-indigo-200' : 'bg-surface-card border-ink-border'}`}
                       >
                         <div className="truncate t-heading-base t-primary">{s.course}</div>
                         <div className="truncate mt-1 t-md t-secondary">{s.location || 'No Location'} • {s.status.toUpperCase()}</div>
@@ -308,11 +308,11 @@ export default function StudentDashboard() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {Object.entries(weeklySchedule).map(([day, classes]) => (
-                <div key={day} className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                <div key={day} className="bg-surface-muted rounded-2xl p-4 border border-ink-border">
                   <div className="t-label-xs t-secondary uppercase tracking-wider mb-3 flex justify-between items-center">
                     {day}
                     {classes.length > 0 && (
-                      <span className="bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-md text-[10px]">
+                      <span className="bg-brand-light text-brand px-1.5 py-0.5 rounded-md text-[10px]">
                         {classes.length}
                       </span>
                     )}
@@ -325,7 +325,7 @@ export default function StudentDashboard() {
                       return (
                         <div
                           key={i}
-                          className="overflow-hidden bg-white rounded-[10px] px-3 py-2.5 border border-slate-100 shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+                          className="overflow-hidden bg-surface-card rounded-[10px] px-3 py-2.5 border border-ink-border shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
                           style={{ borderLeft: `3px solid ${preset.border}` }}
                         >
                           <div className="truncate t-heading-sm" style={{ color: preset.tc }}>{c.course}</div>
@@ -365,7 +365,7 @@ export default function StudentDashboard() {
           </div>
           <button
             onClick={() => window.location.href = '/workspace'}
-            className="w-full pt-3 pb-1 text-center border-t border-slate-100 t-secondary font-medium text-sm hover:text-brand transition-colors"
+            className="w-full pt-3 pb-1 text-center border-t border-ink-border t-secondary font-medium text-sm hover:text-brand transition-colors"
           >
             View all activity
           </button>

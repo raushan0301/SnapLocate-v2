@@ -64,7 +64,7 @@ function ListingRow({ item, onDelete, onStatusChange, onView, onEdit }) {
       {/* Info */}
       <div className="min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-[14px] font-bold t-primary truncate max-w-[280px]">{item.title}</span>
+          <span className="text-[14px] font-bold t-primary truncate max-w-[140px] sm:max-w-[280px]">{item.title}</span>
           <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0 ${badgeCls}`}>{item.status}</span>
         </div>
         <div className="flex gap-2 items-center flex-wrap">
@@ -84,11 +84,11 @@ function ListingRow({ item, onDelete, onStatusChange, onView, onEdit }) {
       {/* Actions */}
       <div className="flex gap-1.5 items-center shrink-0">
         <button onClick={() => onView(item.id)}
-          className="px-3 py-1.5 rounded-[10px] bg-indigo-50 border-none text-indigo-500 text-[12px] font-bold cursor-pointer flex items-center gap-1">
-          <Eye size={13} /> View
+          className="px-2.5 sm:px-3 py-1.5 rounded-[10px] bg-indigo-50 border-none text-indigo-500 text-[12px] font-bold cursor-pointer flex items-center gap-1">
+          <Eye size={13} /><span className="hidden sm:inline">View</span>
         </button>
         <button onClick={() => onEdit(item.id)}
-          className="px-3 py-1.5 rounded-[10px] bg-surface border border-slate-200 t-secondary text-[12px] font-bold cursor-pointer flex items-center gap-1">
+          className="px-2.5 py-1.5 rounded-[10px] bg-surface border border-slate-200 t-secondary text-[12px] font-bold cursor-pointer flex items-center gap-1">
           <Edit size={13} />
         </button>
         <div className="relative">
@@ -192,25 +192,25 @@ export default function MyListings() {
   return (
     <PageLayout>
       {/* Back + Header */}
-      <div className="flex justify-between items-center mb-7 flex-wrap gap-3">
-        <div className="flex items-center gap-4">
+      <div className="mb-4 sm:mb-6">
+        {/* Top row: Back ← → New Listing */}
+        <div className="flex justify-between items-center mb-2.5">
           <button onClick={() => navigate('/marketplace')}
             className="flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[14px] font-semibold text-indigo-500 p-0">
             <ArrowLeft size={16} /> Back
           </button>
-          <div>
-            <h1 className="t-heading-xl t-primary m-0">My Marketplace</h1>
-            <p className="t-md t-subtle m-0 mt-0.5">Manage listings and saved items</p>
-          </div>
+          <button onClick={() => navigate('/marketplace/create')}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-white border-none text-[13px] font-bold cursor-pointer shadow-[0_3px_12px_rgba(99,102,241,0.3)] bg-gradient-to-br from-indigo-500 to-violet-500">
+            <Plus size={14} /> New Listing
+          </button>
         </div>
-        <button onClick={() => navigate('/marketplace/create')}
-          className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-white border-none text-[13px] font-bold cursor-pointer shadow-[0_3px_12px_rgba(99,102,241,0.3)] bg-gradient-to-br from-indigo-500 to-violet-500">
-          <Plus size={14} /> New Listing
-        </button>
+        {/* Title */}
+        <h1 className="t-heading-xl t-primary m-0">My Marketplace</h1>
+        <p className="t-md t-subtle m-0 mt-0.5">Manage listings and saved items</p>
       </div>
 
       {/* Tab strip */}
-      <div className="flex gap-1 mb-6 bg-slate-100 p-1 rounded-2xl w-fit">
+      <div className="flex gap-1 mb-4 sm:mb-6 bg-slate-100 p-1 rounded-2xl w-fit">
         {[
           { id: 'listings', label: 'My Listings', count: totalListings },
           { id: 'saved',    label: '❤️ Saved',    count: saved.length },

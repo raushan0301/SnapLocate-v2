@@ -15,6 +15,12 @@ vi.mock('../lib/api', () => ({
   default: { get: vi.fn(() => Promise.resolve({ success: true, data: [] })) },
 }))
 
+const mockSetTheme = vi.fn()
+let mockTheme = 'light'
+vi.mock('../context/ThemeContext', () => ({
+  useTheme: () => ({ theme: mockTheme, setTheme: mockSetTheme }),
+}))
+
 function renderHeader(props = {}) {
   return render(
     <MemoryRouter>
@@ -26,7 +32,34 @@ function renderHeader(props = {}) {
 describe('Header', () => {
   beforeEach(() => {
     mockLogout.mockClear()
+    mockSetTheme.mockClear()
+    mockTheme = 'light'
     mockUser = { role: 'student', full_name: 'Test Student', email: 'test@example.com' }
+  })
+
+  describe('theme toggle', () => {
+    it('shows "Dark mode" in the dropdown when currently light', async () => {
+      const user = userEvent.setup()
+      renderHeader()
+      await user.click(screen.getByLabelText('Profile menu'))
+      expect(screen.getByText('Dark mode')).toBeInTheDocument()
+    })
+
+    it('shows "Light mode" in the dropdown when currently dark', async () => {
+      mockTheme = 'dark'
+      const user = userEvent.setup()
+      renderHeader()
+      await user.click(screen.getByLabelText('Profile menu'))
+      expect(screen.getByText('Light mode')).toBeInTheDocument()
+    })
+
+    it('calls setTheme("dark") when toggled from light', async () => {
+      const user = userEvent.setup()
+      renderHeader()
+      await user.click(screen.getByLabelText('Profile menu'))
+      await user.click(screen.getByText('Dark mode'))
+      expect(mockSetTheme).toHaveBeenCalledWith('dark')
+    })
   })
 
   it('shows the STUDENT OS label for a student user', () => {

@@ -210,6 +210,7 @@ export default function MarketplaceChat() {
   const [loading, setLoading]           = useState(true)
   const [activeChat, setActiveChat]     = useState(null)
   const [showArchived, setShowArchived] = useState(false)
+  const [mobileView, setMobileView]     = useState('inbox') // 'inbox' | 'thread'
 
   const loadChats = useCallback(async () => {
     try {
@@ -218,7 +219,7 @@ export default function MarketplaceChat() {
       setChats(data)
       if (location.state?.chatId && !activeChat) {
         const target = data.find(c => c.id === location.state.chatId)
-        if (target) setActiveChat(target)
+        if (target) { setActiveChat(target); setMobileView('thread') }
       } else if (!activeChat && data.length > 0) {
         setActiveChat(data[0])
       }
@@ -237,16 +238,22 @@ export default function MarketplaceChat() {
     try {
       await api.patch(`/api/marketplace-chat/chats/${chatId}/archive`, { is_archived })
       setChats(p => p.filter(c => c.id !== chatId))
-      if (activeChat?.id === chatId) setActiveChat(null)
+      if (activeChat?.id === chatId) { setActiveChat(null); setMobileView('inbox') }
     } catch (err) { console.error(err) }
+  }
+
+  const handleSelectChat = (c) => {
+    setActiveChat(c)
+    handleMarkRead(c.id)
+    setMobileView('thread')
   }
 
   const totalUnread = chats.reduce((acc, c) => acc + (c.unread_count || 0), 0)
 
   return (
     <PageLayout>
-      {/* Back + Title */}
-      <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
+      {/* Header — shown only on inbox view (mobile) or always on desktop */}
+      <div className={`${mobileView === 'thread' ? 'hidden lg:flex' : 'flex'} justify-between items-center mb-4 sm:mb-6 flex-wrap gap-3`}>
         <div className="flex items-center gap-4">
           <button onClick={() => navigate('/marketplace')}
             className="flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[14px] font-semibold text-indigo-500 p-0">
@@ -270,8 +277,51 @@ export default function MarketplaceChat() {
         </button>
       </div>
 
-      {/* Two-panel layout */}
-      <div className="grid bg-white rounded-3xl overflow-hidden shadow-[0_4px_28px_rgba(0,0,0,0.08)] border border-slate-200 min-h-[500px] max-h-[720px]"
+      {/* ── Mobile: single panel at a time ── */}
+      <div className="lg:hidden bg-white rounded-3xl overflow-hidden shadow-[0_4px_28px_rgba(0,0,0,0.08)] border border-slate-200"
+        style={{ height: 'calc(100dvh - 180px)' }}>
+
+        {mobileView === 'inbox' ? (
+          <div className="flex flex-col h-full">
+            <div className="px-4 py-3.5 border-b border-slate-100 shrink-0">
+              <p className="text-[12px] font-bold t-subtle m-0 uppercase tracking-[0.8px]">
+                {showArchived ? '🗄 Archived' : '✉️ Active'} ({chats.length})
+              </p>
+            </div>
+            {loading ? (
+              <div className="p-4">
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="h-14 bg-slate-100 rounded-xl mb-2.5 animate-pulse" />
+                ))}
+              </div>
+            ) : (
+              <ChatInbox chats={chats} activeId={activeChat?.id} onSelect={handleSelectChat} />
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col h-full">
+            {/* Mobile thread: back button bar */}
+            <div className="px-4 py-3 border-b border-slate-100 shrink-0 flex items-center gap-3 bg-white">
+              <button onClick={() => setMobileView('inbox')}
+                className="flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[13px] font-semibold text-indigo-500 p-0">
+                <ArrowLeft size={15} /> Inbox
+              </button>
+            </div>
+            {activeChat && (
+              <ChatThread
+                key={activeChat.id}
+                chat={activeChat}
+                currentUserId={user?.id}
+                onMarkRead={handleMarkRead}
+                onToggleArchive={handleToggleArchive}
+              />
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Desktop: two-panel ── */}
+      <div className="hidden lg:grid bg-white rounded-3xl overflow-hidden shadow-[0_4px_28px_rgba(0,0,0,0.08)] border border-slate-200 min-h-[500px] max-h-[720px]"
         style={{ gridTemplateColumns: '310px 1fr', height: 'calc(100dvh - 220px)' }}>
 
         {/* Left: Inbox */}

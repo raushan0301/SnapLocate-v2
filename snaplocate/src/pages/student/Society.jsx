@@ -29,21 +29,21 @@ function SocietyCard({ s }) {
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex justify-between items-start">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
             <div className="flex-1 min-w-0">
               <div className="text-[16px] font-bold leading-[22px] t-primary">{s.name}</div>
               <div className="text-[13px] font-normal leading-[18px] text-slate-500 mt-1.5 max-w-[560px]">{s.desc}</div>
             </div>
             {/* Actions */}
-            <div className="flex items-center gap-2 shrink-0 ml-4">
+            <div className="flex items-center gap-2 shrink-0 sm:ml-4 flex-wrap max-w-full">
               {s.email && (
-                <a href={`mailto:${s.email}`} className="no-underline">
-                  <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] border-[1.5px] border-indigo-100 bg-indigo-50 cursor-pointer text-[12px] font-semibold leading-4 text-brand">
-                    <svg width="13" height="11" viewBox="0 0 13 11" fill="none">
+                <a href={`mailto:${s.email}`} className="no-underline min-w-0 max-w-full">
+                  <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] border-[1.5px] border-indigo-100 bg-indigo-50 cursor-pointer text-[12px] font-semibold leading-4 text-brand max-w-full min-w-0">
+                    <svg width="13" height="11" viewBox="0 0 13 11" fill="none" className="shrink-0">
                       <rect x="0.5" y="0.5" width="12" height="10" rx="1.5" stroke="#4f46e5" strokeWidth="1.1" />
                       <path d="M0.5 2.5l6 4 6-4" stroke="#4f46e5" strokeWidth="1.1" strokeLinecap="round" />
                     </svg>
-                    {s.email}
+                    <span className="truncate">{s.email}</span>
                   </button>
                 </a>
               )}

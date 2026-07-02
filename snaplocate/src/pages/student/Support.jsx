@@ -72,7 +72,7 @@ function ChatPanel({ ticket, user, onClose }) {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 w-[380px] h-[520px] bg-white rounded-[20px] border border-ink-border z-[1000] flex flex-col shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
+    <div className="fixed bottom-3 left-3 right-3 sm:left-auto sm:bottom-6 sm:right-6 w-auto sm:w-[380px] h-[520px] max-h-[calc(100dvh-1.5rem)] bg-white rounded-[20px] border border-ink-border z-[1000] flex flex-col shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
       {/* Header */}
       <div className="px-5 py-4 bg-ink rounded-[20px_20px_0_0] flex items-center justify-between">
         <div>

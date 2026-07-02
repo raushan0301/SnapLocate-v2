@@ -209,7 +209,7 @@ export default function MarketplacePage() {
   return (
     <PageLayout>
       {/* Header */}
-      <div className="flex justify-between items-center pb-5 gap-6 flex-wrap mb-5">
+      <div className="flex justify-between items-center pb-3 sm:pb-5 gap-4 sm:gap-6 flex-wrap mb-4 sm:mb-5">
         <div>
           <h1 className="text-[30px] font-extrabold t-primary m-0 tracking-[-0.5px]">Campus Marketplace</h1>
           <p className="t-base t-muted mt-1.5 m-0">Buy &amp; sell within your university — {total} active listings</p>
@@ -244,7 +244,7 @@ export default function MarketplacePage() {
       )}
 
       {/* Search */}
-      <div className="relative mb-6 max-w-[400px]">
+      <div className="relative mb-4 sm:mb-6 max-w-[400px]">
         <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
         <input type="text" placeholder="Search for textbooks, electronics, bikes…"
           value={search} onChange={e => setSearch(e.target.value)}
@@ -253,7 +253,7 @@ export default function MarketplacePage() {
       </div>
 
       {/* Category filter bar */}
-      <div className="flex gap-2.5 overflow-x-auto pb-1 mb-6">
+      <div className="flex gap-2.5 overflow-x-auto pb-1 mb-4 sm:mb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {CATEGORIES.map(c => {
           const Icon   = c.icon
           const active = cat === c.id
@@ -274,7 +274,7 @@ export default function MarketplacePage() {
       </div>
 
       {/* Sort & filter row */}
-      <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
+      <div className="flex justify-between items-center mb-4 sm:mb-6 gap-2 sm:gap-3">
         <div className="flex items-center gap-3">
           <span className="t-base font-semibold text-slate-500">{loading ? 'Loading…' : `${total} listings`}</span>
           <button onClick={() => setIsFreeOnly(!isFreeOnly)}

@@ -1,32 +1,78 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
+/* Make `dark:` utilities respond to the [data-theme="dark"] attribute set by ThemeContext
+   (instead of the OS-level prefers-color-scheme default). */
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+/* ── Theme-reactive neutral palette ─────────────────────────────
+   These backing vars flip between light and dark. The Tailwind
+   @theme tokens below reference them, so every bg-surface / text-ink /
+   .card etc. re-themes automatically when [data-theme="dark"] is set. */
+:root {
+  --c-surface:       #f8fafc;
+  --c-surface-card:  #ffffff;
+  --c-surface-muted: #f1f5f9;
+  --c-surface-light: #eef2ff;
+
+  --c-ink:           #0f172a;
+  --c-ink-secondary: #64748b;
+  --c-ink-muted:     #475569;
+  --c-ink-subtle:    #94a3b8;
+  --c-ink-light:     #374151;
+  --c-ink-border:    #e2e8f0;
+  --c-ink-divider:   #f1f5f9;
+  --c-ink-accent:    #334155;
+
+  --c-brand-light:   #eef2ff;
+  --c-brand-soft:    #e0e7ff;
+}
+
+[data-theme='dark'] {
+  --c-surface:       #0b1220;
+  --c-surface-card:  #111a2e;
+  --c-surface-muted: #1e293b;
+  --c-surface-light: #1e293b;
+
+  --c-ink:           #f1f5f9;
+  --c-ink-secondary: #94a3b8;
+  --c-ink-muted:     #cbd5e1;
+  --c-ink-subtle:    #64748b;
+  --c-ink-light:     #cbd5e1;
+  --c-ink-border:    #273449;
+  --c-ink-divider:   #1e293b;
+  --c-ink-accent:    #cbd5e1;
+
+  --c-brand-light:   #1e1b4b;
+  --c-brand-soft:    #312e81;
+}
+
 /* ── Tailwind v4 Design Tokens ── */
 /* Maps the app palette to Tailwind utility classes (bg-brand, text-ink, etc.) */
 @theme {
   /* Brand / Primary */
   --color-brand:        #4f46e5;
   --color-brand-dark:   #3730a3;
-  --color-brand-light:  #eef2ff;
-  --color-brand-soft:   #e0e7ff;
+  --color-brand-light:  var(--c-brand-light);
+  --color-brand-soft:   var(--c-brand-soft);
   --color-brand-muted:  #6366f1;
   --color-brand-border: #a5b4fc;
 
-  /* Surfaces */
-  --color-surface:       #f8fafc;
-  --color-surface-card:  #ffffff;
-  --color-surface-muted: #f1f5f9;
-  --color-surface-light: #eef2ff;
+  /* Surfaces — reactive to [data-theme] */
+  --color-surface:       var(--c-surface);
+  --color-surface-card:  var(--c-surface-card);
+  --color-surface-muted: var(--c-surface-muted);
+  --color-surface-light: var(--c-surface-light);
 
-  /* Ink / Text */
-  --color-ink:          #0f172a;
-  --color-ink-secondary: #64748b;
-  --color-ink-muted:    #475569;
-  --color-ink-subtle:   #94a3b8;
-  --color-ink-light:    #374151;
-  --color-ink-border:   #e2e8f0;
-  --color-ink-divider:  #f1f5f9;
-  --color-ink-accent:   #334155;
+  /* Ink / Text — reactive to [data-theme] */
+  --color-ink:          var(--c-ink);
+  --color-ink-secondary: var(--c-ink-secondary);
+  --color-ink-muted:    var(--c-ink-muted);
+  --color-ink-subtle:   var(--c-ink-subtle);
+  --color-ink-light:    var(--c-ink-light);
+  --color-ink-border:   var(--c-ink-border);
+  --color-ink-divider:  var(--c-ink-divider);
+  --color-ink-accent:   var(--c-ink-accent);
 
   /* Status — Success */
   --color-success:        #16a34a;
@@ -203,8 +249,8 @@ body,
 
 body {
   font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
-  background: var(--bg-main);
-  color: var(--text-primary);
+  background: var(--c-surface);
+  color: var(--c-ink);
   /* overflow managed per-page to allow auth pages to scroll on small screens */
 }
 
@@ -219,7 +265,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #e2e8f0;
+  background: var(--c-ink-border);
   border-radius: 99px;
 }
 
@@ -309,11 +355,11 @@ body {
   .t-6xl  { font-size: 48px; line-height: 60px; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
 
   /* ── Colour shortcuts (pair with scale above) ── */
-  .t-primary   { color: #0f172a; }
-  .t-secondary { color: #64748b; }
-  .t-muted     { color: #475569; }
-  .t-subtle    { color: #94a3b8; }
-  .t-light     { color: #374151; }
+  .t-primary   { color: var(--c-ink); }
+  .t-secondary { color: var(--c-ink-secondary); }
+  .t-muted     { color: var(--c-ink-muted); }
+  .t-subtle    { color: var(--c-ink-subtle); }
+  .t-light     { color: var(--c-ink-light); }
   .t-accent    { color: #4f46e5; }
   .t-white     { color: #ffffff; }
   .t-success   { color: #16a34a; }
@@ -348,20 +394,20 @@ body {
 
   /* ── Cards ── */
   .card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
+    background: var(--c-surface-card);
+    border: 1px solid var(--c-ink-border);
     border-radius: 1.5rem;  /* rounded-3xl = 24px */
     box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   }
   .card-sm {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
+    background: var(--c-surface-card);
+    border: 1px solid var(--c-ink-border);
     border-radius: 1rem;    /* rounded-2xl = 16px */
     box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   }
   .card-subtle {
-    background: #f8fafc;
-    border: 1px solid #f1f5f9;
+    background: var(--c-surface);
+    border: 1px solid var(--c-ink-divider);
     border-radius: 1rem;
   }
 
@@ -387,7 +433,7 @@ body {
   .badge-danger   { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
   .badge-warning  { background: #fffbeb; color: #c2410c; border-color: #fed7aa; }
   .badge-info     { background: #f0f9ff; color: #0369a1; border-color: #bae6fd; }
-  .badge-neutral  { background: #f8fafc; color: #475569; border-color: #e2e8f0; }
+  .badge-neutral  { background: var(--c-surface); color: var(--c-ink-muted); border-color: var(--c-ink-border); }
   .badge-purple   { background: #faf5ff; color: #9333ea; border-color: #e9d5ff; }
   .badge-pink     { background: #fdf2f8; color: #db2777; border-color: #fbcfe8; }
   .badge-teal     { background: #f0fdfa; color: #0d9488; border-color: #99f6e4; }
@@ -407,7 +453,7 @@ body {
   .chip-success { background: #f0fdf4; color: #16a34a; }
   .chip-danger  { background: #fef2f2; color: #dc2626; }
   .chip-warning { background: #fffbeb; color: #d97706; }
-  .chip-neutral { background: #f1f5f9; color: #64748b; }
+  .chip-neutral { background: var(--c-surface-muted); color: var(--c-ink-secondary); }
 
   /* ── Buttons ── */
   .btn {
@@ -430,14 +476,14 @@ body {
   .btn-primary  { background: #4f46e5; color: #ffffff; }
   .btn-primary:hover:not(:disabled)  { background: #4338ca; }
 
-  .btn-secondary { background: #f1f5f9; color: #0f172a; }
-  .btn-secondary:hover:not(:disabled) { background: #e2e8f0; }
+  .btn-secondary { background: var(--c-surface-muted); color: var(--c-ink); }
+  .btn-secondary:hover:not(:disabled) { background: var(--c-ink-border); }
 
   .btn-danger   { background: #fef2f2; color: #dc2626; }
   .btn-danger:hover:not(:disabled)  { background: #fee2e2; }
 
-  .btn-ghost    { background: transparent; color: #64748b; }
-  .btn-ghost:hover:not(:disabled)   { background: #f1f5f9; }
+  .btn-ghost    { background: transparent; color: var(--c-ink-secondary); }
+  .btn-ghost:hover:not(:disabled)   { background: var(--c-surface-muted); }
 
   .btn-sm {
     padding: 5px 12px;
@@ -484,7 +530,7 @@ body {
   .section-title {
     font-size: 16px;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--c-ink);
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   }
 
@@ -508,7 +554,7 @@ body {
   .empty-state-title {
     font-size: 15px;
     font-weight: 600;
-    color: #64748b;
+    color: var(--c-ink-secondary);
   }
   .empty-state-desc {
     font-size: 13px;
@@ -520,16 +566,16 @@ body {
   .input {
     width: 100%;
     padding: 9px 12px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--c-ink-border);
     border-radius: 10px;
     font-size: 14px;
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-    color: #0f172a;
-    background: #ffffff;
+    color: var(--c-ink);
+    background: var(--c-surface-card);
     outline: none;
     transition: border-color 0.15s;
   }
-  .input:focus { border-color: #a5b4fc; box-shadow: 0 0 0 3px #eef2ff; }
+  .input:focus { border-color: #a5b4fc; box-shadow: 0 0 0 3px var(--c-brand-light); }
   .input::placeholder { color: #94a3b8; }
 
   /* ── Divider ── */

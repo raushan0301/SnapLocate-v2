@@ -154,17 +154,17 @@ export default function ProfessorsPage() {
 
       <div className="flex flex-col gap-5">
         {/* Filter bar */}
-        <div className="flex justify-between items-center gap-3 flex-wrap">
-          <div className="flex gap-2 flex-wrap items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2.5 sm:gap-3">
+          <div className="flex gap-2 flex-nowrap overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden items-center">
             {DEPTS.slice(0, 5).map(d => (
               <button key={d} onClick={() => setDept(d)}
-                className={`px-4 py-2 rounded-full cursor-pointer transition-all text-[13px] ${dept === d ? 'bg-brand text-white border-none font-bold' : 'bg-white text-slate-500 border-[1.5px] border-slate-200 font-medium hover:bg-surface'}`}>
+                className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-full cursor-pointer transition-all text-[13px] ${dept === d ? 'bg-brand text-white border-none font-bold' : 'bg-white text-slate-500 border-[1.5px] border-slate-200 font-medium hover:bg-surface'}`}>
                 {d === 'All Departments' ? 'All Depts' : d}
               </button>
             ))}
             {DEPTS.length > 5 && (
               <select value={dept} onChange={e => setDept(e.target.value)}
-                className="appearance-none text-[13px] font-medium t-secondary bg-white border-[1.5px] border-slate-200 rounded-full px-4 py-2 pr-8 outline-none cursor-pointer">
+                className="shrink-0 appearance-none text-[13px] font-medium t-secondary bg-white border-[1.5px] border-slate-200 rounded-full px-4 py-2 pr-8 outline-none cursor-pointer">
                 {DEPTS.slice(5).map(d => <option key={d} value={d}>{d}</option>)}
               </select>
             )}

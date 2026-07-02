@@ -11,6 +11,10 @@ vi.mock('../lib/api', () => ({
   default: { get: vi.fn(() => Promise.resolve({ success: true, data: [] })) },
 }))
 
+vi.mock('../context/ThemeContext', () => ({
+  useTheme: () => ({ theme: 'light', setTheme: vi.fn() }),
+}))
+
 function renderLayout(children) {
   return render(
     <MemoryRouter>

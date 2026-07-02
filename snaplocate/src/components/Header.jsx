@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Menu, Bell, LogOut, Settings, Headset, Trash2 } from 'lucide-react'
+import { Menu, Bell, LogOut, Settings, Headset, Trash2, Sun, Moon } from 'lucide-react'
 import api from '../lib/api'
+import { useTheme } from '../context/ThemeContext'
 
 function NotificationItem({ n, markOneRead, deleteNotification }) {
   const [offset, setOffset] = useState(0)
@@ -53,9 +54,11 @@ function NotificationItem({ n, markOneRead, deleteNotification }) {
       {/* Notification row */}
       <div
         onClick={() => { if (offset === 0) markOneRead(n.id, n.link) }}
-        className="relative flex gap-3 px-[18px] py-3 border-b border-slate-50 z-10"
+        className="relative flex gap-3 px-[18px] py-3 border-b border-ink-divider z-10"
         style={{
-          background: hover && n.link ? '#f1f5f9' : (n.is_read ? '#fff' : '#f8faff'),
+          background: hover && n.link
+            ? 'var(--c-surface-muted)'
+            : (n.is_read ? 'var(--c-surface-card)' : 'var(--c-brand-light)'),
           transition: startX.current !== null ? 'none' : 'transform 0.2s',
           transform: `translateX(${offset}px)`,
         }}
@@ -85,6 +88,7 @@ function NotificationItem({ n, markOneRead, deleteNotification }) {
 
 export default function Header({ onMenuClick }) {
   const { user, logout } = useAuth()
+  const { theme, setTheme } = useTheme()
   const navigate = useNavigate()
   const [dropOpen, setDropOpen]           = useState(false)
   const [bellOpen, setBellOpen]           = useState(false)
@@ -147,14 +151,14 @@ export default function Header({ onMenuClick }) {
   const unreadCount = notifications.filter(n => !n.is_read).length
 
   return (
-    <header className="w-full h-[72px] flex items-center justify-between px-4 sm:px-7 bg-white/95 backdrop-blur-[8px] [-webkit-backdrop-filter:blur(8px)] border-b border-slate-100 shadow-[0_1px_0_rgba(0,0,0,0.04)] shrink-0 z-[100]">
+    <header className="w-full h-[72px] flex items-center justify-between px-4 sm:px-7 bg-surface-card/95 backdrop-blur-[8px] [-webkit-backdrop-filter:blur(8px)] border-b border-ink-border shadow-[0_1px_0_rgba(0,0,0,0.04)] shrink-0 z-[100]">
 
       {/* ── LEFT: Hamburger (mobile) + Logo ── */}
       <div className="flex items-center gap-3.5">
         {/* Hamburger — visible only on mobile */}
         <button
           onClick={onMenuClick}
-          className="flex lg:hidden items-center justify-center p-2 rounded-lg bg-transparent border-none cursor-pointer hover:bg-slate-100 transition-colors"
+          className="flex lg:hidden items-center justify-center p-2 rounded-lg bg-transparent border-none cursor-pointer hover:bg-surface-muted transition-colors"
           aria-label="Open navigation menu"
         >
           <Menu size={24} className="text-ink-secondary" />
@@ -189,7 +193,7 @@ export default function Header({ onMenuClick }) {
           <button
             aria-label="Notifications"
             onClick={() => setBellOpen(o => !o)}
-            className="relative flex items-center p-2.5 rounded-[10px] bg-transparent border-none cursor-pointer hover:bg-slate-100 transition-colors"
+            className="relative flex items-center p-2.5 rounded-[10px] bg-transparent border-none cursor-pointer hover:bg-surface-muted transition-colors"
           >
             <Bell size={20} className={bellOpen ? 'text-brand' : 'text-ink-secondary'} />
             {unreadCount > 0 && (
@@ -200,9 +204,9 @@ export default function Header({ onMenuClick }) {
           </button>
 
           {bellOpen && (
-            <div className="absolute top-12 right-0 bg-white border border-slate-100 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] w-[340px] z-[200] overflow-hidden">
+            <div className="fixed sm:absolute top-[72px] sm:top-12 left-2 right-2 sm:left-auto sm:right-0 w-auto sm:w-[340px] bg-surface-card border border-ink-border rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-[200] overflow-hidden">
               {/* Dropdown header */}
-              <div className="flex justify-between items-center px-[18px] py-3.5 border-b border-slate-100">
+              <div className="flex justify-between items-center px-[18px] py-3.5 border-b border-ink-border">
                 <span className="font-jakarta text-sm font-bold text-ink">
                   Notifications{' '}
                   {unreadCount > 0 && (
@@ -260,9 +264,9 @@ export default function Header({ onMenuClick }) {
           </button>
 
           {dropOpen && (
-            <div className="absolute top-12 right-0 bg-white border border-slate-100 rounded-[14px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] min-w-[180px] z-[100] overflow-hidden">
+            <div className="absolute top-12 right-0 bg-surface-card border border-ink-border rounded-[14px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] min-w-[180px] z-[100] overflow-hidden">
               {/* User info */}
-              <div className="px-4 py-3 border-b border-slate-100">
+              <div className="px-4 py-3 border-b border-ink-border">
                 <div className="font-jakarta text-[13px] font-bold text-ink">{displayName}</div>
                 <div className="font-inter text-xs text-ink-secondary mt-0.5">{user?.email}</div>
               </div>
@@ -283,7 +287,17 @@ export default function Header({ onMenuClick }) {
                 <Headset size={16} className="text-ink-secondary" /> Support
               </button>
 
-              <div className="h-px bg-slate-100 my-1" />
+              {/* Theme toggle */}
+              <button
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="w-full px-4 py-[11px] bg-transparent border-none text-left font-jakarta text-sm font-semibold text-ink-accent cursor-pointer flex items-center gap-2.5 hover:bg-surface transition-colors"
+              >
+                {theme === 'dark'
+                  ? <><Sun size={16} className="text-ink-secondary" /> Light mode</>
+                  : <><Moon size={16} className="text-ink-secondary" /> Dark mode</>}
+              </button>
+
+              <div className="h-px bg-surface-muted my-1" />
 
               {/* Sign out */}
               <button

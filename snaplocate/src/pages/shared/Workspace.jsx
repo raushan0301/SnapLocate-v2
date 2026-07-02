@@ -26,6 +26,19 @@ function fmt12(str) {
 }
 
 const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
+
+// Convert a single time token to canonical 24h "HH:MM" (handles "8:50 AM", "08:50", "1:00 PM").
+const to24 = (t) => {
+  const m = (t || '').trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i)
+  if (!m) return (t || '').trim()
+  let h = Number(m[1])
+  const ap = m[3]?.toUpperCase()
+  if (ap === 'PM' && h !== 12) h += 12
+  if (ap === 'AM' && h === 12) h = 0
+  return `${String(h).padStart(2, '0')}:${m[2]}`
+}
+// Normalize a full slot to canonical "HH:MM-HH:MM" so 12h AM/PM data matches the 24h grid.
+const canonSlot = (slot) => (slot || '').split('-').map(to24).join('-')
 const ALL_TIME_SLOTS = [
   '08:00-08:50', '08:50-09:40', '09:40-10:30', '10:30-11:20', '11:20-12:10',
   '12:10-13:00', '13:00-13:50', '13:50-14:40', '14:40-15:30', '15:30-16:20',
@@ -68,9 +81,9 @@ function Cell({ data, onClick }) {
 const fieldCls = 'w-full px-3.5 py-2.5 rounded-[10px] border border-slate-300 outline-none box-border'
 
 const Modal = ({ close, title, children }) => (
-  <div className="fixed inset-0 bg-slate-900/50 z-[9999] flex items-center justify-center backdrop-blur-[2px]"
+  <div className="fixed inset-0 bg-slate-900/50 z-[9999] flex items-center justify-center backdrop-blur-[2px] p-4"
     onMouseDown={close}>
-    <div className="bg-white rounded-3xl w-[420px] p-7 shadow-[0_20px_40px_rgba(0,0,0,0.15)]"
+    <div className="bg-white rounded-3xl w-full max-w-[420px] p-6 sm:p-7 shadow-[0_20px_40px_rgba(0,0,0,0.15)] max-h-[90vh] overflow-y-auto"
       onMouseDown={e => e.stopPropagation()}>
       <div className="flex justify-between mb-6 items-center">
         <h3 className="text-[18px] font-bold t-primary">{title}</h3>
@@ -141,7 +154,8 @@ export default function Workspace({ role = 'student' }) {
     }
     try {
       const dayKey  = ttModal.day.toUpperCase()
-      const filtered = timetable.filter(sl => !(sl.day.toUpperCase() === dayKey && (sl.time_slot === ttModal.slot || sl.time === ttModal.slot)))
+      const slotCanon = canonSlot(ttModal.slot)
+      const filtered = timetable.filter(sl => !(sl.day.toUpperCase() === dayKey && canonSlot(sl.time_slot || sl.time) === slotCanon))
       const updated  = courseName ? [...filtered, payload] : filtered
       await api.put(ttApi, role === 'faculty' ? { slots: updated } : updated)
       setTimetable(updated); setTtModal(null)
@@ -151,7 +165,7 @@ export default function Workspace({ role = 'student' }) {
 
   const ttMap = {}
   timetable.forEach(t => {
-    const slotKey = t.time_slot || t.time
+    const slotKey = canonSlot(t.time_slot || t.time)
     const dayKey  = t.day?.toUpperCase()
     if (!ttMap[slotKey]) ttMap[slotKey] = {}
     ttMap[slotKey][dayKey] = t
@@ -382,7 +396,7 @@ export default function Workspace({ role = 'student' }) {
                 <tr key={i} className="border-b border-slate-50">
                   <td className="text-[10px] font-medium text-slate-500 px-3 py-1 border-r border-slate-100 whitespace-nowrap align-middle">{fmt12(slot)}</td>
                   {DAYS.map(d => (
-                    <Cell key={d} data={ttMap[slot]?.[d]} onClick={() => setTtModal({ day: d, slot, existing: ttMap[slot]?.[d] })} />
+                    <Cell key={d} data={ttMap[canonSlot(slot)]?.[d]} onClick={() => setTtModal({ day: d, slot, existing: ttMap[canonSlot(slot)]?.[d] })} />
                   ))}
                 </tr>
               ))}
@@ -392,7 +406,7 @@ export default function Workspace({ role = 'student' }) {
       </div>
 
       {/* Productivity Grid */}
-      <div className="grid gap-4 mt-4" style={{ gridTemplateColumns: 'minmax(0,1fr) 300px 340px' }}>
+      <div className="grid gap-4 mt-4 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px_340px]">
 
         {/* Notes */}
         <div className="bg-white rounded-[20px] border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.03)] p-6 flex flex-col gap-5">

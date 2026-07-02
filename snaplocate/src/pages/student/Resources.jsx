@@ -347,7 +347,7 @@ export default function Resources() {
               </div>
 
               {/* Footer: Rating | Views | Rate */}
-              <div className="flex items-center gap-9 px-6 pt-3.5 pb-5 mt-3 border-t border-slate-100 flex-wrap">
+              <div className="flex items-center gap-x-6 gap-y-3 px-6 pt-3.5 pb-5 mt-3 border-t border-slate-100 flex-wrap">
                 <div>
                   <div className="text-[11px] font-medium leading-[15px] text-slate-400 mb-[3px] uppercase tracking-[0.05em]">Rating</div>
                   <div className="flex items-center gap-[5px]">

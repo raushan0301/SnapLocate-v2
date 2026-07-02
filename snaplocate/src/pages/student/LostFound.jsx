@@ -747,7 +747,7 @@ export default function LostFoundPage() {
       <CustomConfirmModal open={!!confirmConfig} {...confirmConfig} onCancel={() => setConfirmConfig(null)} />
 
       {/* ── Page header ── */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-5 mb-5 border-b border-slate-100">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 pb-3 sm:pb-5 mb-3 sm:mb-5 border-b border-slate-100">
         <div>
           <h1 className="t-heading-3xl t-primary m-0 tracking-[-0.5px]">Lost & Found</h1>
           <p className="t-lg t-secondary mt-1.5 mb-0">Report lost items or help return found items to the community.</p>
@@ -799,7 +799,7 @@ export default function LostFoundPage() {
       {tab === 'browse' && (
         <>
           {/* Filters card */}
-          <div className="card p-6 mb-5 flex flex-col gap-5">
+          <div className="card p-4 sm:p-6 mb-4 sm:mb-5 flex flex-col gap-4 sm:gap-5">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 flex-wrap">
               {/* Search */}
               <div className="relative flex-1 min-w-0 max-w-sm w-full">
@@ -850,14 +850,14 @@ export default function LostFoundPage() {
 
             <div className="divider" />
 
-            {/* Category chips */}
-            <div className="flex gap-2 flex-wrap">
+            {/* Category chips — single scrollable row on mobile, wraps on larger screens */}
+            <div className="flex gap-2 flex-nowrap overflow-x-auto sm:flex-wrap pb-1 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {CATEGORIES.map(c => {
                 const isSel = catFilter === c.value
                 const Icon  = c.icon
                 return (
                   <button key={c.value} onClick={() => setCatFilter(c.value)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl border cursor-pointer transition-all t-md"
+                    className="shrink-0 whitespace-nowrap flex items-center gap-2 px-4 py-2 rounded-xl border cursor-pointer transition-all t-md"
                     style={{
                       borderColor: isSel ? c.color : '#e2e8f0',
                       background:  isSel ? c.bg    : '#fff',

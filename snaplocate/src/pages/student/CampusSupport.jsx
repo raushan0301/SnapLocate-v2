@@ -177,14 +177,14 @@ export default function CampusSupportPage() {
           </div>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex gap-2 flex-wrap mb-9">
+        {/* Filter Tabs — single scrollable row on mobile, wraps on larger screens */}
+        <div className="flex gap-2 flex-nowrap overflow-x-auto sm:flex-wrap mb-6 pb-1 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TABS.map(tab => {
             const active      = activeTab === tab.label
             const isEmergency = tab.label === 'Emergency'
             return (
               <button key={tab.label} onClick={() => setActiveTab(tab.label)}
-                className={`px-5 py-2.5 rounded-xl cursor-pointer text-[13px] font-semibold transition-all duration-200 ${
+                className={`shrink-0 whitespace-nowrap px-5 py-2.5 rounded-xl cursor-pointer text-[13px] font-semibold transition-all duration-200 ${
                   active
                     ? isEmergency
                       ? 'bg-danger text-white border-none shadow-[0_4px_12px_rgba(0,0,0,0.12)]'

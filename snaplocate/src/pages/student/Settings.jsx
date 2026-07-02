@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import PageLayout from '../../components/PageLayout'
 import { useAuth } from '../../context/AuthContext'
+import { useTheme } from '../../context/ThemeContext'
 import api from '../../lib/api'
 import Modal from '../../components/admin/Modal'
 import {
@@ -56,6 +57,7 @@ function Checkbox({ checked, onChange }) {
 
 export default function SettingsPage() {
   const { user, updateUser } = useAuth()
+  const { theme, setTheme } = useTheme()
   const fileInputRef = useRef(null)
 
   const [profile, setProfile] = useState({
@@ -130,6 +132,13 @@ export default function SettingsPage() {
     setPrefs(nextPrefs)
     try { await api.put('/api/users/preferences', { preferences: nextPrefs }); showToast('Preferences updated!') }
     catch (err) { console.error('Failed to sync preferences:', err); setPrefs(prev); showToast('Failed to save preference', 'error') }
+  }
+
+  // Theme is applied instantly via ThemeContext (persisted to localStorage),
+  // then synced to the server preferences like any other setting.
+  const handleThemeChange = (value) => {
+    setTheme(value)
+    handlePrefChange('theme', value)
   }
 
   const handlePasswordUpdate = async (e) => {
@@ -261,16 +270,16 @@ export default function SettingsPage() {
                 { id: 'light', label: 'Light Mode', icon: <Sun size={24} /> },
                 { id: 'dark',  label: 'Dark Mode',  icon: <Moon size={24} /> },
               ].map(t => (
-                <div key={t.id} onClick={() => handlePrefChange('theme', t.id)}
+                <div key={t.id} onClick={() => handleThemeChange(t.id)}
                   className="py-7 px-4 rounded-2xl cursor-pointer text-center transition-all border-2"
                   style={{
-                    border:      `2px solid ${prefs.theme === t.id ? '#4f46e5' : '#e2e8f0'}`,
+                    border:      `2px solid ${theme === t.id ? '#4f46e5' : '#e2e8f0'}`,
                     background:  t.id === 'dark' ? '#1a202c' : '#f8fafc',
                     color:       t.id === 'dark' ? '#fff' : '#0f172a',
                   }}
                 >
-                  <div className={`flex justify-center mb-3 ${prefs.theme === t.id ? 'text-brand' : 't-secondary'}`}>{t.icon}</div>
-                  <div className={`t-md font-bold ${prefs.theme === t.id ? (t.id === 'dark' ? 'text-white' : 'text-brand') : 't-secondary'}`}>{t.label}</div>
+                  <div className={`flex justify-center mb-3 ${theme === t.id ? 'text-brand' : 't-secondary'}`}>{t.icon}</div>
+                  <div className={`t-md font-bold ${theme === t.id ? (t.id === 'dark' ? 'text-white' : 'text-brand') : 't-secondary'}`}>{t.label}</div>
                 </div>
               ))}
             </div>

@@ -98,7 +98,7 @@ router.patch('/:id', authenticate, requireFaculty, async (req, res) => {
   // Get request + student info
   const { data: request, error: rErr } = await supabaseAdmin
     .from('requests')
-    .select(`*, student:student_id(full_name, email), faculty_profile:faculty_id(user_id)`)
+    .select(`*, student:student_id(full_name, email)`)
     .eq('id', req.params.id)
     .single()
 
@@ -107,7 +107,9 @@ router.patch('/:id', authenticate, requireFaculty, async (req, res) => {
   }
 
   // Ensure this faculty owns the request
-  if (request.faculty_profile.user_id !== req.user.id) {
+  const { data: fp } = await supabaseAdmin
+    .from('faculty_profiles').select('id').eq('user_id', req.user.id).single()
+  if (!fp || request.faculty_id !== fp.id) {
     return res.status(403).json({ success: false, message: 'Forbidden' })
   }
 
@@ -145,11 +147,13 @@ router.patch('/:id/accept', authenticate, requireFaculty, async (req, res) => {
   // reuse the main PATCH logic inline
   const { data: request, error: rErr } = await supabaseAdmin
     .from('requests')
-    .select(`*, users:student_id(full_name, email), fp:faculty_id(user_id)`)
+    .select(`*, users:student_id(full_name, email)`)
     .eq('id', req.params.id).single()
 
   if (rErr || !request) return res.status(404).json({ success: false, message: 'Request not found' })
-  if (request.fp?.user_id !== req.user.id) return res.status(403).json({ success: false, message: 'Forbidden' })
+  const { data: fpA } = await supabaseAdmin
+    .from('faculty_profiles').select('id').eq('user_id', req.user.id).single()
+  if (!fpA || request.faculty_id !== fpA.id) return res.status(403).json({ success: false, message: 'Forbidden' })
 
   const { data, error } = await supabaseAdmin
     .from('requests').update({ status: 'accepted', updated_at: new Date().toISOString() })
@@ -177,11 +181,13 @@ router.patch('/:id/accept', authenticate, requireFaculty, async (req, res) => {
 router.patch('/:id/reject', authenticate, requireFaculty, async (req, res) => {
   const { data: request, error: rErr } = await supabaseAdmin
     .from('requests')
-    .select(`*, users:student_id(full_name, email), fp:faculty_id(user_id)`)
+    .select(`*, users:student_id(full_name, email)`)
     .eq('id', req.params.id).single()
 
   if (rErr || !request) return res.status(404).json({ success: false, message: 'Request not found' })
-  if (request.fp?.user_id !== req.user.id) return res.status(403).json({ success: false, message: 'Forbidden' })
+  const { data: fpR } = await supabaseAdmin
+    .from('faculty_profiles').select('id').eq('user_id', req.user.id).single()
+  if (!fpR || request.faculty_id !== fpR.id) return res.status(403).json({ success: false, message: 'Forbidden' })
 
   const { data, error } = await supabaseAdmin
     .from('requests').update({ status: 'rejected', updated_at: new Date().toISOString() })

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import PageLayout from '../../components/PageLayout'
 import api from '../../lib/api'
 import { ClipboardList, Clock, CheckCircle, XCircle } from 'lucide-react'
@@ -58,7 +59,12 @@ export default function FacultyRequests() {
     setCommentModal({ isOpen: false, requestId: null, status: null, notes: '' })
     try {
       await api.patch(`/api/requests/${requestId}`, { status, notes })
-    } catch { }
+      loadRequests() // reflect server truth
+    } catch (err) {
+      console.error('Update request error:', err)
+      alert(err.message || 'Failed to update request')
+      loadRequests() // revert optimistic change
+    }
   }
 
   const acceptAll = async () => {
@@ -190,8 +196,8 @@ export default function FacultyRequests() {
         })}
       </div>
 
-      {commentModal.isOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-[4px]">
+      {commentModal.isOpen && createPortal(
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[2000] p-4 backdrop-blur-[4px]">
           <div className="bg-white rounded-[24px] p-8 w-full max-w-[400px] shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1)]">
             <h3 className="text-[20px] font-bold t-primary m-0">
               {commentModal.status === 'accepted' ? 'Approve Request' : 'Reject Request'}
@@ -216,7 +222,8 @@ export default function FacultyRequests() {
               >{commentModal.status === 'accepted' ? 'Approve' : 'Reject'}</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </PageLayout>
   )
